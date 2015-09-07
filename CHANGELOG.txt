@@ -1,0 +1,2 @@
+Changes since 8.x-1.x
+Issue #2351299 by johnv: Porting D7-version to D8 using drupalmoduleupgrader module.
