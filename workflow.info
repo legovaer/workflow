@@ -1,4 +1,0 @@
-name = Workflow
-description = "Allows the creation and assignment of arbitrary workflows to node types."
-package = Workflow
-core = 7.x

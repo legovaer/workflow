@@ -1,6 +1,0 @@
-name = Workflow rules
-description = Provides rules integration for workflows.
-dependencies[] = workflow
-dependencies[] = rules
-package = Workflow
-core = 7.x
