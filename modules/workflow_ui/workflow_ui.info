@@ -1,5 +1,5 @@
 name = Workflow UI
-description = "Provides administrative UI for workflow."
+description = "Administrative UI for Workflow."
 package = Workflow
 core = 7.x
 
