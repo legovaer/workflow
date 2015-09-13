@@ -1,9 +1,7 @@
-name = Workflow API
-description = Workflow API. (Enable Workflow Node or Workflow Field to add arbitrary workflows to entities.)
+name = Workflow
+description = Defines a field type with Workflows, containing customizable state transitions.
 package = Workflow
 core = 7.x
-
-dependencies[] = entity
 
 files[] = includes/Entity/Workflow.php
 files[] = includes/Entity/WorkflowState.php
