@@ -1,0 +1,13 @@
+# Menu tasks for Workflow UI.
+
+workflow.ui.workflows:
+  title: 'Workflows'
+  route_name: entity.workflow_workflow.collection
+  base_route: entity.workflow_workflow.collection
+  weight: 1
+
+workflow.ui.settings:
+  title: 'Settings'
+  route_name: workflow.ui.settings
+  base_route: entity.workflow_workflow.collection
+  weight: 9

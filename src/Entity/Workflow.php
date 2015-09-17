@@ -2,29 +2,87 @@
 
 /**
  * @file
- * Contains workflow\includes\Entity\Workflow.
+ * Contains Drupal\workflow\Entity\Workflow.
  */
 
-class Workflow extends Entity {
-  public $wid = 0;
-  public $name = '';
+namespace Drupal\workflow\Entity;
+
+use Drupal\Core\Config\Entity\ConfigEntityBase;
+
+/**
+ * Workflow configuration entity to persistently store configuration.
+ *
+ * @ConfigEntityType(
+ *   id = "workflow_workflow",
+ *   label = @Translation("Workflow"),
+ *   handlers = {
+ *     "storage" = "Drupal\workflow\Entity\WorkflowStorage",
+ *     "list_builder" = "Drupal\workflow\Entity\Controller\WorkflowListBuilder",
+ *     "form" = {
+ *        "add" = "\Drupal\workflow\Entity\WorkflowForm",
+ *        "edit" = "\Drupal\workflow\Entity\WorkflowForm",
+ *        "delete" = "\Drupal\Core\Entity\EntityDeleteForm"
+ *      }
+ *   },
+ *   admin_permission = "administer workflow",
+ *   config_prefix = "workflow",
+ *   entity_keys = {
+ *     "id" = "id",
+ *     "label" = "label",
+ *   },
+ *   config_export = {
+ *     "id",
+ *     "label",
+ *     "status",
+ *     "module",
+ *     "tab_roles",
+ *     "options",
+ *   },
+ *   links = {
+ *     "collection" = "/admin/config/workflow/workflow",
+ *     "edit-form" = "/admin/config/workflow/workflow/{workflow_workflow}/edit",
+ *     "delete-form" = "/admin/config/workflow/workflow/{workflow_workflow}/delete"
+ *   }
+ * )
+ */
+class Workflow extends ConfigEntityBase {
+
+  /**
+   * The machine name.
+   *
+   * @var string
+   */
+  public $id;
+
+  /**
+   * The human readable name.
+   *
+   * @var string
+   */
+  public $label;
+
+// TODO D8-port: remove below variables wid , name.
+//  public $wid = 0; // This is not an INT anymore, but a string
+//  public $name = ''; // This is dientical to the ID
+
+// TODO D8-port: complete below variables. (Add get()-functions).
+// @see https://www.drupal.org/node/1809494
+// @see https://codedrop.com.au/blog/creating-custom-config-entities-drupal-8
   public $tab_roles = array();
   public $options = array();
   protected $creation_sid = 0;
 
-  // Attached States.
-  public $states = NULL;
-  public $transitions = NULL;
+  // Attached States and Transitions.
+  public $states = array();
+  public $transitions = array();
 
   /**
    * CRUD functions.
    */
 
-  // public function __construct(array $values = array(), $entityType = NULL) {
-  //   return parent::__construct($values, $entityType);
-  // }
-
   public function __clone() {
+    // TODO D8-port: test below function.
+
     // Clone the arrays of States and Transitions.
     foreach ($this->states as &$state) {
       $state = clone $state;
@@ -50,6 +108,11 @@ class Workflow extends Entity {
    * - save Workflow programmatically;
    */
   public function save($create_creation_state = TRUE) {
+    $return = parent::save();
+
+    return $return;
+    // TODO D8-port: add all of the below: save() function.
+
     // Are we saving a new Workflow?
     $is_new = !empty($this->is_new);
     // Are we rebuilding, reverting a new Workflow? @see workflow.features.inc
@@ -75,7 +138,7 @@ class Workflow extends Entity {
       // Insert the type_map when building from Features.
       if ($this->typeMap) {
         foreach ($this->typeMap as $node_type) {
-          workflow_insert_workflow_type_map($node_type, $this->wid);
+          workflow_insert_workflow_type_map($node_type, $this->id());
         }
       }
     }
@@ -94,7 +157,7 @@ class Workflow extends Entity {
         $state = is_array($state) ? new WorkflowState($state) : $state;
         // Set up a conversion table, while saving the states.
         $old_sid = $state->sid;
-        $state->wid = $this->wid;
+        $state->wid = $this->id();
         // @todo: setting sid to FALSE should be done by entity_ui_clone_entity().
         $state->sid = FALSE;
         $state->save();
@@ -123,22 +186,21 @@ class Workflow extends Entity {
       $state = $this->getCreationState();
     }
 
-    workflow_reset_cache($this->wid);
+    workflow_reset_cache($this->id());
 
     return $return;
   }
 
   /**
    * Given a wid, delete the workflow and its data.
-   *
-   * @deprecated: workflow_delete_workflows_by_wid() --> Workflow::delete().
    */
   public function delete() {
-    $wid = $this->wid;
+    // TODO D8-port: test below function.
+    $wid = $this->id();
 
     // Notify any interested modules before we delete the workflow.
     // E.g., Workflow Node deletes the {workflow_type_map} record.
-    module_invoke_all('workflow', 'workflow delete', $wid, NULL, NULL, FALSE);
+    \Drupal::moduleHandler()->invokeAll('workflow', ['workflow delete', $wid, NULL, NULL, FALSE]);
 
     // Delete associated state (also deletes any associated transitions).
     foreach ($this->getStates($all = TRUE) as $state) {
@@ -147,7 +209,7 @@ class Workflow extends Entity {
     }
 
     // Delete the workflow.
-    db_delete('workflows')->condition('wid', $wid)->execute();
+    return parent::delete();
   }
 
   /**
@@ -161,6 +223,7 @@ class Workflow extends Entity {
    *   $is_valid
    */
   public function isValid() {
+    // TODO D8-port: test below function.
     $is_valid = TRUE;
 
     // Don't allow workflows with no states. There should always be a creation state.
@@ -187,21 +250,6 @@ class Workflow extends Entity {
       $is_valid = FALSE;
     }
 
-    // If the Workflow is mapped to a node type, check if workflow->options is set.
-    if ($this->getTypeMap() && !count($this->options)) {
-      // That's all, so let's remind them to create some transitions.
-      $message = t('Please maintain Workflow %workflow on its <a href="@url">settings</a> page.',
-        array(
-          '%workflow' => $this->getName(),
-          '@url' => url('admin/config/workflow/workflow/manage/' . $this->wid),
-        )
-      );
-      drupal_set_message($message, 'warning');
-
-      // Skip allowing this workflow.
-      // $is_valid = FALSE;
-    }
-
     return $is_valid;
   }
 
@@ -212,6 +260,8 @@ class Workflow extends Entity {
    *   TRUE if a Workflow may safely be deleted.
    */
   public function isDeletable() {
+    // TODO D8-port: test below function.
+
     $is_deletable = FALSE;
 
     // May not be deleted if a TypeMap exists.
@@ -221,7 +271,7 @@ class Workflow extends Entity {
 
     // May not be deleted if assigned to a Field.
     foreach (_workflow_info_fields() as $field) {
-      if ($field['settings']['wid'] == $this->wid) {
+      if ($field['settings']['wid'] == $this->id()) {
         return $is_deletable;
       }
     }
@@ -252,10 +302,12 @@ class Workflow extends Entity {
    *   magically when saving the State. But you may need a temporary state.
    */
   public function createState($name, $save = TRUE) {
-    $wid = $this->wid;
+    // TODO D8-port: test below function.
+
+    $wid = $this->id();
     $state = workflow_state_load_by_name($name, $wid);
     if (!$state) {
-      $state = entity_create('WorkflowState', array('name' => $name, 'state' => $name, 'wid' => $wid));
+      $state = \Drupal::entityManager()->getStorage('WorkflowState')->create(array('name' => $name, 'state' => $name, 'wid' => $wid));
       if ($save) {
         $state->save();
       }
@@ -271,6 +323,8 @@ class Workflow extends Entity {
    * Gets the initial state for a newly created entity.
    */
   public function getCreationState() {
+    // TODO D8-port: test below function.
+
     $sid = $this->getCreationSid();
     return ($sid) ? $this->getState($sid) : $this->createState(WORKFLOW_CREATION_STATE_NAME);
   }
@@ -279,6 +333,8 @@ class Workflow extends Entity {
    * Gets the ID of the initial state for a newly created entity.
    */
   public function getCreationSid() {
+    // TODO D8-port: test below function.
+
     if (!$this->creation_sid) {
       foreach ($this->getStates($all = TRUE) as $state) {
         if ($state->isCreationState()) {
@@ -296,6 +352,8 @@ class Workflow extends Entity {
    * The first State ID is user-dependent!
    */
   public function getFirstSid($entity_type, $entity, $field_name, $user, $force) {
+    // TODO D8-port: test below function.
+
     $creation_state = $this->getCreationState();
     $options = $creation_state->getOptions($entity_type, $entity, $field_name, $user, $force);
     if ($options) {
@@ -323,8 +381,11 @@ class Workflow extends Entity {
    *   An array of WorkflowState objects.
    */
   public function getStates($all = FALSE, $reset = FALSE) {
+    // TODO D8-port: test below function.
+
     if ($this->states === NULL || $reset) {
-      $this->states = $this->wid ? WorkflowState::getStates($this->wid, $reset) : array();
+      $wid = $this->id();
+      $this->states = $wid ? WorkflowState::getStates($wid, $reset) : array();
     }
     // Do not unset, but add to array - you'll remove global objects otherwise.
     $states = array();
@@ -352,11 +413,14 @@ class Workflow extends Entity {
    *   A WorkflowState object.
    */
   public function getState($key) {
+    // TODO D8-port: test below function.
+
+    $wid = $this->id();
     if (is_numeric($key)) {
-      return workflow_state_load_single($key, $this->wid);
+      return workflow_state_load_single($key, $wid);
     }
     else {
-      return workflow_state_load_by_name($key, $this->wid);
+      return workflow_state_load_by_name($key, $wid);
     }
   }
 
@@ -364,6 +428,8 @@ class Workflow extends Entity {
    * Creates a Transition for this workflow.
    */
   public function createTransition($sid, $target_sid, $values = array()) {
+    // TODO D8-port: test below function. Remove wid.
+
     $workflow = $this;
     if (is_numeric($sid) && is_numeric($target_sid)) {
       $values['sid'] = $sid;
@@ -377,12 +443,14 @@ class Workflow extends Entity {
     }
 
     // First check if this transition already exists.
-    if ($transitions = entity_load('WorkflowConfigTransition', FALSE, $values)) {
+    if ($transitions = // @FIXME
+// To reset the entity cache, use EntityStorageInterface::resetCache().
+\Drupal::entityManager()->getStorage('WorkflowConfigTransition')->loadByProperties($values)) {
       $transition = reset($transitions);
     }
     else {
       $values['wid'] = $workflow->wid;
-      $transition = entity_create('WorkflowConfigTransition', $values);
+      $transition = \Drupal::entityManager()->getStorage('WorkflowConfigTransition')->create($values);
       $transition->save();
     }
     $transition->setWorkflow($this);
@@ -398,6 +466,8 @@ class Workflow extends Entity {
    * This is only needed for the Admin UI.
    */
   public function sortTransitions() {
+    // TODO D8-port: test below function.
+
     // Sort the transitions on state weight.
     usort($this->transitions, '_workflow_transitions_sort_by_weight');
   }
@@ -413,6 +483,8 @@ class Workflow extends Entity {
    *   $conditions['roles'] : if provided, an array of roles, or 'ALL'.
    */
   public function getTransitions($tids = FALSE, array $conditions = array(), $reset = FALSE) {
+    // TODO D8-port: test below function.
+
     $config_transitions = array();
 
     // Get valid + creation states.
@@ -428,7 +500,7 @@ class Workflow extends Entity {
     if ($this->transitions === NULL) {
       $this->transitions = array();
       // Get all transitions. (Even from other workflows. :-( )
-      $config_transitions = entity_load('WorkflowConfigTransition', $tids, array(), $reset);
+      $config_transitions = \Drupal::entityManager()->getStorage('WorkflowConfigTransition')->loadByProperties(array());
       foreach ($config_transitions as &$config_transition) {
         if (isset($states[$config_transition->sid])) {
           $config_transition->setWorkflow($this);
@@ -463,6 +535,8 @@ class Workflow extends Entity {
   }
 
   public function getTransitionsByTid($tid, $roles = '', $reset = FALSE) {
+    // TODO D8-port: test below function.
+
     $conditions = array(
       'roles' => $roles,
     );
@@ -470,6 +544,8 @@ class Workflow extends Entity {
   }
 
   public function getTransitionsBySid($sid, $roles = '', $reset = FALSE) {
+    // TODO D8-port: test below function.
+
     $conditions = array(
       'sid' => $sid,
       'roles' => $roles,
@@ -478,6 +554,8 @@ class Workflow extends Entity {
   }
 
   public function getTransitionsByTargetSid($target_sid, $roles = '', $reset = FALSE) {
+    // TODO D8-port: test below function.
+
     $conditions = array(
       'target_sid' => $target_sid,
       'roles' => $roles,
@@ -489,6 +567,8 @@ class Workflow extends Entity {
    * Get a specific transition. Therefore, use $roles = 'ALL'.
    */
   public function getTransitionsBySidTargetSid($sid, $target_sid, $roles = 'ALL', $reset = FALSE) {
+    // TODO D8-port: test below function.
+
     $conditions = array(
       'sid' => $sid,
       'target_sid' => $target_sid,
@@ -507,9 +587,11 @@ class Workflow extends Entity {
    *   An array of typemaps.
    */
   public function getTypeMap() {
+    // TODO D8-port: test below function.
+
     $result = array();
 
-    $type_maps = module_exists('workflownode') ? workflow_get_workflow_type_map_by_wid($this->wid) : array();
+    $type_maps = \Drupal::moduleHandler()->moduleExists('workflownode') ? workflow_get_workflow_type_map_by_wid($this->id()) : array();
     foreach ($type_maps as $map) {
       $result[] = $map->type;
     }
@@ -521,6 +603,8 @@ class Workflow extends Entity {
    * Gets a setting from the state object.
    */
   public function getSetting($key, array $field = array()) {
+    // TODO D8-port: test below function.
+
     switch ($key) {
       case 'watchdog_log':
         if (isset($this->options['watchdog_log'])) {
@@ -541,24 +625,11 @@ class Workflow extends Entity {
     }
   }
 
-  /**
-   * Mimics Entity API functions.
-   */
-  public function getName() {
-    return $this->name;
-  }
-
-  protected function defaultLabel() {
-    return isset($this->label) ? $this->label : '';
-  }
-
-  protected function defaultUri() {
-    return array('path' => 'admin/config/workflow/workflow/manage/' . $this->wid);
-  }
-
 }
 
 function _workflow_rebuild_roles(array $roles, array $role_map) {
+  // TODO D8-port: test below function.
+
   // See also https://drupal.org/node/1702626 .
   $new_roles = array();
   foreach ($roles as $key => $rid) {
@@ -581,6 +652,8 @@ function _workflow_rebuild_roles(array $roles, array $role_map) {
  * @param WorkflowConfigTransition $b
  */
 function _workflow_transitions_sort_by_weight($a, $b) {
+  // TODO D8-port: test below function.
+
   // First sort on From-State.
   $old_state_a = $a->getOldState();
   $old_state_b = $b->getOldState();
