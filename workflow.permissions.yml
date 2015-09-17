@@ -1,17 +1,22 @@
 # Permissions are declared in Workflow (not Workflow UI) so other contrib
 # modules can make use of it.
+
 administer workflow:
   title: 'Administer workflows'
   description: 'Administer all Workflow configurations and settings.'
+
 schedule workflow transitions:
   title: 'Schedule workflow transitions'
   description: 'Schedule workflow transitions.'
+
 show workflow state form':
   title: 'Show workflow state change on node view'
   description': 'Show workflow state change form on node viewing.'
+
 participate in workflow:
   title: 'Participate in workflows'
   description: 'Role is enabled for transitions on the workflow admin pages.'
+
 edit workflow comment':
   title: 'Edit comment in workflow transitions'
   description: 'Edit comment of Logged transitions via a Views link.'

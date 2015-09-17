@@ -174,7 +174,8 @@ class WorkflowForm extends EntityForm {
 
     $form['tab']['tab_roles'] = array(
       '#type' => 'checkboxes',
-//      '#options' => workflow_get_roles(),
+      '#title' => $this->t('Roles'),
+      '#options' => workflow_get_roles(),
       '#default_value' => array_keys($workflow->tab_roles),
       '#description' => t('Select any roles that should have access to the workflow tab on nodes that have a workflow.'),
     );
@@ -198,9 +199,9 @@ class WorkflowForm extends EntityForm {
     /** @var \Drupal\workflow\Entity\Workflow $entity */
     $entity = $this->entity;
 
-    dpm($form_state, __FUNCTION__);
     // Prevent leading and trailing spaces.
-    $entity->set('label', trim($this->entity->label()));
+    $entity->set('label', trim($entity->label()));
+
     $entity->set('tab_roles', array_filter($form_state->getValue('tab_roles')));
     $entity->set('options', array(
         'name_as_title' => $form_state->getValue('name_as_title'),
@@ -231,21 +232,6 @@ class WorkflowForm extends EntityForm {
   }
 
   /**
-   * Form constructor.
-   *
-   * @param array $form
-   *   An associative array containing the structure of the form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The current state of the form.
-   *
-   * @return array
-   *   The form structure.
-   */
-  public function buildForm(array $form, FormStateInterface $form_state) {
-    return parent::buildForm($form, $form_state);
-  }
-
-  /**
    * Form validation handler.
    *
    * @param array $form
@@ -265,23 +251,6 @@ class WorkflowForm extends EntityForm {
 
     return parent::validateForm($form, $form_state);
   }
-
-  /**
-   * Form submission handler.
-   *
-   * @param array $form
-   *   An associative array containing the structure of the form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The current state of the form.
-   */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-    $workflow = $this->entity;
-
-    dpm(__FUNCTION__);
-
-    return parent::submitForm($form, $form_state);
-  }
-
 
   /**
    * Machine name exists callback.

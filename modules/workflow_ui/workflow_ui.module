@@ -66,7 +66,7 @@ function workflow_ui_help($route_name, RouteMatchInterface $route_match) {
       . '<br /><i>'
       . t("If not all roles are in the list, please review which roles may
         'participate in workflows' <a href='!url'> on the Permissions page</a>.",
-        array('!url' => \Drupal::url(('user.admin_permissions')));
+        array('!url' => \Drupal::url(('user.admin_permissions'))));
 
     case 'admin/config/workflow/workflow/manage/%/labels':
       return t('You can add labels to transitions if you don\'t like the

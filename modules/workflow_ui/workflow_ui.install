@@ -10,8 +10,9 @@
  */
 function workflow_ui_install() {
   // TODO D8-port: the display of the link is not OK.
-  $message =  t("Please review which roles may 'participate in workflows' <a href='!url'>on the Permissions page</a>.",
-      array('!url' => \Drupal::url('user.admin_permissions')));
+  $message = t("Please review which roles may 'participate in workflows'
+      <a href='!url'>on the Permissions page</a>.",
+    array('!url' => \Drupal::url('user.admin_permissions')));
   drupal_set_message($message);
 }
 
