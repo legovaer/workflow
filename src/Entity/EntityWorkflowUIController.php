@@ -57,14 +57,6 @@ class EntityWorkflowUIController extends EntityDefaultUIController {
 //       '#weight' => -1,
 //     );
 
-
-    if (\Drupal::moduleHandler()->moduleExists('workflownode')) {
-      // Append the type_map form, changing the form by reference.
-      // The 'type_map' form is only valid for Workflow Node API.
-      module_load_include('inc', 'workflow_admin_ui', 'workflow_admin_ui.page.type_map');
-      workflow_admin_ui_type_map_form($form);
-    }
-
     // Add a submit button. The submit functions are added in the sub-forms.
     $form['submit'] = array(
       '#type' => 'submit',

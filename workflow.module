@@ -1034,13 +1034,6 @@ function workflow_get_workflows_by_type($entity_bundle, $entity_type = 'node') {
     $wid = FALSE;
     $map[$entity_type][$entity_bundle] = FALSE;
 
-    // Check the Node API first: Get $wid.
-    if (\Drupal::moduleHandler()->moduleExists('workflownode') && $type_map = workflow_get_workflow_type_map_by_type($entity_bundle)) {
-      // Get the workflow by wid.
-      $wid = $type_map->wid;
-    }
-
-    // If $entity_type is set, we must check Field API. Data is already cached by core.
     if (!$wid && isset($entity_type)) {
       foreach (_workflow_info_fields(NULL, $entity_type, $entity_bundle) as $field_name => $field_info) {
         $wid = $field_info['settings']['wid'];

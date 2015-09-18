@@ -64,7 +64,6 @@ class WorkflowController extends EntityAPIControllerExportable {
       // Load the states, so they are already present on the next (cached) load.
       $entity->states = $entity->getStates($all = TRUE);
       $entity->transitions = $entity->getTransitions(FALSE);
-      $entity->typeMap = $entity->getTypeMap();
     }
 
     parent::attachLoad($queried_entities, $revision_id);

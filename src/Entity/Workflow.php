@@ -147,12 +147,6 @@ class Workflow extends ConfigEntityBase {
             }
           }
 
-          // Insert the type_map when building from Features.
-          if ($this->typeMap) {
-            foreach ($this->typeMap as $node_type) {
-              workflow_insert_workflow_type_map($node_type, $this->id());
-            }
-          }
         }
         // After update.php or import feature, label might be empty. @todo: remove in D8.
         if (empty($this->label)) {
@@ -214,7 +208,7 @@ class Workflow extends ConfigEntityBase {
     $wid = $this->id();
 
     // Notify any interested modules before we delete the workflow.
-    // E.g., Workflow Node deletes the {workflow_type_map} record.
+    // E.g., D7-Workflow Node deleted the {workflow_type_map} record.
     \Drupal::moduleHandler()->invokeAll('workflow', ['workflow delete', $wid, NULL, NULL, FALSE]);
 
     // Delete associated state (also deletes any associated transitions).
@@ -231,7 +225,6 @@ class Workflow extends ConfigEntityBase {
    * Validate the workflow. Generate a message if not correct.
    *
    * This function is used on the settings page of:
-   * - Workflow node: workflow_admin_ui_type_map_form()
    * - Workflow field: WorkflowItem->settingsForm()
    *
    * @return bool
@@ -281,11 +274,6 @@ class Workflow extends ConfigEntityBase {
 //    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     $is_deletable = FALSE;
-
-    // May not be deleted if a TypeMap exists.
-    if ($this->getTypeMap()) {
-      return $is_deletable;
-    }
 
     // May not be deleted if assigned to a Field.
     foreach (_workflow_info_fields() as $field) {
@@ -612,28 +600,6 @@ class Workflow extends ConfigEntityBase {
       'roles' => $roles,
     );
     return $this->getTransitions(FALSE, $conditions, $reset);
-  }
-
-  /**
-   * Gets a the type map for a given workflow.
-   *
-   * @param int $sid
-   *   A state ID.
-   *
-   * @return array
-   *   An array of typemaps.
-   */
-  public function getTypeMap() {
-    // TODO D8-port Workflow: test below function.
-
-    $result = array();
-
-    $type_maps = \Drupal::moduleHandler()->moduleExists('workflownode') ? workflow_get_workflow_type_map_by_wid($this->id()) : array();
-    foreach ($type_maps as $map) {
-      $result[] = $map->type;
-    }
-
-    return $result;
   }
 
   /**

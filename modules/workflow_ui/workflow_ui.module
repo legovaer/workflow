@@ -103,7 +103,6 @@ function workflow_access($op, $entity, $account, $entity_type) {
 function workflow_ui_theme() {
   // TODO D8-port: add/remove/update this function.
   return array(
-    'workflow_ui_type_map_form' => array('render element' => 'form'),
     'workflow_ui_states_form' => array('render element' => 'form'),
     'workflow_ui_transitions_form' => array('render element' => 'form'),
   );
