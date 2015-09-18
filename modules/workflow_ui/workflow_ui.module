@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\workflow\Entity\Workflow;
 
 // TODO D8-port: Caveat: Several hooks have moved into the EntityWorkflowUIController class.
 
@@ -98,12 +99,29 @@ function workflow_access($op, $entity, $account, $entity_type) {
 }
 
 /**
- * Implements hook_theme().
+ * Helper function to determine Workflow from Workflow UI URL.
  */
-function workflow_ui_theme() {
-  // TODO D8-port: add/remove/update this function.
-  return array(
-    'workflow_ui_states_form' => array('render element' => 'form'),
-    'workflow_ui_transitions_form' => array('render element' => 'form'),
-  );
+function workflow_ui_url_get_wid($url = '' ) {
+  // For some reason, $_SERVER is not alowed as default.
+  $url = ($url == '') ? $_SERVER['REQUEST_URI'] : $url;
+
+  $wid = explode('/', $url)[5];
+
+  return $wid;
+}
+
+/**
+ * Helper function to determine the title of the page.
+ *
+ * Used in file workflow_ui.routing.yml.
+ */
+function workflow_ui_url_get_title() {
+  $wid = workflow_ui_url_get_wid();
+  $workflow = Workflow::load($wid);
+
+//  drupal_set_title() has been removed.
+//  @see https://www.drupal.org/node/2067859
+  return  t('Edit Workflow %label', ['$entity' => 'Workflow', '%label' => $workflow->label()]);
+
+  return $title;
 }

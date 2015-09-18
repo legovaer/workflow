@@ -41,9 +41,6 @@ function workflow_help($path, $arg) {
 
 /**
  * Implements hook_menu_alter().
- *
- * hook_menu() in workflownode sets a '/workflow' menu item for entity type 'node'.
- * hook_menu_alter() in workflowfield sets a '/workflow' menu item for each relevant entity type.
  */
 function workflow_menu_alter(&$items) {
   return; // TODO D8-port: test this function.

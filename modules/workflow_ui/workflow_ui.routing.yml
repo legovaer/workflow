@@ -19,7 +19,6 @@ entity.workflow_workflow.collection:
   defaults:
     _entity_list: 'workflow_workflow'
 #    _controller: '\workflow\EntityWorkflowUIController::adminOverview'
-#     _form: '\Drupal\user\AccountSettingsForm'
     _title: 'Workflows'
   requirements:
     _permission: 'administer workflow'
@@ -28,7 +27,6 @@ entity.workflow_workflow.add_form:
   path: '/admin/config/workflow/workflow/add'
   defaults:
     _entity_form: 'workflow_workflow.add'
-# TODO D8-Port: add name of entity to title
     _title: 'Add Workflow'
   requirements:
     _permission: 'administer workflow'
@@ -38,8 +36,8 @@ entity.workflow_workflow.edit_form:
   path: '/admin/config/workflow/workflow/{workflow_workflow}/edit'
   defaults:
     _entity_form: 'workflow_workflow.edit'
-# TODO D8-Port: add name of entity to title
     _title: 'Edit Workflow'
+    _title_callback: 'workflow_ui_url_get_title'
   requirements:
     _permission: 'administer workflow'
 #   _entity_access: 'workflow.update'
@@ -48,7 +46,6 @@ entity.workflow_workflow.delete_form:
   path: '/admin/config/workflow/workflow/{workflow_workflow}/delete'
   defaults:
     _entity_form: 'workflow_workflow.delete'
-# TODO D8-Port: add name of entity to title
     _title: 'Delete Workflow'
   requirements:
     _permission: 'administer workflow'
@@ -61,9 +58,8 @@ entity.workflow_state.collection:
   defaults:
     _entity_list: 'workflow_state'
 #    _controller: '\workflow\EntityWorkflowUIController::adminOverview'
-#     _form: '\Drupal\user\AccountSettingsForm'
-# TODO D8-Port: add name of entity to title
     _title: 'Edit Workflow'
+    _title_callback: 'workflow_ui_url_get_title'
   requirements:
     _permission: 'administer workflow'
 
@@ -73,7 +69,9 @@ entity.workflow_transition.collection:
   path: '/admin/config/workflow/workflow/{workflow_workflow}/transitions'
   defaults:
     _entity_list: 'workflow_state'
+#     _form: '\Drupal\user\AccountSettingsForm'
     _title: 'Edit Workflow'
+    _title_callback: 'workflow_ui_url_get_title'
   requirements:
     _permission: 'administer workflow'
 
@@ -83,6 +81,7 @@ entity.workflow_label.collection:
   defaults:
     _entity_list: 'workflow_state'
     _title: 'Edit Workflow'
+    _title_callback: 'workflow_ui_url_get_title'
   requirements:
     _permission: 'administer workflow'
 
@@ -92,5 +91,6 @@ entity.workflow_permission.collection:
   defaults:
     _entity_list: 'workflow_state'
     _title: 'Edit Workflow'
+    _title_callback: 'workflow_ui_url_get_title'
   requirements:
     _permission: 'administer workflow'
