@@ -1,0 +1,392 @@
+<?php
+
+/**
+ * @file
+ * Contains \Drupal\workflow\Entity\Controller\WorkflowStateListBuilder.
+ */
+
+namespace Drupal\workflow\Entity\Controller;
+
+//use Drupal\Component\Utility\Html;
+//use Drupal\Core\Config\Entity\ConfigEntityListBuilder;
+use Drupal\Core\Config\Entity\DraggableListBuilder;
+use Drupal\Core\Entity\EntityInterface;
+//use Drupal\Core\Field\Plugin\Field\FieldFormatter\StringFormatter;
+//use Drupal\Core\Form\FormInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\workflow\Entity\Workflow;
+use Drupal\workflow\Entity\WorkflowState;
+
+/**
+ * Defines a class to build a draggable listing of Workflow State entities.
+ *
+ * @see \Drupal\workflow\Entity\WorkflowState
+ */
+class WorkflowStateListBuilder extends DraggableListBuilder {
+
+  /**
+   * {@inheritdoc}
+   */
+
+// TODO D8-port: filter entities for correct $wid with array_filter in $this::load().
+//  public function load() {
+//    dpm('TODO D8-port: implement function WorkflowStateListBuilder::' . __FUNCTION__ );
+//
+//    $entities = parent::load();
+//    dpm($entities, __FUNCTION__);
+//
+//    $wid = $url_wid = workflow_ui_url_get_wid();
+//    $entities = array_filter($entities, ($entity->wid == $wid ) )
+//    dpm($entities, __FUNCTION__);
+//    return $entities;
+//  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFormId() {
+    return 'workflow_state_form';
+//    return parent::getFormId();
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * Building the header and content lines for the contact list.
+   *
+   * Calling the parent::buildHeader() adds a column for the possible actions
+   * and inserts the 'edit' and 'delete' links as defined for the entity type.
+   */
+  public function buildHeader() {
+//  The column 'weight' is added magically in the draggable EntityList.
+//    $header['weight'] = $this->t('Weight');
+//  Some columns are not welcome in the list.
+//    $header['module'] = $this->t('Module');
+//    $header['wid'] = $this->t('Workflow');
+//    $header['sysid'] = $this->t('Sysid');
+//  For some reason, you cannot make the 'label' column editable. So, we use 'label_new'.
+//    $header['label'] = $this->t('Label');
+    $header['label_new'] = $this->t('Label');
+    $header['id'] = $this->t('ID');
+    $header['status'] = $this->t('Active');
+    $header['reassign'] = $this->t('Reassign');
+    $header['count'] = $this->t('Count');
+
+    return $header + parent::buildHeader();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildRow(EntityInterface $entity) {
+    /* @var $entity \Drupal\workflow\Entity\WorkflowState */
+    $state = $entity;
+    $sid = $state->id();
+    $label = $state->label();
+    $workflow = $state->getWorkflow();
+    $wid = $workflow->id();
+
+    // TODO D8-port: filter entities for correct $wid with array_filter in $this::load().
+    // This function lists ALL states for ALL workfows. We only need for ONE workflow.
+    // For backwards code-compatibility, @see D7.x-2.x, file workflow_admin_ui.page.states.inc
+    if ($wid != workflow_ui_url_get_wid()) {
+      return;
+    }
+
+    // Build select options for reassigning states.
+    // We put a blank state first for validation.
+    $state_options = array('' => ' ');
+    $state_options += workflow_get_workflow_state_names($wid, $grouped = FALSE, $all = FALSE);
+    // Is this the last state available?
+    $form['#last_mohican'] = count($state_options) == 2;
+
+    // Make it impossible to reassign to the same state that is disabled.
+    if ($state->isCreationState() || !$sid || !$state->isActive()) {
+      $current_state_options = array();
+    } else {
+      $current_state = array($sid => $state_options[$sid]);
+      $current_state_options = array_diff($state_options, $current_state);
+    }
+
+    /*
+     *  Build the Row.
+     */
+//  The column 'weight' is added magically in the draggable EntityList.
+//      $row['weight'] = $state->weight;
+//  Some columns are not welcome in the list.
+//      $row['module'] = $state->getModule();
+//      $row['wid'] = $state->getWorkflow();
+//      $row['sysid'] = $state->sysid;
+//    For some reason, you cannot make the 'label' column editable. So, we use 'label_new'.
+//    $row['label'] = $state->label();
+    $row['label_new'] = [
+      '#markup' => $label,
+      '#type' => 'textfield',
+      '#size' => 30,
+      '#maxlength' => 255,
+      '#default_value' => $label,
+//    '#description' => t('The human-readable label of the workflow. This will be used as a label when
+//         the workflow status is shown during editing of content.'),
+      '#title' => NULL,  // Thes hides the red 'required' asterisk.
+//      '#required' => TRUE,
+    ];
+    $row['id'] = [
+      '#type' => 'machine_name',
+      '#title' => NULL,  // Thes hides the red 'required' asterisk.
+      '#size' => 30,
+//       '#description' => t('A unique machine-readable name. Can only contain lowercase letters, numbers, and underscores.'),
+      '#description' => NULL, '#disabled' => !$state->isNew(),
+      '#disabled' => !empty($label), // If needed this would disable updating machine name, once set.
+      '#default_value' => $state->id(),
+      '#required' => FALSE,
+      '#machine_name' => [
+        'exists' => [$this, 'exists'],  // Local helper function, at the bottom of this class.
+// TODO D8-port: machine_name->source of new WorkflowState must follow the label."
+        'source' => array('states', $state->id(), 'label_new'),
+//        'source' => array('label_new'),
+//        'replace_pattern' =>'([^a-z0-9_]+)|(^custom$)',
+        'replace_pattern' => '[^a-z0-9_()]+', // Added '()' characters from exclusion list since creation state has it.
+        'error' => $this->t('The machine-readable name must be unique, and can only contain lowercase letters, numbers, and underscores.'),
+      ],
+    ];
+    $row['status'] = [
+      '#type' => 'checkbox',
+      '#default_value' => $state->isActive(),
+    ];
+    // The new value of states that are inactivated.
+    $row['reassign'] = [
+      '#type' => 'select',
+      '#options' => $current_state_options,
+    ];
+    $row['count'] = [
+      '#type' => 'value',
+      '#value' => $state->count(),
+      '#markup' => $state->count(),
+    ];
+
+    // Don't let the creation state change weight or status or name.
+    if ($state->isCreationState()) {
+//      $row['weight']['#value'] = $minweight;
+//      $row['sysid']['#value'] = 1;
+      $row['label_new']['#disabled'] = TRUE;
+      $row['status']['#disabled'] = TRUE;
+      $row['reassign']['#type'] = 'hidden';
+      $row['reassign']['#disabled'] = TRUE;
+    }
+    // New state and disabled states cannot be reassigned.
+    if (!$sid || !$state->isActive()) {
+      $row['reassign']['#type'] = 'hidden';
+      $row['reassign']['#disabled'] = TRUE;
+    }
+    // Disabled states cannot be renamed (and is a visual clue, too.).
+    if (!$state->isActive()) {
+      $row['label_new']['#disabled'] = TRUE;
+    }
+
+    return $row + parent::buildRow($entity);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildForm(array $form, FormStateInterface $form_state) {
+    $form = parent::buildForm($form, $form_state);
+
+    $wid = workflow_ui_url_get_wid();
+    $workflow = Workflow::load($wid);
+
+    // Create a dummy WorkflowState (It must NOT be saved to DB). Add it to the item list.
+    $sid = ''; // 'dummy_state';
+    $dummy_state = $workflow->createState($sid, FALSE);
+//    $dummy_state->set('label', '');
+    $this->entities['workflow_dummy_state'] = $dummy_state;
+    $form['entities']['workflow_dummy_state'] = $this->buildRow($dummy_state);
+
+    // Rename 'submit' button.
+    $form['actions']['submit']['#value'] = t('Save Changes');
+
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDefaultOperations(EntityInterface $entity) {
+    $operations = parent::getDefaultOperations($entity);
+
+    // dpm('TODO D8-port: test function WorkflowStateListBuilder::' . __FUNCTION__ );
+    // TODO D8-port: test invokeAll('workflow_operations',).
+    // Allow modules to insert operations per state.
+    $state = $entity;
+    $workflow = $state->getWorkflow();
+    $links = \Drupal::moduleHandler()->invokeAll('workflow_operations', ['state', $workflow, $state]);
+    /*
+        if ($entity->hasLinkTemplate('edit-form')) {
+          $operations['edit'] = array(
+            'title' => t('Edit ball'),
+            'weight' => 20,
+            'url' => $entity->urlInfo('edit-form'),
+          );
+        }
+    */
+    return $operations;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    // Get the Workflow ID from the page.
+    $wid = $url_wid = workflow_ui_url_get_wid();
+
+    foreach ($form_state->getValue($this->entitiesKey) as $sid => $value) {
+      if (isset($this->entities[$sid])) {
+        $state = $this->entities[$sid];
+
+        // Skip states of other workflows.
+        // TODO D8-port: filter entities for correct $wid with array_filter in $this::load().
+        // This function lists ALL states for ALL workfows. We only need for ONE workflow.
+        // For backwards code-compatibility, @see D7.x-2.x, file workflow_admin_ui.page.states.inc
+        if ($state->wid != $url_wid) {
+          continue;
+        }
+
+        // Does user want to deactivate the state (reassign current nodes)?
+        if ($sid && $value['status'] == 0 && $state->isActive()) {
+          $args = array('%state' => $state->label()); // check_plain() is run by t().
+          // Does that state have nodes in it?
+          if ($value['count'] > 0 && empty($value['reassign'])) {
+            if ($form['#last_mohican']) {
+              $message = 'Since you are deleting the last available workflow state
+            in this workflow, all content items which are in that state will have their
+            workflow state removed.';
+              drupal_set_message(t($message, $args), 'warning');
+            } else {
+              $message = 'The %state state has content; you must reassign the content to another state.';
+              form_set_error("states'][$sid]['reassign'", t($message, $args));
+            }
+          }
+
+          // @todo: Reassign states for Workflow Field.
+          $message = 'Deactivating state %state for does not reassign Fields of type Workflow with this status.';
+          drupal_set_message(t($message, $args), 'warning');
+        }
+
+        // The machine_name is required for new dummy_state.
+        if ($value['label_new'] && !$value['id']) {
+          $message = 'Machine name is required.';
+          $form_state->setErrorByName('machine_name', $this->t($message));
+        }
+      }
+    }
+    return;
+  }
+
+    /**
+     * {@inheritdoc}
+     *
+     * Overrides DraggableListBuilder::submitForm().
+     * The WorkflowState entities are always saved.
+     */
+    public function submitForm(array &$form, FormStateInterface $form_state) {
+      //  parent::submitForm($form, $form_state);
+
+      // Get the Workflow ID from the page.
+      $wid = $url_wid = workflow_ui_url_get_wid();
+      /* @var $workflow \Drupal\workflow\Entity\Workflow */
+      $workflow = Workflow::load($wid);
+
+      $maxweight = $minweight = -50;
+
+      foreach ($form_state->getValue($this->entitiesKey) as $sid => $value) {
+        if (isset($this->entities[$sid])) {
+          $state = $this->entities[$sid];
+
+          // Skip states of other workflows.
+          // TODO D8-port: filter entities for correct $wid with array_filter in $this::load().
+          // This function lists ALL states for ALL workfows. We only need for ONE workflow.
+          // For backwards code-compatibility, @see D7.x-2.x, file workflow_admin_ui.page.states.inc
+          if ($state->wid != $url_wid) {
+            continue;
+          }
+
+          // Is the new state name empty?
+          if (empty($value['label_new'])) {
+            // No new state entered, so skip it.
+            continue;
+          }
+
+          // Does user want to deactivate the state (reassign current nodes)?
+          if ($sid && $value['status'] == 0 && $state->isActive()) {
+            $new_sid = $value['reassign'];
+            $new_state = WorkflowState::load($new_sid);
+
+            $args = [
+              '%workflow' => $workflow->label(), // check_plain() is run by t().
+              '%old_state' => $state->label(),
+              '%new_state' => isset($new_state) ? $new_state->label() : '',
+            ];
+
+            if ($value['count'] > 0) {
+              if ($form['#last_mohican']) {
+                $new_sid = NULL; // Do not reassign to new state.
+                $message = 'Removing workflow states from content in the %workflow.';
+                drupal_set_message(t($message, $args));
+              } else {
+                // Prepare the state delete function.
+                $message = 'Reassigning content from %old_state to %new_state.';
+                drupal_set_message(t($message, $args));
+              }
+            }
+            // Delete the old state without orphaning nodes, move them to the new state.
+            $state->deactivate($new_sid);
+
+            $message = 'Deactivated workflow state %old_state in %workflow.';
+            \Drupal::logger('workflow')->notice($message, []);
+            drupal_set_message(t($message, $args));
+          }
+
+          // Set a proper weight to the new state.
+          $maxweight = max($maxweight, $state->get($this->weightKey));
+
+          // Is this a new state?
+          if ($sid == 'workflow_dummy_state' && empty(!$value['label_new'])) {
+            // New state, add it.
+            $state->set('id', $value['id']);
+            // Set a proper weight to the new state.
+            $state->set($this->weightKey, $maxweight + 1);
+          }
+          else {
+//        $state->set('id', $value['id']);
+            $state->set($this->weightKey, $value['weight']);
+          }
+          $state->set('label', $value['label_new']);
+          $state->set('status', $value['status']);
+
+          $state->save();
+        }
+
+      }
+      drupal_set_message(t('The Workflow states have been updated.'));
+
+      return;
+    }
+
+    /**
+     * Validate duplicate machine names. Function registered in 'machine_name' form element.
+     */
+    function exists($name, $element, $form_state) {
+      $state_names = array();
+      foreach ($form_state->getValue($this->entitiesKey) as $sid => $value) {
+        $state_names[] = $value['id'];
+      }
+
+      $state_names = array_map('strtolower', $state_names);
+      $result = array_unique(array_diff_assoc($state_names, array_unique($state_names)));
+
+      if (in_array($name, $result)) {
+        return TRUE;
+      }
+      return FALSE;
+    }
+  }
