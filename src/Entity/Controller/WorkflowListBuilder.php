@@ -19,6 +19,14 @@ class WorkflowListBuilder extends ConfigEntityListBuilder {
 
   /**
    * {@inheritdoc}
+   */
+  public function getFormId() {
+    // return 'workflow_form';
+    return parent::getFormId();
+  }
+
+  /**
+   * {@inheritdoc}
    *
    * Building the header and content lines for the contact list.
    *

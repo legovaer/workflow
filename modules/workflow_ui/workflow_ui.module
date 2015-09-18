@@ -36,16 +36,12 @@ function workflow_ui_entity_info_alter(&$entity_info) {
  * Implements hook_help().
  */
 function workflow_ui_help($route_name, RouteMatchInterface $route_match) {
-
-  return; // TODO D8-port: update this function.
-
   switch ($route_name) {
-
     case 'entity.workflow_workflow.collection':
     case 'entity.workflow_workflow.add_form':
-      return t('');
+      return '';
 
-    case 'admin/config/workflow/workflow/manage/%/states':
+    case 'entity.workflow_state.collection':
       return t("To create a new state, enter its name in the last row of the
         'State' column. Check the 'Active' box to make it effective. You may
         also drag it to the appropriate position.") . '<br />'
@@ -55,7 +51,7 @@ function workflow_ui_help($route_name, RouteMatchInterface $route_match) {
         not zero), then you need to select a state to which to reassign that
         content.");
 
-    case 'admin/config/workflow/workflow/manage/%/transitions':
+    case 'entity.workflow_transition.collection':
       return t('You are currently viewing the possible transitions to and from
         workflow states. The state is shown in the left column; the state to be
         moved to is to the right. For each transition, check the box next to
@@ -68,7 +64,7 @@ function workflow_ui_help($route_name, RouteMatchInterface $route_match) {
         'participate in workflows' <a href='!url'> on the Permissions page</a>.",
         array('!url' => \Drupal::url(('user.admin_permissions'))));
 
-    case 'admin/config/workflow/workflow/manage/%/labels':
+    case 'entity.workflow_label.collection':
       return t('You can add labels to transitions if you don\'t like the
         standard state labels. They will modify the Workflow form options, so
         specific workflow transitions can have their own labels, relative to

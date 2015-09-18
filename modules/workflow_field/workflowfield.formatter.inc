@@ -44,7 +44,7 @@ function workflowfield_field_formatter_view($entity_type, $entity, $field, $inst
 
   // Check permission, so that even with state change rights,
   // the form can be suppressed from the node view (#1893724).
-  if (!user_access('show workflow state form')) {
+  if (!user_access('show workflow transition form')) {
     return $list_element;
   }
   if ($entity_type == 'comment') {

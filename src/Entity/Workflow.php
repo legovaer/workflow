@@ -15,13 +15,14 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  * @ConfigEntityType(
  *   id = "workflow_workflow",
  *   label = @Translation("Workflow"),
+ *   module = "workflow",
  *   handlers = {
  *     "storage" = "Drupal\workflow\Entity\WorkflowStorage",
  *     "list_builder" = "Drupal\workflow\Entity\Controller\WorkflowListBuilder",
  *     "form" = {
  *        "add" = "\Drupal\workflow\Entity\WorkflowForm",
  *        "edit" = "\Drupal\workflow\Entity\WorkflowForm",
- *        "delete" = "\Drupal\Core\Entity\EntityDeleteForm"
+ *        "delete" = "\Drupal\Core\Entity\EntityDeleteForm",
  *      }
  *   },
  *   admin_permission = "administer workflow",
@@ -41,7 +42,7 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *   links = {
  *     "collection" = "/admin/config/workflow/workflow",
  *     "edit-form" = "/admin/config/workflow/workflow/{workflow_workflow}/edit",
- *     "delete-form" = "/admin/config/workflow/workflow/{workflow_workflow}/delete"
+ *     "delete-form" = "/admin/config/workflow/workflow/{workflow_workflow}/delete",
  *   }
  * )
  */
@@ -61,11 +62,11 @@ class Workflow extends ConfigEntityBase {
    */
   public $label;
 
-// TODO D8-port: remove below variables wid , name.
+// TODO D8-port Workflow: remove below variables wid , name.
 //  public $wid = 0; // This is not an INT anymore, but a string
 //  public $name = ''; // This is dientical to the ID
 
-// TODO D8-port: complete below variables. (Add get()-functions).
+// TODO D8-port Workflow: complete below variables. (Add get()-functions).
 // @see https://www.drupal.org/node/1809494
 // @see https://codedrop.com.au/blog/creating-custom-config-entities-drupal-8
   public $tab_roles = array();
@@ -81,7 +82,7 @@ class Workflow extends ConfigEntityBase {
    */
 
   public function __clone() {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
 
     // Clone the arrays of States and Transitions.
     foreach ($this->states as &$state) {
@@ -97,7 +98,8 @@ class Workflow extends ConfigEntityBase {
    *
    * This also handles importing, rebuilding, reverting from Features,
    * as defined in workflow.features.inc.
-   * todo: reverting does not refresh States and transitions, since no
+   * TODO D8: clean up this function, since we are config entity now.
+   * todo D7: reverting does not refresh States and transitions, since no
    * machine_name was present. As of 7.x-2.3, the machine_name exists in
    * Workflow and WorkflowConfigTransition, so rebuilding is possible.
    *
@@ -108,46 +110,57 @@ class Workflow extends ConfigEntityBase {
    * - save Workflow programmatically;
    */
   public function save($create_creation_state = TRUE) {
-    $return = parent::save();
 
-    return $return;
-    // TODO D8-port: add all of the below: save() function.
-
+    $status = parent::save();
+    $action = $status == SAVED_UPDATED ? 'updated' : 'added';
     // Are we saving a new Workflow?
-    $is_new = !empty($this->is_new);
-    // Are we rebuilding, reverting a new Workflow? @see workflow.features.inc
-    $is_rebuild = !empty($this->is_rebuild);
-    $is_reverted = !empty($this->is_reverted);
+    $is_new = $status != SAVED_UPDATED;
 
-    // If rebuild by Features, make some conversions.
-    if (!$is_rebuild && !$is_reverted) {
-      // Avoid troubles with features clone/revert/..
-      unset($this->module);
+    // Make sure a Creation state exists.
+    if ($is_new) {
+      $state = $this->getCreationState();
     }
-    else {
-      $role_map = isset($this->system_roles) ? $this->system_roles : array();
-      if ($role_map) {
-        // Remap roles. They can come from another system with shifted role IDs.
-        // See also https://drupal.org/node/1702626 .
-        $this->tab_roles = _workflow_rebuild_roles($this->tab_roles, $role_map);
-        foreach ($this->transitions as &$transition) {
-          $transition['roles'] = _workflow_rebuild_roles($transition['roles'], $role_map);
+
+    return $status;
+
+    // TODO D8-port Workflow: add all of the below: save() function.
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+
+    /*
+        // Are we rebuilding, reverting a new Workflow? @see workflow.features.inc
+        $is_rebuild = !empty($this->is_rebuild);
+        $is_reverted = !empty($this->is_reverted);
+
+        // If rebuild by Features, make some conversions.
+        if (!$is_rebuild && !$is_reverted) {
+          // Avoid troubles with features clone/revert/..
+          unset($this->module);
         }
-      }
+        else {
+          $role_map = isset($this->system_roles) ? $this->system_roles : array();
+          if ($role_map) {
+            // Remap roles. They can come from another system with shifted role IDs.
+            // See also https://drupal.org/node/1702626 .
+            $this->tab_roles = _workflow_rebuild_roles($this->tab_roles, $role_map);
+            foreach ($this->transitions as &$transition) {
+              $transition['roles'] = _workflow_rebuild_roles($transition['roles'], $role_map);
+            }
+          }
 
-      // Insert the type_map when building from Features.
-      if ($this->typeMap) {
-        foreach ($this->typeMap as $node_type) {
-          workflow_insert_workflow_type_map($node_type, $this->id());
+          // Insert the type_map when building from Features.
+          if ($this->typeMap) {
+            foreach ($this->typeMap as $node_type) {
+              workflow_insert_workflow_type_map($node_type, $this->id());
+            }
+          }
         }
-      }
-    }
-    // After update.php or import feature, label might be empty. @todo: remove in D8.
-    if (empty($this->label)) {
-      $this->label = $this->name;
-    }
+        // After update.php or import feature, label might be empty. @todo: remove in D8.
+        if (empty($this->label)) {
+          $this->label = $this->name;
+        }
+    */
 
-    $return = parent::save();
+    $status = parent::save();
 
     // If a workflow is cloned in Admin UI, it contains data from original workflow.
     // Redetermine the keys.
@@ -188,14 +201,16 @@ class Workflow extends ConfigEntityBase {
 
     workflow_reset_cache($this->id());
 
-    return $return;
+    return $status;
   }
 
   /**
    * Given a wid, delete the workflow and its data.
    */
   public function delete() {
-    // TODO D8-port: test below function.
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+
+    // TODO D8-port Workflow: test below function.
     $wid = $this->id();
 
     // Notify any interested modules before we delete the workflow.
@@ -223,7 +238,9 @@ class Workflow extends ConfigEntityBase {
    *   $is_valid
    */
   public function isValid() {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+
     $is_valid = TRUE;
 
     // Don't allow workflows with no states. There should always be a creation state.
@@ -260,7 +277,8 @@ class Workflow extends ConfigEntityBase {
    *   TRUE if a Workflow may safely be deleted.
    */
   public function isDeletable() {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     $is_deletable = FALSE;
 
@@ -301,20 +319,22 @@ class Workflow extends ConfigEntityBase {
    *   with Transitions, and they rely on State IDs which are generated
    *   magically when saving the State. But you may need a temporary state.
    */
-  public function createState($name, $save = TRUE) {
-    // TODO D8-port: test below function.
-
+  public function createState($sid, $save = TRUE) {
     $wid = $this->id();
-    $state = workflow_state_load_by_name($name, $wid);
+    $state = WorkflowState::load($sid, $wid);
+
+    // TODO D8-port Workflow: test below function.
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+
     if (!$state) {
-      $state = \Drupal::entityManager()->getStorage('WorkflowState')->create(array('name' => $name, 'state' => $name, 'wid' => $wid));
+      $state = new WorkflowState($values = array('id' => $sid, 'wid' => $wid));
       if ($save) {
-        $state->save();
+        $status = $state->save();
       }
     }
     $state->setWorkflow($this);
     // Maintain the new object in the workflow.
-    $this->states[$state->sid] = $state;
+    $this->states[$state->id()] = $state;
 
     return $state;
   }
@@ -323,7 +343,8 @@ class Workflow extends ConfigEntityBase {
    * Gets the initial state for a newly created entity.
    */
   public function getCreationState() {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     $sid = $this->getCreationSid();
     return ($sid) ? $this->getState($sid) : $this->createState(WORKFLOW_CREATION_STATE_NAME);
@@ -333,7 +354,8 @@ class Workflow extends ConfigEntityBase {
    * Gets the ID of the initial state for a newly created entity.
    */
   public function getCreationSid() {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     if (!$this->creation_sid) {
       foreach ($this->getStates($all = TRUE) as $state) {
@@ -352,7 +374,7 @@ class Workflow extends ConfigEntityBase {
    * The first State ID is user-dependent!
    */
   public function getFirstSid($entity_type, $entity, $field_name, $user, $force) {
-    // TODO D8-port: test below function.
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     $creation_state = $this->getCreationState();
     $options = $creation_state->getOptions($entity_type, $entity, $field_name, $user, $force);
@@ -381,25 +403,36 @@ class Workflow extends ConfigEntityBase {
    *   An array of WorkflowState objects.
    */
   public function getStates($all = FALSE, $reset = FALSE) {
-    // TODO D8-port: test below function.
+    $wid = $this->id();
 
-    if ($this->states === NULL || $reset) {
-      $wid = $this->id();
+    if ($reset) {
+      $this->states = $wid ? WorkflowState::getStates($wid, $reset) : array();
+    }
+    elseif ($this->states === NULL) {
+      $this->states = $wid ? WorkflowState::getStates($wid, $reset) : array();
+    }
+    elseif ($this->states === array()) {
       $this->states = $wid ? WorkflowState::getStates($wid, $reset) : array();
     }
     // Do not unset, but add to array - you'll remove global objects otherwise.
     $states = array();
+
     foreach ($this->states as $state) {
+      $id = $state->id();
       if ($all === TRUE) {
-        $states[$state->sid] = $state;
+        $states[$id] = $state;
       }
       elseif (($all === FALSE) && ($state->isActive() && !$state->isCreationState())) {
-        $states[$state->sid] = $state;
+        $states[$id] = $state;
       }
       elseif (($all == 'CREATION') && ($state->isActive() || $state->isCreationState())) {
-        $states[$state->sid] = $state;
+        $states[$id] = $state;
+      }
+      else {
+        // Do not add state.
       }
     }
+
     return $states;
   }
 
@@ -413,7 +446,8 @@ class Workflow extends ConfigEntityBase {
    *   A WorkflowState object.
    */
   public function getState($key) {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     $wid = $this->id();
     if (is_numeric($key)) {
@@ -428,7 +462,10 @@ class Workflow extends ConfigEntityBase {
    * Creates a Transition for this workflow.
    */
   public function createTransition($sid, $target_sid, $values = array()) {
-    // TODO D8-port: test below function. Remove wid.
+    $transition = NULL;
+
+    // TODO D8-port Workflow: test below function. Remove wid.
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     $workflow = $this;
     if (is_numeric($sid) && is_numeric($target_sid)) {
@@ -466,7 +503,7 @@ class Workflow extends ConfigEntityBase {
    * This is only needed for the Admin UI.
    */
   public function sortTransitions() {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
 
     // Sort the transitions on state weight.
     usort($this->transitions, '_workflow_transitions_sort_by_weight');
@@ -483,7 +520,7 @@ class Workflow extends ConfigEntityBase {
    *   $conditions['roles'] : if provided, an array of roles, or 'ALL'.
    */
   public function getTransitions($tids = FALSE, array $conditions = array(), $reset = FALSE) {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
 
     $config_transitions = array();
 
@@ -535,7 +572,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   public function getTransitionsByTid($tid, $roles = '', $reset = FALSE) {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
 
     $conditions = array(
       'roles' => $roles,
@@ -544,7 +581,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   public function getTransitionsBySid($sid, $roles = '', $reset = FALSE) {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
 
     $conditions = array(
       'sid' => $sid,
@@ -554,7 +591,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   public function getTransitionsByTargetSid($target_sid, $roles = '', $reset = FALSE) {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
 
     $conditions = array(
       'target_sid' => $target_sid,
@@ -567,7 +604,7 @@ class Workflow extends ConfigEntityBase {
    * Get a specific transition. Therefore, use $roles = 'ALL'.
    */
   public function getTransitionsBySidTargetSid($sid, $target_sid, $roles = 'ALL', $reset = FALSE) {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
 
     $conditions = array(
       'sid' => $sid,
@@ -587,7 +624,7 @@ class Workflow extends ConfigEntityBase {
    *   An array of typemaps.
    */
   public function getTypeMap() {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
 
     $result = array();
 
@@ -603,7 +640,8 @@ class Workflow extends ConfigEntityBase {
    * Gets a setting from the state object.
    */
   public function getSetting($key, array $field = array()) {
-    // TODO D8-port: test below function.
+    // TODO D8-port Workflow: test below function.
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     switch ($key) {
       case 'watchdog_log':
@@ -628,7 +666,7 @@ class Workflow extends ConfigEntityBase {
 }
 
 function _workflow_rebuild_roles(array $roles, array $role_map) {
-  // TODO D8-port: test below function.
+  // TODO D8-port Workflow: test below function.
 
   // See also https://drupal.org/node/1702626 .
   $new_roles = array();
@@ -652,7 +690,8 @@ function _workflow_rebuild_roles(array $roles, array $role_map) {
  * @param WorkflowConfigTransition $b
  */
 function _workflow_transitions_sort_by_weight($a, $b) {
-  // TODO D8-port: test below function.
+  // TODO D8-port Workflow: test below function.
+//  dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
   // First sort on From-State.
   $old_state_a = $a->getOldState();

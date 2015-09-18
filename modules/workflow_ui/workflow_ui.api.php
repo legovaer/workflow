@@ -4,6 +4,9 @@
  * Hooks provided by the workflow_admin_ui module.
  */
 
+use Drupal\workflow\Entity\Workflow;
+use Drupal\workflow\Entity\WorkflowState;
+
 /**
  * Implements hook_workflow_operations().
  *
@@ -16,7 +19,7 @@
  * @param WorkflowState $state
  *   The current state object.
  */
-function hook_workflow_operations($op, object $workflow, object $state) {
+function hook_workflow_operations($op, Workflow $workflow, WorkflowState $state) {
   switch ($op) {
     case 'top_actions':
       $actions = array();

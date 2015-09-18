@@ -6,68 +6,7 @@
  */
 
 class EntityWorkflowUIController extends EntityDefaultUIController {
-  /**
-   * Provides definitions for implementing hook_menu().
-   */
-  public function hook_menu() {
-    $items = parent::hook_menu();
-
-    // Workflow is now an exportable entity. But the 'Import' menu item is
-    // still broken. We show it, but it requires #1967794 before it works.
-    // unset($items['admin/config/workflow/workflow/import']);
-
-    // Set this on the object so classes that extend hook_menu() can use it.
-    $id_count = count(explode('/', $this->path));
-    $wildcard = isset($this->entityInfo['admin ui']['menu wildcard']) ? $this->entityInfo['admin ui']['menu wildcard'] : '%entity_object';
-    $plural_label = isset($this->entityInfo['plural label']) ? $this->entityInfo['plural label'] : $this->entityInfo['label'] . 's';
-    $entityType = $this->entityInfo['entity class'];
-
-    // @todo: Allow modules to insert their own action links to the 'workflow',
-    // $workflow_operations = module_invoke_all('workflow_operations', 'workflow', NULL);
-
-    $item = array(
-      'file path' => isset($this->entityInfo['admin ui']['file path']) ? $this->entityInfo['admin ui']['file path'] : drupal_get_path('module', $this->entityInfo['module']),
-      'access arguments' => array('administer workflow'),
-      'type' => MENU_LOCAL_TASK,
-    );
-
-    $items[$this->path . '/manage/' . $wildcard . '/states'] = $item + array(
-      'file' => 'workflow_admin_ui/workflow_admin_ui.page.states.inc',
-      'title' => 'States',
-      'weight' => '11',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('workflow_admin_ui_states_form', $id_count + 1, $id_count + 2),
-    );
-
-    $items[$this->path . '/manage/' . $wildcard . '/transitions'] = $item + array(
-      'file' => 'workflow_admin_ui/workflow_admin_ui.page.transitions.inc',
-      'title' => 'Transitions',
-      'weight' => '12',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('workflow_admin_ui_transitions_form', $id_count + 1, $id_count + 2),
-    );
-
-    $items[$this->path . '/manage/' . $wildcard . '/labels'] = $item + array(
-      'file' => 'workflow_admin_ui/workflow_admin_ui.page.labels.inc',
-      'title' => 'Labels',
-      'weight' => '13',
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('workflow_admin_ui_labels_form', $id_count + 1, $id_count + 2),
-    );
-
-    $items[$this->path . '/manage/' . $wildcard . '/permissions'] = $item + array(
-      'file' => 'workflow_admin_ui/workflow_admin_ui.page.permissions.inc',
-      'title' => 'Permission summary',
-      'weight' => '14',
-      'page callback' => 'workflow_admin_ui_view_permissions_form',
-      'page arguments' => array($id_count + 1, $id_count + 2),
-      // @todo: convert to drupal_get_form('workflow_admin_ui_view_permissions_form');
-      // 'page callback' => 'drupal_get_form',
-      // 'page arguments' => array('workflow_admin_ui_view_permissions_form', $id_count + 1, $id_count + 2),
-    );
-
-    return $items;
-  }
+// TODO D8-port: Move all functionality in this file 'EntityWorkflowUIController' elsewhere.
 
   protected function operationCount() {
     // Add more then enough colspan.
@@ -83,15 +22,18 @@ class EntityWorkflowUIController extends EntityDefaultUIController {
     $form = parent::overviewForm($form, $form_state);
 
     // Allow modules to insert their own action links to the 'table', like cleanup module.
-    $top_actions = module_invoke_all('workflow_operations', 'top_actions', NULL);
+    $top_actions = \Drupal::moduleHandler()->invokeAll('workflow_operations', ['top_actions', NULL]);
 
     // Allow modules to insert their own workflow operations.
     foreach ($form['table']['#rows'] as &$row) {
       $url = $row[0]['data']['#url'];
       $workflow = $url['options']['entity'];
-      foreach ($actions = module_invoke_all('workflow_operations', 'workflow', $workflow) as $action) {
+      foreach ($actions = \Drupal::moduleHandler()->invokeAll('workflow_operations', ['workflow', $workflow]) as $action) {
         $action['attributes'] = isset($action['attributes']) ? $action['attributes'] : array();
-        $row[] = l(strtolower($action['title']), $action['href'], $action['attributes']);
+        // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $row[] = l(strtolower($action['title']), $action['href'], $action['attributes']);
+
       }
     }
 
@@ -101,13 +43,22 @@ class EntityWorkflowUIController extends EntityDefaultUIController {
       'attributes' => array('class' => array('inline', 'action-links')),
     );
 
-    $form['action-links'] = array(
-      '#type' => 'markup',
-      '#markup' => theme('links', $top_actions_args),
-      '#weight' => -1,
-    );
+    // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $form['action-links'] = array(
+//       '#type' => 'markup',
+//       '#markup' => theme('links', $top_actions_args),
+//       '#weight' => -1,
+//     );
 
-    if (module_exists('workflownode')) {
+
+    if (\Drupal::moduleHandler()->moduleExists('workflownode')) {
       // Append the type_map form, changing the form by reference.
       // The 'type_map' form is only valid for Workflow Node API.
       module_load_include('inc', 'workflow_admin_ui', 'workflow_admin_ui.page.type_map');
@@ -150,10 +101,13 @@ class EntityWorkflowUIController extends EntityDefaultUIController {
    * @see https://www.drupal.org/node/1043634
    */
   public function applyOperation($op, $entity) {
-    $label = entity_label($this->entityType, $entity);
+    $label = $entity->label();
     $vars = array('%entity' => $this->entityInfo['label'], '%label' => $label);
     $id = entity_id($this->entityType, $entity);
-    $edit_link = l(t('edit'), $this->path . '/manage/' . $id . '/edit');
+    // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $edit_link = l(t('edit'), $this->path . '/manage/' . $id . '/edit');
+
 
     switch ($op) {
       case 'revert':
@@ -185,13 +139,13 @@ class EntityWorkflowUIController extends EntityDefaultUIController {
 
             // We mark it for being in revert mode.
             $entity->is_reverted = TRUE;
-            entity_save($entity_type, $entity);
+            $entity->save();
             unset($entity->is_reverted);
           }
           // The rest of the defaults is handled by default implementation.
           // @see entity_defaults_rebuild()
         }
-        watchdog($this->entityType, 'Reverted %entity %label to the defaults.', $vars, WATCHDOG_NOTICE, $edit_link);
+        \Drupal::logger($this->entityType)->notice('Reverted %entity %label to the defaults.', []);
         return t('Reverted %entity %label to the defaults.', $vars);
 
       case 'delete':

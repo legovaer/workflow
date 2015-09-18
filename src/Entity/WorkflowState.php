@@ -2,19 +2,91 @@
 
 /**
  * @file
- * Contains workflow\includes\Entity\WorkflowState.
+ * Contains Drupal\workflow\Entity\WorkflowState.
  */
 
-class WorkflowState extends Entity {
+namespace Drupal\workflow\Entity;
+
+use Drupal\Core\Config\Entity\ConfigEntityBase;
+
+
+/**
+ * Workflow configuration entity to persistently store configuration.
+ *
+ * @ConfigEntityType(
+ *   id = "workflow_state",
+ *   label = @Translation("Workflow state"),
+ *   module = "workflow",
+ *   handlers = {
+ *     "storage" = "Drupal\workflow\Entity\WorkflowStateStorage",
+ *     "list_builder" = "Drupal\workflow\Entity\Controller\WorkflowStateListBuilder",
+ *     "form" = {
+ *        "delete" = "\Drupal\Core\Entity\EntityDeleteForm",
+ *      }
+ *   },
+ *   admin_permission = "administer workflow",
+ *   config_prefix = "workflow_state",
+ *   entity_keys = {
+ *     "id" = "id",
+ *     "label" = "label",
+ *     "weight" = "weight",
+ *   },
+ *   config_export = {
+ *     "id",
+ *     "label",
+ *     "module",
+ *     "wid",
+ *     "weight",
+ *     "sysid",
+ *     "status",
+ *   },
+ *   links = {
+ *     "collection" = "/admin/config/workflow/workflow/{workflow_workflow}/states",
+ *     "add-form TODO" = "/admin/config/workflow/workflow/{workflow_workflow}/states/add",
+ *     "edit-form TODO" = "/admin/config/workflow/workflow/{workflow_workflow}/states/{workflow_state}/edit",
+ *     "delete-form TODO" = "/admin/config/workflow/workflow/{workflow_workflow}/states/{workflow_state}/delete",
+ *   }
+ * )
+ */
+class WorkflowState extends ConfigEntityBase {
+
+  // TODO D8-port WorkflowState: rename variable $sid, $name to $id.
+  // TODO D8-port WorkflowState: rename variable $state to $label.
+  // TODO D8-port WorkflowState:remove variable $states, cached by D8(??).
+
+  /**
+   * The machine name.
+   *
+   * @var string
+   */
+  public $id;
+
+  /**
+   * The human readable name.
+   *
+   * @var string
+   */
+  public $label;
+
+  /**
+   * The machine_name of the attached Workflow.
+   *
+   * @var string
+   */
+  public $wid;
+
+  /**
+   * The weight of this Workflow state.
+   *
+   * @var int
+   */
+  public $weight;
+
+  public $sysid = 0;
+  public $status = 1;
+
   // Since workflows do not change, it is implemented as a singleton.
   protected static $states = array();
-
-  public $sid = 0;
-  public $wid = 0;
-  public $weight = 0;
-  public $sysid = 0;
-  public $state = ''; // @todo D8: remove $state, use $label/$name. (requires conversion of Views displays.)
-  public $status = 1;
 
   /**
    * CRUD functions.
@@ -28,28 +100,31 @@ class WorkflowState extends Entity {
    * @param string $name
    *   The name of the new State. If '(creation)', a CreationState is generated.
    */
-  public function __construct(array $values = array(), $entityType = 'WorkflowState') {
+  public function __construct(array $values = array(), $entityType = 'workflow_state') {
     // Please be aware that $entity_type and $entityType are different things!
+
+    $id = isset($values['id']) ? $values['id'] : '';
 
     // Keep official name and external name equal. Both are required.
     // @todo: stil needed? test import, manual creation, programmatic creation, etc.
-    if (!isset($values['state']) && isset($values['name'])) {
-      $values['state'] = $values['name'];
+    if (!isset($values['label']) && $id) {
+      $values['label'] = $id;
     }
 
     // Set default values for '(creation)' state.
-    if (!empty($values['is_new']) && $values['name'] == WORKFLOW_CREATION_STATE_NAME) {
-      $values['sysid'] = WORKFLOW_CREATION;
+    if ($id == WORKFLOW_CREATION_STATE_NAME) {
+      $values['sysid'] = WORKFLOW_CREATION_STATE;
       $values['weight'] = WORKFLOW_CREATION_DEFAULT_WEIGHT;
-      $values['name'] = '(creation)'; // machine_name;
+      $values['label'] = '(creation)'; // machine_name;
     }
     parent::__construct($values, $entityType);
 
+//    dpm('TODO D8-port WorkflowState: test below part of function: ' . __FUNCTION__ );
     if (empty($values)) {
       // Automatic constructor when casting an array or object.
       // Add pre-existing states to cache (not new/temp ones).
-      if (!isset(self::$states[$this->sid])) {
-        self::$states[$this->sid] = $this;
+      if (!isset(self::$states[$this->id()])) {
+        self::$states[$this->id()] = $this;
       }
     }
   }
@@ -63,7 +138,7 @@ class WorkflowState extends Entity {
   /**
    * Alternative constructor, loading objects from table {workflow_states}.
    *
-   * @param int $sid
+   * @param int $id
    *   The requested State ID
    * @param int $wid
    *   An optional Workflow ID, to check if the requested State is valid for the Workflow.
@@ -73,13 +148,13 @@ class WorkflowState extends Entity {
    *   NULL if not loaded,
    *   FALSE if state does not belong to requested Workflow.
    */
-  public static function load($sid, $wid = 0) {
-    $states = self::getStates();
-    $state = isset($states[$sid]) ? $states[$sid] : NULL;
-    if ($wid && $state && ($wid != $state->wid)) {
-      return FALSE;
+  public static function load($id, $wid = 0) {
+    foreach ($states = WorkflowState::getStates($wid) as $state) {
+      if ($id == $state->id()) {
+        return $state;
+      }
     }
-    return $state;
+    return NULL;
   }
 
   /**
@@ -92,10 +167,6 @@ class WorkflowState extends Entity {
    *
    * @return array $states
    *   An array of cached states.
-   *
-   * @deprecated workflow_get_workflow_states --> workflow_state_load_multiple
-   * @deprecated workflow_get_workflow_states_all --> workflow_state_load_multiple
-   * @deprecated workflow_get_other_states_by_sid --> workflow_state_load_multiple
    */
   public static function getStates($wid = 0, $reset = FALSE) {
     if ($reset) {
@@ -103,46 +174,24 @@ class WorkflowState extends Entity {
     }
 
     if (empty(self::$states)) {
-      // Build the query, and get ALL states.
-      // Note: self::states[] is populated in respective constructors.
-      $query = db_select('workflow_states', 'ws');
-      $query->fields('ws');
-      $query->orderBy('ws.weight');
-      $query->orderBy('ws.wid');
-      // Just for grins, add a tag that might result in modifications.
-      $query->addTag('workflow_states');
-
-      $query->execute()->fetchAll(PDO::FETCH_CLASS, 'WorkflowState');
+      self::$states = WorkflowState::loadMultiple();
     }
 
     if (!$wid) {
       // All states are requested and cached: return them.
-      return self::$states;
+      $result = self::$states;
     }
     else {
       // All states of only 1 Workflow is requested: return this one.
+      // E.g., when called by Workflow->getStates().
       $result = array();
       foreach (self::$states as $state) {
         if ($state->wid == $wid) {
-          $result[$state->sid] = $state;
+          $result[$state->id()] = $state;
         }
       }
-      return $result;
     }
-  }
-
-  /**
-   * Get all states in the system, with options to filter, only where a workflow exists.
-   *
-   * May return more then one State, since a name is not (yet) an UUID.
-   */
-  public static function loadByName($name, $wid = 0) {
-    foreach ($states = self::getStates($wid) as $state) {
-      if ($name == $state->getName()) {
-        return $state;
-      }
-    }
-    return NULL;
+    return $result;
   }
 
   /**
@@ -150,47 +199,50 @@ class WorkflowState extends Entity {
    *
    * @param int $new_sid
    *   The state ID, to which all affected entities must be moved.
-   *
-   * @deprecated workflow_delete_workflow_states_by_sid() --> WorkflowState->deactivate() + delete()
    */
   public function deactivate($new_sid) {
-    global $user; // We can use global, since deactivate() is a UI-only function.
+//    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ );
 
-    $current_sid = $this->sid;
+    $user = \Drupal::currentUser(); // We can use global, since deactivate() is a UI-only function.
+
+    $current_sid = $this->id();
     $force = TRUE;
 
     // Notify interested modules. We notify first to allow access to data before we zap it.
     // E.g., Node API (@todo Field API):
     // - re-parents any nodes that we don't want to orphan, whilst deactivating a State.
     // - delete any lingering node to state values.
-    module_invoke_all('workflow', 'state delete', $current_sid, $new_sid, NULL, $force);
+    \Drupal::moduleHandler()->invokeAll('workflow', ['state delete', $current_sid, $new_sid, NULL, $force]);
 
+    // TODO D8-port: re-implement below code.
+//    dpm('TODO D8-port: re-implement re-assign states when deactivating state in function WorkflowState::' . deactivate );
     // Re-parent any nodes that we don't want to orphan, whilst deactivating a State.
     // This is called in WorkflowState::deactivate().
     // @todo: reparent Workflow Field, whilst deactivating a state.
-    if ($new_sid) {
-      // A candidate for the batch API.
-      // @TODO: Future updates should seriously consider setting this with batch.
-
-      $comment = t('Previous state deleted');
-      foreach (workflow_get_workflow_node_by_sid($current_sid) as $workflow_node) {
-        // @todo: add Field support in 'state delete', by using workflow_node_history or reading current field.
-        $entity_type = 'node';
-        $entity = entity_load_single('node', $workflow_node->nid);
-        $field_name = '';
-        $transition = new WorkflowTransition();
-        $transition->setValues($entity_type, $entity, $field_name, $current_sid, $new_sid, $user->uid, REQUEST_TIME, $comment);
-        $transition->force($force);
-        // Execute Transition, invoke 'pre' and 'post' events, save new state in workflow_node, save also in workflow_node_history.
-        // For Workflow Node, only {workflow_node} and {workflow_node_history} are updated. For Field, also the Entity itself.
-        $new_sid = workflow_execute_transition($entity_type, $entity, $field_name, $transition, $force);
-      }
-    }
-    // Delete any lingering node to state values.
-    workflow_delete_workflow_node_by_sid($current_sid);
+//    if ($new_sid) {
+//      // A candidate for the batch API.
+//      // @TODO: Future updates should seriously consider setting this with batch.
+//
+//      $comment = t('Previous state deleted');
+//      foreach (workflow_get_workflow_node_by_sid($current_sid) as $workflow_node) {
+//        // @todo: add Field support in 'state delete', by using workflow_node_history or reading current field.
+//        $entity_type = 'node';
+//        $entity = entity_load_single('node', $workflow_node->nid);
+//        $field_name = '';
+//        $transition = new WorkflowTransition();
+//        $transition->setValues($entity_type, $entity, $field_name, $current_sid, $new_sid, $user->uid, REQUEST_TIME, $comment);
+//        $transition->force($force);
+//        // Execute Transition, invoke 'pre' and 'post' events, save new state in workflow_node, save also in workflow_node_history.
+//        // For Workflow Node, only {workflow_node} and {workflow_node_history} are updated. For Field, also the Entity itself.
+//        $new_sid = workflow_execute_transition($entity_type, $entity, $field_name, $transition, $force);
+//      }
+//    }
+//
+//    // Delete any lingering node to state values.
+//    workflow_delete_workflow_node_by_sid($current_sid);
 
     // Delete the transitions this state is involved in.
-    $workflow = workflow_load_single($this->wid);
+    $workflow = Workflow::load($this->wid);
     foreach ($workflow->getTransitionsBySid($current_sid, 'ALL') as $transition) {
       $transition->delete();
     }
@@ -223,11 +275,11 @@ class WorkflowState extends Entity {
     if (isset($this->workflow)) {
       return $this->workflow;
     }
-    return workflow_load_single($this->wid);
+    return $this->workflow = Workflow::load($this->wid);
   }
 
   public function setWorkflow($workflow) {
-    $this->wid = $workflow->wid;
+    $this->wid = $workflow->id();
     $this->workflow = $workflow;
   }
 
@@ -242,7 +294,7 @@ class WorkflowState extends Entity {
   }
 
   public function isCreationState() {
-    return $this->sysid == WORKFLOW_CREATION;
+    return $this->sysid == WORKFLOW_CREATION_STATE;
   }
 
   /**
@@ -254,6 +306,7 @@ class WorkflowState extends Entity {
    *   TRUE = a form (a.k.a. widget) must be shown; FALSE = no form, a formatter must be shown instead.
    */
   public function showWidget($entity_type, $entity, $field_name, $user, $force) {
+//    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ );
     $options = $this->getOptions($entity_type, $entity, $field_name, $user, $force);
     $count = count($options);
     // The easiest case first: more then one option: always show form.
@@ -282,9 +335,10 @@ class WorkflowState extends Entity {
    *   An array of tid=>transition pairs with allowed transitions for State.
    */
   public function getTransitions($entity_type = '', $entity = NULL, $field_name = '', $user = NULL, $force = FALSE) {
+//    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ );
     $transitions = array();
 
-    $current_sid = $this->sid;
+    $current_sid = $this->id();
     $current_state = $this;
 
     if (!$workflow = $this->getWorkflow()) {
@@ -340,7 +394,7 @@ class WorkflowState extends Entity {
       'user_roles' => $roles, // @todo: can be removed in D8, since $user is in.
     );
     // @todo D8: rename to 'workflow_permitted_transitions'.
-    drupal_alter('workflow_permitted_state_transitions', $transitions, $context);
+    \Drupal::moduleHandler()->alter('workflow_permitted_state_transitions', $transitions, $context);
 
     // Let custom code change the options, using old_style hook.
     // @todo D8: delete below foreach/hook for better performance and flexibility.
@@ -354,7 +408,7 @@ class WorkflowState extends Entity {
       // Modules may veto a choice by returning FALSE.
       // In this case, the choice is never presented to the user.
       if ($roles != 'ALL') {
-        $permitted = module_invoke_all('workflow', 'transition permitted', $current_sid, $new_sid, $entity, $force, $entity_type, $field_name, $transition, $user);
+        $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition permitted', $current_sid, $new_sid, $entity, $force, $entity_type, $field_name, $transition, $user]);
       }
 
       // If vetoed by a module, remove from list.
@@ -376,11 +430,9 @@ class WorkflowState extends Entity {
    *
    * @return array
    *   An array of sid=>label pairs.
-   *   If $this->sid is set, returns the allowed transitions from this state.
-   *   If $this->sid is 0 or FALSE, then labels of ALL states of the State's
+   *   If $this->id() is set, returns the allowed transitions from this state.
+   *   If $this->id() is 0 or FALSE, then labels of ALL states of the State's
    *   Workflow are returned.
-   *
-   * @deprecated workflow_field_choices() --> WorkflowState->getOptions()
    */
   public function getOptions($entity_type, $entity, $field_name, $user, $force = FALSE) {
     // Define an Entity-specific cache per page load.
@@ -389,7 +441,7 @@ class WorkflowState extends Entity {
     $options = array();
 
     $entity_id = ($entity) ? entity_id($entity_type, $entity) : '';
-    $current_sid = $this->sid;
+    $current_sid = $this->id();
 
     // Get options from page cache, using a non-empty index (just to be sure).
     $entity_index = (!$entity) ? 'x' : $entity_id;
@@ -407,10 +459,18 @@ class WorkflowState extends Entity {
       // We cannot use getTransitions, since there are no ConfigTransitions
       // from State with ID 0, and we do not want to repeat States.
       foreach ($workflow->getStates() as $state) {
-        $options[$state->value()] = check_plain(t($state->label()));
+        $options[$state->id()] = \Drupal\Component\Utility\SafeMarkup::checkPlain(t($state->label()));
       }
     }
     else {
+
+//  dpm('TODO D8-port WorkflowState: test below part of function: ' . __FUNCTION__ );
+      foreach ($workflow->getStates() as $state) {
+        $options[$state->id()] = \Drupal\Component\Utility\SafeMarkup::checkPlain(t($state->label()));
+      }
+      return $options;
+
+
       $transitions = $this->getTransitions($entity_type, $entity, $field_name, $user, $force);
       foreach ($transitions as $transition) {
         // Get the label of the transition, and if empty of the target state.
@@ -421,7 +481,7 @@ class WorkflowState extends Entity {
           $label = $target_state ? $target_state->label() : '';
         }
         $new_sid = $transition->target_sid;
-        $options[$new_sid] = check_plain(t($label));
+        $options[$new_sid] = \Drupal\Component\Utility\SafeMarkup::checkPlain(t($label));
       }
 
       // Include current state for same-state transitions, except when $sid = 0.
@@ -429,7 +489,7 @@ class WorkflowState extends Entity {
       // but only if the transitions have been saved at least one time.
       if ($current_sid && ($current_sid != $workflow->getCreationSid())) {
         if (!isset($options[$current_sid])) {
-          $options[$current_sid] = check_plain(t($this->label()));
+          $options[$current_sid] = \Drupal\Component\Utility\SafeMarkup::checkPlain(t($this->label()));
         }
       }
 
@@ -449,15 +509,11 @@ class WorkflowState extends Entity {
    * @todo: add $options to select on entity type, etc.
    */
   public function count() {
-    $sid = $this->sid;
-    // Get the numbers for Workflow Node.
-    $result = db_select('workflow_node', 'wn')
-      ->fields('wn')
-      ->condition('sid', $sid, '=')
-      ->execute();
-    $count = $result->rowCount();
+    $count = 0;
+    $sid = $this->id();
 
-    // Get the numbers for Workflow Field.
+//    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ );
+
     $fields = _workflow_info_fields();
     foreach ($fields as $field_name => $field_map) {
       if ($field_map['type'] == 'workflow') {
@@ -475,22 +531,4 @@ class WorkflowState extends Entity {
 
     return $count;
   }
-
-  /**
-   * Mimics Entity API functions.
-   */
-  protected function defaultLabel() {
-    return $this->state;
-  }
-
-  public function getName() {
-    return isset($this->name) ? $this->name : '';
-  }
-  public function setName($name) {
-    return $this->name = $name;
-  }
-  public function value() {
-    return $this->sid;
-  }
-
 }

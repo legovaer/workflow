@@ -9,7 +9,7 @@ schedule workflow transitions:
   title: 'Schedule workflow transitions'
   description: 'Schedule workflow transitions.'
 
-show workflow state form':
+show workflow transition form':
   title: 'Show workflow state change on node view'
   description': 'Show workflow state change form on node viewing.'
 

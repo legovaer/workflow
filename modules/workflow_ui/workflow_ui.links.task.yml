@@ -1,13 +1,39 @@
 # Menu tasks for Workflow UI.
 
+workflow.ui.settings:
+  title: 'Settings'
+  route_name: workflow.ui.settings
+  base_route: entity.workflow_workflow.collection
+  weight: 9
 workflow.ui.workflows:
   title: 'Workflows'
   route_name: entity.workflow_workflow.collection
   base_route: entity.workflow_workflow.collection
   weight: 1
 
-workflow.ui.settings:
-  title: 'Settings'
-  route_name: workflow.ui.settings
-  base_route: entity.workflow_workflow.collection
-  weight: 9
+workflow.ui.workflow_edit:
+  title: 'Edit'
+  route_name: entity.workflow_workflow.edit_form
+  base_route: entity.workflow_workflow.edit_form
+  weight: 2
+
+workflow.ui.workflow_states:
+  title: 'States'
+  route_name: entity.workflow_state.collection
+  base_route: entity.workflow_workflow.edit_form
+  weight: 11
+workflow.ui.workflow_transitions:
+  title: 'Transitions'
+  route_name: entity.workflow_transition.collection
+  base_route: entity.workflow_workflow.edit_form
+  weight: 12
+workflow.ui.workflow_labels:
+  title: 'Labels'
+  route_name: entity.workflow_label.collection
+  base_route: entity.workflow_workflow.edit_form
+  weight: 13
+workflow.ui.workflow_permissions:
+  title: 'Permission summary'
+  route_name: entity.workflow_permission.collection
+  base_route: entity.workflow_workflow.edit_form
+  weight: 14

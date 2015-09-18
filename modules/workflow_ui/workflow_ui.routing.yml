@@ -28,7 +28,8 @@ entity.workflow_workflow.add_form:
   path: '/admin/config/workflow/workflow/add'
   defaults:
     _entity_form: 'workflow_workflow.add'
-    _title: 'Add workflow'
+# TODO D8-Port: add name of entity to title
+    _title: 'Add Workflow'
   requirements:
     _permission: 'administer workflow'
 #   _entity_access: 'workflow.update'
@@ -37,7 +38,8 @@ entity.workflow_workflow.edit_form:
   path: '/admin/config/workflow/workflow/{workflow_workflow}/edit'
   defaults:
     _entity_form: 'workflow_workflow.edit'
-    _title: 'Edit workflow'
+# TODO D8-Port: add name of entity to title
+    _title: 'Edit Workflow'
   requirements:
     _permission: 'administer workflow'
 #   _entity_access: 'workflow.update'
@@ -46,7 +48,49 @@ entity.workflow_workflow.delete_form:
   path: '/admin/config/workflow/workflow/{workflow_workflow}/delete'
   defaults:
     _entity_form: 'workflow_workflow.delete'
-    _title: 'Delete workflow'
+# TODO D8-Port: add name of entity to title
+    _title: 'Delete Workflow'
   requirements:
     _permission: 'administer workflow'
 #   _entity_access: 'workflow.update'
+
+
+### Workflow States
+entity.workflow_state.collection:
+  path: '/admin/config/workflow/workflow/{workflow_workflow}/states'
+  defaults:
+    _entity_list: 'workflow_state'
+#    _controller: '\workflow\EntityWorkflowUIController::adminOverview'
+#     _form: '\Drupal\user\AccountSettingsForm'
+# TODO D8-Port: add name of entity to title
+    _title: 'Edit Workflow'
+  requirements:
+    _permission: 'administer workflow'
+
+
+### Workflow Transitions
+entity.workflow_transition.collection:
+  path: '/admin/config/workflow/workflow/{workflow_workflow}/transitions'
+  defaults:
+    _entity_list: 'workflow_state'
+    _title: 'Edit Workflow'
+  requirements:
+    _permission: 'administer workflow'
+
+### Workflow Labels
+entity.workflow_label.collection:
+  path: '/admin/config/workflow/workflow/{workflow_workflow}/labels'
+  defaults:
+    _entity_list: 'workflow_state'
+    _title: 'Edit Workflow'
+  requirements:
+    _permission: 'administer workflow'
+
+### Workflow Permissions
+entity.workflow_permission.collection:
+  path: '/admin/config/workflow/workflow/{workflow_workflow}/permissions'
+  defaults:
+    _entity_list: 'workflow_state'
+    _title: 'Edit Workflow'
+  requirements:
+    _permission: 'administer workflow'
