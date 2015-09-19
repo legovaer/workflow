@@ -158,6 +158,26 @@ class WorkflowState extends ConfigEntityBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function save($create_creation_state = TRUE) {
+
+    // Create the machine_name for new states.
+    // N.B.: Keep machine_name in WorkflowState and ~ListBuillder aligned.
+    if (empty($sid = $this->id())) {
+      if ($label = $this->label()) {
+        $sid = str_replace(' ', '_', strtolower($label));
+      }
+      else {
+        $sid = 'state_' . $entity->id();
+      }
+      $this->set('id', $sid);
+    }
+
+    return parent::save();
+  }
+
+    /**
    * Get all states in the system, with options to filter, only where a workflow exists.
    *
    * @param $wid
@@ -464,7 +484,7 @@ class WorkflowState extends ConfigEntityBase {
     }
     else {
 
-//  dpm('TODO D8-port WorkflowState: test below part of function: ' . __FUNCTION__ );
+//  dpm('TODO D8-port: test below of function WorkflowState::' . __FUNCTION__ );
       foreach ($workflow->getStates() as $state) {
         $options[$state->id()] = \Drupal\Component\Utility\SafeMarkup::checkPlain(t($state->label()));
       }
