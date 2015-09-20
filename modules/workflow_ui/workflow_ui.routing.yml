@@ -84,13 +84,3 @@ entity.workflow_label.collection:
     _title_callback: 'workflow_ui_url_get_title'
   requirements:
     _permission: 'administer workflow'
-
-### Workflow Permissions
-entity.workflow_permission.collection:
-  path: '/admin/config/workflow/workflow/{workflow_workflow}/permissions'
-  defaults:
-    _entity_list: 'workflow_state'
-    _title: 'Edit Workflow'
-    _title_callback: 'workflow_ui_url_get_title'
-  requirements:
-    _permission: 'administer workflow'

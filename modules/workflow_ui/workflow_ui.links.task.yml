@@ -32,8 +32,3 @@ workflow.ui.workflow_labels:
   route_name: entity.workflow_label.collection
   base_route: entity.workflow_workflow.edit_form
   weight: 13
-workflow.ui.workflow_permissions:
-  title: 'Permission summary'
-  route_name: entity.workflow_permission.collection
-  base_route: entity.workflow_workflow.edit_form
-  weight: 14
