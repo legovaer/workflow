@@ -2,14 +2,3 @@ name = Workflow
 description = Defines a field type with Workflows, containing customizable state transitions.
 package = Workflow
 core = 7.x
-
-files[] = includes/Entity/Workflow.php
-files[] = includes/Entity/WorkflowState.php
-files[] = includes/Entity/WorkflowConfigTransition.php
-files[] = includes/Entity/WorkflowScheduledTransition.php
-files[] = includes/Entity/WorkflowTransition.php
-files[] = includes/Entity/WorkflowTransitionController.php
-files[] = includes/Field/WorkflowD7Base.php
-files[] = includes/Field/WorkflowItem.php
-files[] = includes/Field/WorkflowDefaultWidget.php
-files[] = includes/Form/WorkflowTransitionForm.php

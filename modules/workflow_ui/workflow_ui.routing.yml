@@ -68,7 +68,7 @@ entity.workflow_state.collection:
 entity.workflow_transition.collection:
   path: '/admin/config/workflow/workflow/{workflow_workflow}/transitions'
   defaults:
-    _entity_list: 'workflow_state'
+    _entity_list: 'workflow_config_transition'
 #     _form: '\Drupal\user\AccountSettingsForm'
     _title: 'Edit Workflow'
     _title_callback: 'workflow_ui_url_get_title'

@@ -6,5 +6,4 @@ core = 7.x
 configure = admin/config/workflow/workflow
 
 dependencies[] = workflow
-files[] = includes/Entity/EntityWorkflowUIController.php
 stylesheets[all][] = workflow_admin_ui.css

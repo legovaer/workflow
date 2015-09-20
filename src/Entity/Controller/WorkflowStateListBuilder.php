@@ -7,12 +7,8 @@
 
 namespace Drupal\workflow\Entity\Controller;
 
-//use Drupal\Component\Utility\Html;
-//use Drupal\Core\Config\Entity\ConfigEntityListBuilder;
 use Drupal\Core\Config\Entity\DraggableListBuilder;
 use Drupal\Core\Entity\EntityInterface;
-//use Drupal\Core\Field\Plugin\Field\FieldFormatter\StringFormatter;
-//use Drupal\Core\Form\FormInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\workflow\Entity\Workflow;
 use Drupal\workflow\Entity\WorkflowState;
@@ -30,14 +26,18 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
 
 // TODO D8-port: filter entities for correct $wid with array_filter in $this::load().
 //  public function load() {
-//    dpm('TODO D8-port: implement function WorkflowStateListBuilder::' . __FUNCTION__ );
+//    ('TODO D8-port: implement function WorkflowStateListBuilder::' . __FUNCTION__ );
 //
 //    $entities = parent::load();
 //    dpm($entities, __FUNCTION__);
 //
-//    $wid = $url_wid = workflow_ui_url_get_wid();
+//  // Get the Workflow from the page.
+//  /* @var $workflow \Drupal\workflow\Entity\Workflow */
+//  if ($workflow = workflow_ui_url_get_workflow()) {
+//  }
 //    $entities = array_filter($entities, ($entity->wid == $wid ) )
 //    dpm($entities, __FUNCTION__);
+//
 //    return $entities;
 //  }
 
@@ -68,6 +68,7 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
 //    $header['label'] = $this->t('Label');
     $header['label_new'] = $this->t('Label');
     $header['id'] = $this->t('ID');
+    $header['sysid'] = $this->t('');
     $header['status'] = $this->t('Active');
     $header['reassign'] = $this->t('Reassign');
     $header['count'] = $this->t('Count');
@@ -83,13 +84,18 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
     $state = $entity;
     $sid = $state->id();
     $label = $state->label();
-    $workflow = $state->getWorkflow();
-    $wid = $workflow->id();
+
+    // Get the Workflow from the page.
+    /* @var $workflow \Drupal\workflow\Entity\Workflow */
+    if (!$workflow = workflow_ui_url_get_workflow()) {
+      return;
+    }
+    $wid = $url_wid = $workflow->id();
 
     // TODO D8-port: filter entities for correct $wid with array_filter in $this::load().
     // This function lists ALL states for ALL workfows. We only need for ONE workflow.
     // For backwards code-compatibility, @see D7.x-2.x, file workflow_admin_ui.page.states.inc
-    if ($wid != workflow_ui_url_get_wid()) {
+    if ($entity->wid != $wid) {
       return;
     }
 
@@ -116,7 +122,6 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
 //  Some columns are not welcome in the list.
 //      $row['module'] = $state->getModule();
 //      $row['wid'] = $state->getWorkflow();
-//      $row['sysid'] = $state->sysid;
 //    For some reason, you cannot make the 'label' column editable. So, we use 'label_new'.
 //    $row['label'] = $state->label();
     $row['label_new'] = [
@@ -149,6 +154,10 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
         'replace_pattern' => '[^a-z0-9_()]+', // Added '()' characters from exclusion list since creation state has it.
         'error' => $this->t('The machine-readable name must be unique, and can only contain lowercase letters, numbers, and underscores.'),
       ],
+    ];
+    $row['sysid'] = [
+      '#type' => 'value',
+      '#value' => $state->sysid,
     ];
     $row['status'] = [
       '#type' => 'checkbox',
@@ -193,8 +202,12 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
 
-    $wid = workflow_ui_url_get_wid();
-    $workflow = Workflow::load($wid);
+    // Get the Workflow from the page.
+    /* @var $workflow \Drupal\workflow\Entity\Workflow */
+    if (!$workflow = workflow_ui_url_get_workflow()) {
+      return $form;
+    }
+    $wid = $url_wid = $workflow->id();
 
     // Create a dummy WorkflowState (It must NOT be saved to DB). Add it to the item list.
     $sid = ''; // 'dummy_state';
@@ -204,7 +217,7 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
     $form['entities']['workflow_dummy_state'] = $this->buildRow($dummy_state);
 
     // Rename 'submit' button.
-    $form['actions']['submit']['#value'] = t('Save Changes');
+    $form['actions']['submit']['#value'] = t('Save');
 
     return $form;
   }
@@ -237,8 +250,12 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    // Get the Workflow ID from the page.
-    $wid = $url_wid = workflow_ui_url_get_wid();
+    // Get the Workflow from the page.
+    /* @var $workflow \Drupal\workflow\Entity\Workflow */
+    if (!$workflow = workflow_ui_url_get_workflow()) {
+      return ;
+    }
+    $wid = $url_wid = $workflow->id();
 
     foreach ($form_state->getValue($this->entitiesKey) as $sid => $value) {
       if (isset($this->entities[$sid])) {
@@ -294,13 +311,14 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     //  parent::submitForm($form, $form_state);
 
-    // Get the Workflow ID from the page.
-    $wid = $url_wid = workflow_ui_url_get_wid();
+    // Get the Workflow from the page.
     /* @var $workflow \Drupal\workflow\Entity\Workflow */
-    $workflow = Workflow::load($wid);
+    if (!$workflow = workflow_ui_url_get_workflow()) {
+      return ;
+    }
+    $wid = $url_wid = $workflow->id();
 
     $maxweight = $minweight = -50;
-
     foreach ($form_state->getValue($this->entitiesKey) as $sid => $value) {
       if (isset($this->entities[$sid])) {
         $state = $this->entities[$sid];
@@ -359,8 +377,11 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
           // Set a proper weight to the new state.
           $state->set($this->weightKey, $maxweight + 1);
         }
+        elseif ($value['sysid'] == WORKFLOW_CREATION_STATE) {
+          // Set a proper weight to the creation state.
+          $state->set($this->weightKey, $minweight - 1);
+        }
         else {
-//        $state->set('id', $value['id']);
           $state->set($this->weightKey, $value['weight']);
         }
         $state->set('label', $value['label_new']);

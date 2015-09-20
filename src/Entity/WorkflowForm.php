@@ -227,9 +227,8 @@ class WorkflowForm extends EntityForm {
     drupal_set_message($this->t('Workflow %label has been %action. Please maintain the states and transitions.', $args));
     $this->logger('workflow')->notice('Workflow %label has been %action.', $args);
 
-    // Redirect back to the list view when creating a new workflow.
     if ($status == SAVED_NEW){
-      $form_state->setRedirect('entity.workflow_workflow.collection');
+      $form_state->setRedirect('entity.workflow_workflow.edit_form', ['workflow_workflow' => $entity->id()]);
     }
 
   }

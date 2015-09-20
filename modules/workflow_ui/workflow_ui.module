@@ -8,31 +8,6 @@
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\workflow\Entity\Workflow;
 
-// TODO D8-port: Caveat: Several hooks have moved into the EntityWorkflowUIController class.
-
-// TODO D8-port: Rename WORKFLOW_ADMIN_UI_ARROW once permissions and transitions are converted.
-define('WORKFLOW_ADMIN_UI_ARROW', '&#8594;');
-
-/**
- * Implements hook_entity_info_alter().
- *
- * Adds Admin UI to entities, using EntityWorkflowUIController.
- */
-function workflow_ui_entity_info_alter(&$entity_info) {
-  return; // TODO D8-port: add/remove this function.
-
-  $entity_info['Workflow'] += array(
-    'access callback' => 'workflow_access',
-    'admin ui' => array(
-      'path' => 'admin/config/workflow/workflow',
-      // Do not add 'file', since each page has its own file.
-      // 'file' => 'workflow_ui/workflow_ui.pages.inc',
-      'controller class' => 'EntityWorkflowUIController',
-      'menu wildcard' => '%workflow',
-    ),
-  );
-}
-
 /**
  * Implements hook_help().
  */
@@ -77,38 +52,24 @@ function workflow_ui_help($route_name, RouteMatchInterface $route_match) {
 }
 
 /**
- * Determines whether the given user has access to a Workflow entity.
- *
- * @param string $op
- *   The operation being performed. One of 'view', 'update', 'create' or 'delete'.
- * @param object $entity
- *   Entity to check access for. If no entity is given, it will be
- *   determined whether access is allowed for all entities of the given type.
- * @param object $account
- *   The user to check for. Leave it to NULL to check for the global user.
- * @param string $entity_type
- *   The entity type.
- *
- * @return bool
- *   Whether access is allowed or not. If the entity type does not specify any
- *   access information, NULL is returned.
- */
-function workflow_access($op, $entity, $account, $entity_type) {
-  // TODO D8-port: add/remove/update this function.
-  return $account->hasPermission('administer workflow');
-}
-
-/**
  * Helper function to determine Workflow from Workflow UI URL.
  */
-function workflow_ui_url_get_wid($url = '' ) {
+function workflow_ui_url_get_workflow($url = '' ) {
+  /* @var $workflows \Drupal\workflow\Entity\Workflow[] */
+  static $workflows = array();
+
   // For some reason, $_SERVER is not alowed as default.
   $url = ($url == '') ? $_SERVER['REQUEST_URI'] : $url;
 
   $wid = explode('/', $url)[5];
 
-  return $wid;
+  if (!isset($workflows[$wid])) {
+    $workflows[$wid] = Workflow::load($wid);
+  }
+
+  return $workflows[$wid];
 }
+
 
 /**
  * Helper function to determine the title of the page.
@@ -116,12 +77,14 @@ function workflow_ui_url_get_wid($url = '' ) {
  * Used in file workflow_ui.routing.yml.
  */
 function workflow_ui_url_get_title() {
-  $wid = workflow_ui_url_get_wid();
-  $workflow = Workflow::load($wid);
+  $label = '';
 
-//  drupal_set_title() has been removed.
-//  @see https://www.drupal.org/node/2067859
-  return  t('Edit Workflow %label', ['$entity' => 'Workflow', '%label' => $workflow->label()]);
+  // Get the Workflow from the page.
+  /* @var $workflow \Drupal\workflow\Entity\Workflow */
+  if ($workflow = workflow_ui_url_get_workflow()) {
+    $label = $workflow->label();
+  }
 
+  $title = t('Edit Workflow %label', ['$entity' => 'Workflow', '%label' => $label]);
   return $title;
 }

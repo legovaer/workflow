@@ -8,7 +8,7 @@
 namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
-
+use Drupal\Core\Config\Entity\ConfigEntityInterface;
 
 /**
  * Workflow configuration entity to persistently store configuration.
@@ -18,7 +18,6 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *   label = @Translation("Workflow state"),
  *   module = "workflow",
  *   handlers = {
- *     "storage" = "Drupal\workflow\Entity\WorkflowStateStorage",
  *     "list_builder" = "Drupal\workflow\Entity\Controller\WorkflowStateListBuilder",
  *     "form" = {
  *        "delete" = "\Drupal\Core\Entity\EntityDeleteForm",
@@ -42,9 +41,6 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *   },
  *   links = {
  *     "collection" = "/admin/config/workflow/workflow/{workflow_workflow}/states",
- *     "add-form TODO" = "/admin/config/workflow/workflow/{workflow_workflow}/states/add",
- *     "edit-form TODO" = "/admin/config/workflow/workflow/{workflow_workflow}/states/{workflow_state}/edit",
- *     "delete-form TODO" = "/admin/config/workflow/workflow/{workflow_workflow}/states/{workflow_state}/delete",
  *   }
  * )
  */
@@ -74,6 +70,13 @@ class WorkflowState extends ConfigEntityBase {
    * @var string
    */
   public $wid;
+
+  /**
+   * The attached Workflow.
+   *
+   * @var Drupal\workflow\Entity\Workflow
+   */
+  protected $workflow;
 
   /**
    * The weight of this Workflow state.
@@ -113,6 +116,7 @@ class WorkflowState extends ConfigEntityBase {
 
     // Set default values for '(creation)' state.
     if ($id == WORKFLOW_CREATION_STATE_NAME) {
+      $values['id'] = ''; // Clear ID; will be set in save().
       $values['sysid'] = WORKFLOW_CREATION_STATE;
       $values['weight'] = WORKFLOW_CREATION_DEFAULT_WEIGHT;
       $values['label'] = '(creation)'; // machine_name;
@@ -128,12 +132,6 @@ class WorkflowState extends ConfigEntityBase {
       }
     }
   }
-
-/*
-  // Implementing clone needs a list of tid-less transitions, and a conversion
-  // of sids for both States and ConfigTransitions.
-  // public function __clone() {}
- */
 
   /**
    * Alternative constructor, loading objects from table {workflow_states}.
@@ -161,23 +159,27 @@ class WorkflowState extends ConfigEntityBase {
    * {@inheritdoc}
    */
   public function save($create_creation_state = TRUE) {
-
     // Create the machine_name for new states.
     // N.B.: Keep machine_name in WorkflowState and ~ListBuillder aligned.
-    if (empty($sid = $this->id())) {
+    $sid = $this->id();
+    $wid = $this->wid;
+
+//    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ .' '. $wid.'>'.$sid);
+
+    if (empty($sid) || $sid == WORKFLOW_CREATION_STATE_NAME) {
       if ($label = $this->label()) {
         $sid = str_replace(' ', '_', strtolower($label));
       }
       else {
         $sid = 'state_' . $entity->id();
       }
-      $this->set('id', $sid);
+      $this->set('id', implode('_', [$wid, $sid]));
     }
 
     return parent::save();
   }
 
-    /**
+  /**
    * Get all states in the system, with options to filter, only where a workflow exists.
    *
    * @param $wid
@@ -195,6 +197,7 @@ class WorkflowState extends ConfigEntityBase {
 
     if (empty(self::$states)) {
       self::$states = WorkflowState::loadMultiple();
+      usort(self::$states, ['Drupal\workflow\Entity\WorkflowState', 'sort'] );
     }
 
     if (!$wid) {
@@ -247,9 +250,9 @@ class WorkflowState extends ConfigEntityBase {
 //      foreach (workflow_get_workflow_node_by_sid($current_sid) as $workflow_node) {
 //        // @todo: add Field support in 'state delete', by using workflow_node_history or reading current field.
 //        $entity_type = 'node';
-//        $entity = entity_load_single('node', $workflow_node->nid);
+//        $entity = Node::load($workflow_node->nid);
 //        $field_name = '';
-//        $transition = new WorkflowTransition();
+//        $transition = WorkflowTransition::create();
 //        $transition->setValues($entity_type, $entity, $field_name, $current_sid, $new_sid, $user->uid, REQUEST_TIME, $comment);
 //        $transition->force($force);
 //        // Execute Transition, invoke 'pre' and 'post' events, save new state in workflow_node, save also in workflow_node_history.
@@ -292,10 +295,10 @@ class WorkflowState extends ConfigEntityBase {
    *   Workflow object.
    */
   public function getWorkflow() {
-    if (isset($this->workflow)) {
-      return $this->workflow;
+    if (!isset($this->workflow)) {
+      $this->workflow = Workflow::load($this->wid);
     }
-    return $this->workflow = Workflow::load($this->wid);
+    return $this->workflow;
   }
 
   public function setWorkflow($workflow) {
@@ -352,7 +355,7 @@ class WorkflowState extends ConfigEntityBase {
    *   The entity at hand. May be NULL (E.g., on a Field settings page).
    *
    * @return array
-   *   An array of tid=>transition pairs with allowed transitions for State.
+   *   An array of id=>transition pairs with allowed transitions for State.
    */
   public function getTransitions($entity_type = '', $entity = NULL, $field_name = '', $user = NULL, $force = FALSE) {
 //    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ );
@@ -433,7 +436,7 @@ class WorkflowState extends ConfigEntityBase {
 
       // If vetoed by a module, remove from list.
       if (in_array(FALSE, $permitted, TRUE)) {
-        unset($transitions[$transition->tid]);
+        unset($transitions[$transition->id()]);
       }
     }
 
@@ -484,7 +487,7 @@ class WorkflowState extends ConfigEntityBase {
     }
     else {
 
-//  dpm('TODO D8-port: test below of function WorkflowState::' . __FUNCTION__ );
+//      dpm('TODO D8-port: test below of function WorkflowState::' . __FUNCTION__ );
       foreach ($workflow->getStates() as $state) {
         $options[$state->id()] = \Drupal\Component\Utility\SafeMarkup::checkPlain(t($state->label()));
       }
