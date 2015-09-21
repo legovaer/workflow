@@ -124,6 +124,7 @@ class WorkflowState extends ConfigEntityBase {
     parent::__construct($values, $entityType);
 
 //    dpm('TODO D8-port WorkflowState: test below part of function: ' . __FUNCTION__ );
+    /*
     if (empty($values)) {
       // Automatic constructor when casting an array or object.
       // Add pre-existing states to cache (not new/temp ones).
@@ -131,6 +132,8 @@ class WorkflowState extends ConfigEntityBase {
         self::$states[$this->id()] = $this;
       }
     }
+    */
+
   }
 
   /**
@@ -146,8 +149,8 @@ class WorkflowState extends ConfigEntityBase {
    *   NULL if not loaded,
    *   FALSE if state does not belong to requested Workflow.
    */
-  public static function load($id, $wid = 0) {
-    foreach ($states = WorkflowState::getStates($wid) as $state) {
+  public static function load($id, $wid = '') {
+    foreach ($states = WorkflowState::loadMultiple([], $wid) as $state) {
       if ($id == $state->id()) {
         return $state;
       }
@@ -182,6 +185,7 @@ class WorkflowState extends ConfigEntityBase {
   /**
    * Get all states in the system, with options to filter, only where a workflow exists.
    *
+   * {@inheritdoc}
    * @param $wid
    *   The requested Workflow ID.
    * @param bool $reset
@@ -190,13 +194,13 @@ class WorkflowState extends ConfigEntityBase {
    * @return array $states
    *   An array of cached states.
    */
-  public static function getStates($wid = 0, $reset = FALSE) {
+  public static function loadMultiple(array $ids = NULL, $wid = '', $reset = FALSE) {
     if ($reset) {
       self::$states = array();
     }
 
     if (empty(self::$states)) {
-      self::$states = WorkflowState::loadMultiple();
+      self::$states = parent::loadMultiple();
       usort(self::$states, ['Drupal\workflow\Entity\WorkflowState', 'sort'] );
     }
 
@@ -215,9 +219,24 @@ class WorkflowState extends ConfigEntityBase {
       }
     }
     return $result;
+
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public static function sort(ConfigEntityInterface $a, ConfigEntityInterface $b) {
+    $a_wid = $a->wid;
+    $b_wid = $b->wid;
+    if ($a_wid == $b_wid) {
+      $a_weight = $a->getWeight();
+      $b_weight = $b->getWeight();
+      return ($a_weight < $b_weight) ? -1 : 1;
+    }
+    return ($a_wid < $b_wid) ? -1 : 1;
+  }
+
+    /**
    * Deactivate a Workflow State, moving existing nodes to a given State.
    *
    * @param int $new_sid
@@ -281,12 +300,19 @@ class WorkflowState extends ConfigEntityBase {
     $this->save();
 
     // Clear the cache.
-    self::getStates(0, TRUE);
+    self::loadMultiple([], 0, TRUE);
   }
 
   /**
    * Property functions.
    */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getWeight() {
+    return $this->weight;
+  }
 
   /**
    * Returns the Workflow object of this State.

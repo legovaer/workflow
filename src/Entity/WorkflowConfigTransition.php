@@ -53,7 +53,7 @@ class WorkflowConfigTransition extends ConfigEntityBase {
   public $roles = array();
 
   // Extra fields.
-  public $wid = 0;
+  public $wid;
   // The following must explicitely defined, and not be public, to avoid errors when exporting with json_encode().
   protected $workflow = NULL;
 
@@ -72,7 +72,7 @@ class WorkflowConfigTransition extends ConfigEntityBase {
    * @return static[]
    *   An array of entity objects indexed by their IDs. Filtered by $wid.
    */
-  public static function loadMultiple(array $ids = NULL, $wid = 0) {
+  public static function loadMultiple(array $ids = NULL, $wid = '') {
     return parent::loadMultiple($ids);
     //TODO D8-port: filter for $wid.
   }

@@ -209,12 +209,12 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
     }
     $wid = $url_wid = $workflow->id();
 
-    // Create a dummy WorkflowState (It must NOT be saved to DB). Add it to the item list.
-    $sid = ''; // 'dummy_state';
-    $dummy_state = $workflow->createState($sid, FALSE);
-//    $dummy_state->set('label', '');
-    $this->entities['workflow_dummy_state'] = $dummy_state;
-    $form['entities']['workflow_dummy_state'] = $this->buildRow($dummy_state);
+    // Create a placeholder WorkflowState (It must NOT be saved to DB). Add it to the item list.
+    $sid = '';
+    $placeholder = $workflow->createState($sid, FALSE);
+//    $placeholder->set('label', '');
+    $this->entities['placeholder'] = $placeholder;
+    $form['entities']['placeholder'] = $this->buildRow($placeholder);
 
     // Rename 'submit' button.
     $form['actions']['submit']['#value'] = t('Save');
@@ -371,7 +371,7 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
         $maxweight = max($maxweight, $state->get($this->weightKey));
 
         // Is this a new state?
-        if ($sid == 'workflow_dummy_state' && empty(!$value['label_new'])) {
+        if ($sid == 'placeholder' && empty(!$value['label_new'])) {
           // New state, add it.
           $state->set('id', $value['id']);
           // Set a proper weight to the new state.

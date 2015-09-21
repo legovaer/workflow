@@ -63,10 +63,6 @@ class Workflow extends ConfigEntityBase {
    */
   public $label;
 
-// TODO D8-port Workflow: remove below variables wid , name.
-//  public $wid = 0; // This is not an INT anymore, but a string
-//  public $name = ''; // This is dientical to the ID
-
 // TODO D8-port Workflow: complete below variables. (Add get()-functions).
 // @see https://www.drupal.org/node/1809494
 // @see https://codedrop.com.au/blog/creating-custom-config-entities-drupal-8
@@ -253,9 +249,6 @@ class Workflow extends ConfigEntityBase {
    *   $is_valid
    */
   public function isValid() {
-    // TODO D8-port Workflow: test below function.
-//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
-
     $is_valid = TRUE;
 
     // Don't allow workflows with no states. There should always be a creation state.
@@ -263,7 +256,7 @@ class Workflow extends ConfigEntityBase {
     if (count($states) < 1) {
       // That's all, so let's remind them to create some states.
       $message = t('Workflow %workflow has no states defined, so it cannot be assigned to content yet.',
-        array('%workflow' => $this->getName()));
+        array('%workflow' => $this->label()));
       drupal_set_message($message, 'warning');
 
       // Skip allowing this workflow.
@@ -275,7 +268,7 @@ class Workflow extends ConfigEntityBase {
     if (count($transitions) < 1) {
       // That's all, so let's remind them to create some transitions.
       $message = t('Workflow %workflow has no transitions defined, so it cannot be assigned to content yet.',
-        array('%workflow' => $this->getName()));
+        array('%workflow' => $this->label()));
       drupal_set_message($message, 'warning');
 
       // Skip allowing this workflow.
@@ -424,13 +417,13 @@ class Workflow extends ConfigEntityBase {
     $wid = $this->id();
 
     if ($reset) {
-      $this->states = $wid ? WorkflowState::getStates($wid, $reset) : array();
+      $this->states = $wid ? WorkflowState::loadMultiple([], $wid, $reset) : array();
     }
     elseif ($this->states === NULL) {
-      $this->states = $wid ? WorkflowState::getStates($wid, $reset) : array();
+      $this->states = $wid ? WorkflowState::loadMultiple([], $wid, $reset) : array();
     }
     elseif ($this->states === array()) {
-      $this->states = $wid ? WorkflowState::getStates($wid, $reset) : array();
+      $this->states = $wid ? WorkflowState::loadMultiple([], $wid, $reset) : array();
     }
     // Do not unset, but add to array - you'll remove global objects otherwise.
     $states = array();
