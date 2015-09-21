@@ -128,7 +128,7 @@ class WorkflowItem extends FieldItemBase {
    */
   public static function defaultStorageSettings() {
     return array(
-      'workflow_type' => 'workflow',
+      'workflow_type' => '',
 
 // TODO D8-port: below settings may be removed.
 /*
