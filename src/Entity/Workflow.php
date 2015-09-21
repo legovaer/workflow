@@ -254,7 +254,7 @@ class Workflow extends ConfigEntityBase {
    */
   public function isValid() {
     // TODO D8-port Workflow: test below function.
-    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     $is_valid = TRUE;
 
@@ -465,7 +465,7 @@ class Workflow extends ConfigEntityBase {
    */
   public function getState($key) {
     // TODO D8-port Workflow: test below function.
-    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     $wid = $this->id();
     WorkflowState::load($key, $wid);
@@ -478,7 +478,7 @@ class Workflow extends ConfigEntityBase {
     $transition = NULL;
 
     // TODO D8-port Workflow: test below function. Remove wid.
-    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     $workflow = $this;
 
