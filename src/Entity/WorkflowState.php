@@ -401,7 +401,7 @@ class WorkflowState extends ConfigEntityBase {
     // Get the role IDs of the user, to get the proper permissions.
     $roles = $user ? $user->getRoles() : array();
 
-    // TODO D8-port: get the uid from the entity.
+    // TODO D8-port: get the Author from the entity in WorkflowState->getTransitions().
     // Some entities (e.g., taxonomy_term) do not have a uid.
     $entity_uid = $entity->get('uid')->getEntity();// ; isset($entity->uid) ? $entity->uid : 0;
     $entity_uid = 0;
@@ -409,10 +409,8 @@ class WorkflowState extends ConfigEntityBase {
     // Fetch entity_id from entity for _newness_ check
     $entity_id = ($entity) ? $entity->id() : '';
 
-//    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ );
 
     if ($force || ($user && $user->id() == 1)) {
-//      dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__.'/'.__LINE__ );
       // Superuser is special. And $force allows Rules to cause transition.
       $roles = 'ALL';
     }
@@ -567,6 +565,7 @@ class WorkflowState extends ConfigEntityBase {
     $sid = $this->id();
 
 //    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ );
+    return $count;
 
     $fields = _workflow_info_fields();
     foreach ($fields as $field_name => $field_map) {

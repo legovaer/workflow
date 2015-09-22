@@ -114,7 +114,6 @@ class Workflow extends ConfigEntityBase {
    */
   public function save($create_creation_state = TRUE) {
 
-    // TODO D8-port Workflow: add all of the below: save() function.
 //    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     /*
@@ -150,39 +149,39 @@ class Workflow extends ConfigEntityBase {
     // Are we saving a new Workflow?
     $is_new = ($status == SAVED_NEW);
 
-/*
-    // If a workflow is cloned in Admin UI, it contains data from original workflow.
-    // Redetermine the keys.
-    if (($is_new) && $this->states) {
-      foreach ($this->states as $state) {
-        // Can be array when cloning or with features.
-        $state = is_array($state) ? new WorkflowState($state) : $state;
-        // Set up a conversion table, while saving the states.
-        $old_sid = $state->id();
-        $state->wid = $this->id();
-        // @todo: setting sid to FALSE should be done by entity_ui_clone_entity().
-        $state->set('id', FALSE);
-        $state->save();
-        $sid_conversion[$old_sid] = $state->id();
-      }
+    /*
+        // If a workflow is cloned in Admin UI, it contains data from original workflow.
+        // Redetermine the keys.
+        if (($is_new) && $this->states) {
+          foreach ($this->states as $state) {
+            // Can be array when cloning or with features.
+            $state = is_array($state) ? new WorkflowState($state) : $state;
+            // Set up a conversion table, while saving the states.
+            $old_sid = $state->id();
+            $state->wid = $this->id();
+            // @todo: setting sid to FALSE should be done by entity_ui_clone_entity().
+            $state->set('id', FALSE);
+            $state->save();
+            $sid_conversion[$old_sid] = $state->id();
+          }
 
-       // Reset state cache.
-      $this->getStates(TRUE, TRUE);
-      foreach ($this->transitions as &$transition) {
-        // Can be array when cloning or with features.
-        $transition = is_array($transition) ? WorkflowConfigTransition::create($transition, 'WorkflowConfigTransition') : $transition;
-        // Convert the old sids of each transitions before saving.
-        // @todo: is this be done in 'clone $transition'?
-        // (That requires a list of transitions without tid and a wid-less conversion table.)
-        if (isset($sid_conversion[$transition->sid])) {
-          $transition->set('id', FALSE);
-          $transition->set('sid', $sid_conversion[$transition->sid]);
-          $transition->set('target_sid', $sid_conversion[$transition->target_sid]);
-          $transition->save();
+           // Reset state cache.
+          $this->getStates(TRUE, TRUE);
+          foreach ($this->transitions as &$transition) {
+            // Can be array when cloning or with features.
+            $transition = is_array($transition) ? WorkflowConfigTransition::create($transition, 'WorkflowConfigTransition') : $transition;
+            // Convert the old sids of each transitions before saving.
+            // @todo: is this be done in 'clone $transition'?
+            // (That requires a list of transitions without tid and a wid-less conversion table.)
+            if (isset($sid_conversion[$transition->sid])) {
+              $transition->set('id', FALSE);
+              $transition->set('sid', $sid_conversion[$transition->sid]);
+              $transition->set('target_sid', $sid_conversion[$transition->target_sid]);
+              $transition->save();
+            }
+          }
         }
-      }
-    }
-*/
+    */
 
     // Make sure a Creation state exists.
     if ($is_new) {
@@ -218,7 +217,6 @@ class Workflow extends ConfigEntityBase {
   public function delete() {
 //    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
-    // TODO D8-port Workflow: test below function.
     $wid = $this->id();
 
     // @todo: throw error if not workflow->isDeletable().
@@ -285,7 +283,6 @@ class Workflow extends ConfigEntityBase {
    *   TRUE if a Workflow may safely be deleted.
    */
   public function isDeletable() {
-    // TODO D8-port Workflow: test below function.
 //    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     $is_deletable = FALSE;
@@ -470,22 +467,19 @@ class Workflow extends ConfigEntityBase {
   public function createTransition($sid, $target_sid, $values = array()) {
     $transition = NULL;
 
-    // TODO D8-port Workflow: test below function. Remove wid.
-//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
-
     $workflow = $this;
 
     $state = $workflow->getState($sid);
     $target_state = $workflow->getState($target_sid);
 
-    $values['wid'] = $workflow->id();
-    $values['sid'] = $sid;
-    $values['target_sid'] = $target_sid;
     // First check if this transition already exists.
     if ($transitions = $this->getTransitionsBySidTargetSid($sid, $target_sid)) {
       $transition = reset($transitions);
     }
     else {
+      $values['wid'] = $workflow->id();
+      $values['sid'] = $sid;
+      $values['target_sid'] = $target_sid;
       $transition = WorkflowConfigTransition::create($values);
       $transition->save();
     }
@@ -502,8 +496,6 @@ class Workflow extends ConfigEntityBase {
    * This is only needed for the Admin UI.
    */
   public function sortTransitions() {
-    // TODO D8-port Workflow: test below function.
-
     // Sort the transitions on state weight.
     uasort($this->transitions, ['Drupal\workflow\Entity\WorkflowConfigTransition', 'sort'] );
   }
@@ -544,14 +536,8 @@ class Workflow extends ConfigEntityBase {
       }
 
       $this->sortTransitions();
-
-      // TODO D8-port Workflow: test below function.
-//      dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
-//      dpm($config_transitions, __FUNCTION__. ' config trans');
-//      dpm($roles);
     }
 
-    $config_transitions = array();
     foreach ($this->transitions as &$config_transition) {
       if (!isset($states[$config_transition->sid])) {
         // Not a valid transition for this workflow.
@@ -562,7 +548,12 @@ class Workflow extends ConfigEntityBase {
       elseif ($target_sid && $target_sid != $config_transition->target_sid) {
         // Not the requested 'to' state.
       }
-      elseif ($roles = 'ALL' || $config_transition->isAllowed($roles)) {
+      elseif ($roles == 'ALL') {
+        // Transition is allowed, permitted. Add to list.
+        $config_transition->setWorkflow($this);
+        $config_transitions[$config_transition->id()] = $config_transition;
+      }
+      elseif ($config_transition->isAllowed($roles)) {
         // Transition is allowed, permitted. Add to list.
         $config_transition->setWorkflow($this);
         $config_transitions[$config_transition->id()] = $config_transition;
