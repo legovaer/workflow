@@ -48,8 +48,7 @@ function workflow_requirements($phase) {
     case 'runtime':
       $type_list = 'Not yet determined.';
 
-      // TODO D8-port: test below function.
-    dpm('TODO D8-port: test function workflow.install::' . __FUNCTION__ );
+//  dpm('TODO D8-port: test function workflow.install::' . __FUNCTION__ );
 
       // Show info on admin/reports/status.
 /*
@@ -131,7 +130,8 @@ function workflow_schema() {
       ),
       'old_sid' => array(
         'description' => 'The {workflow_states}.sid this state starts at.',
-        'type' => 'int',
+        'type' => 'varchar_ascii',
+        'length' => 128,
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
@@ -139,7 +139,8 @@ function workflow_schema() {
       ),
       'sid' => array(
         'description' => 'The {workflow_states}.sid this state transitions to.',
-        'type' => 'int',
+        'type' => 'varchar_ascii',
+        'length' => 128,
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
@@ -227,7 +228,8 @@ function workflow_schema() {
       ),
       'old_sid' => array(
         'description' => 'The {workflow_states}.sid this transition started as.',
-        'type' => 'int',
+        'type' => 'varchar_ascii',
+        'length' => 128,
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
@@ -235,7 +237,8 @@ function workflow_schema() {
       ),
       'sid' => array(
         'description' => 'The {workflow_states}.sid this transition transitioned to.',
-        'type' => 'int',
+        'type' => 'varchar_ascii',
+        'length' => 128,
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,

@@ -4,6 +4,11 @@
  * Hooks provided by the workflow module.
  */
 
+namespace Drupal\workflow\Entity;
+
+use Drupal\workflow\Entity\WorkflowState;
+use Drupal\workflow\Entity\WorkflowConfigTransition;
+
 /**
  * Implements hook_workflow().
  *
@@ -64,17 +69,17 @@ function hook_workflow($op, $id, $new_sid, $entity, $force, $entity_type = '', $
 
     case 'transition delete':
       // A transition is deleted. Only the first parameter is used.
-      // $tid = $id;
+      // $transition_id = $id;
       break;
 
     case 'state delete':
       // A state is deleted. Only the first parameter is used.
-      // $sid = $id;
+      // $state_id = $id;
       break;
 
     case 'workflow delete':
       // A workflow is deleted. Only the first parameter is used.
-      // $wid = $id;
+      // $workflow_id = $id;
       break;
   }
 }
@@ -102,7 +107,10 @@ function hook_workflow_history_alter(array &$variables) {
 
   // If you want to add additional data, such as an operation link,
   // place it in the 'extra' value.
-  $variables['extra'] = l(t('My new operation: go to frontpage'), $path, $options);
+  // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $variables['extra'] = l(t('My new operation: go to frontpage'), $path, $options);
+
 }
 
 /**
@@ -155,7 +163,7 @@ function hook_workflow_permitted_state_transitions_alter(array &$transitions, ar
     'target_sid' => '998',
     'label' => 'go to my new fantasy state',
   );
-  $new_transition = new WorkflowConfigTransition($values);
+  $new_transition = WorkflowConfigTransition::create($values);
 
   $transitions[] = $new_transition;
 }
@@ -185,7 +193,7 @@ function workflowfield_form_workflow_transition_form_alter(&$form, &$form_state,
   // Get the current State ID.
   $sid = workflow_node_current_state($entity, $entity_type, $field_name = NULL);
   // Get the State object, if needed.
-  $state = workflow_state_load($sid);
+  $state = WorkflowState::load($sid);
 
   // Change the form, depending on the state ID.
   // In the upcoming version 7.x-2.4, States should have a machine_name, too.

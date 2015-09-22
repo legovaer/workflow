@@ -9,6 +9,7 @@ namespace Drupal\workflow\Plugin\Field\FieldType;
 
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FieldConfigStorageBase;
 use Drupal\Core\Field\FieldItemBase;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -22,15 +23,11 @@ use Drupal\workflow\Entity\WorkflowState;
  *
  * @FieldType(
  *   id = "workflow",
- *   label = @Translation("Workflow"),
+ *   label = @Translation("Workflow state"),
  *   description = @Translation("This field stores Workflow values for a certain Workflow type from a list of allowed 'value => label' pairs, i.e. 'Publishing': 1 => unpublished, 2 => draft, 3 => published."),
  *   category = @Translation("Workflow"),
  *   default_widget = "workflow_default",
- *   default_widget_TODO = "options_select",
- *   default_formatter_TODO = "list_formatter",
- *   default_widget_TODO = "telephone_default",
  *   default_formatter = "basic_string",
- *   property_type_TODO = WORKFLOWFIELD_PROPERTY_TYPE,
  * )
  */
 class WorkflowItem extends FieldItemBase {
@@ -39,23 +36,23 @@ class WorkflowItem extends FieldItemBase {
    * {@inheritdoc}
    */
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
-//    dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
 
     $schema = array(
       'columns' => array(
         'value' => array(
           'description' => 'The {workflow_states}.sid that this node is currently in.',
-          'type' => 'int',
-          'unsigned' => TRUE,
-          'not null' => TRUE,
-          'default' => 0,
-          'disp-width' => '10',
+          'type' => 'varchar',
+          'length' => 128,
+//          'unsigned' => TRUE,
+//          'not null' => TRUE,
+//          'default' => 0,
+//          'disp-width' => '10',
         ),
       ),
-          // 'primary key' => array('nid'),
-          // 'indexes' => array(
-          // 'nid' => array('nid', 'sid'),
-          // ),
+      // 'primary key' => array('nid'),
+      // 'indexes' => array(
+      // 'nid' => array('nid', 'sid'),
+      // ),
       'indexes' => array(
         'value' => array('value'),
       ),
@@ -68,11 +65,19 @@ class WorkflowItem extends FieldItemBase {
    * {@inheritdoc}
    */
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
-//    dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
 
     $properties['value'] = DataDefinition::create('string') // TODO D8-port : or 'any'
       ->setLabel(t('Workflow state'))
       ->setRequired(TRUE);
+
+    /*
+    $properties['date'] = DataDefinition::create('WorkflowTransition')
+      ->setLabel(t('Computed date'))
+      ->setDescription(t('The computed DateTime object.'))
+      ->setComputed(TRUE)
+      ->setClass('\Drupal\datetime\DateTimeComputed')
+      ->setSetting('date source', 'value');
+*/
 
     return $properties;
   }
@@ -81,8 +86,6 @@ class WorkflowItem extends FieldItemBase {
    * {@inheritdoc}
    */
   public function isEmpty() {
-//    dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
-
     $value = $this->get('value')->getValue();
     return $value === NULL || $value === '';
   }
@@ -91,15 +94,15 @@ class WorkflowItem extends FieldItemBase {
    * {@inheritdoc}
    */
   public function onChange($property_name, $notify = TRUE) {
-//  dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
+    // TODO D8: use this function for...
+//    dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
 
-    // Enforce that the computed date is recalculated.
-    if ($property_name == 'value') {
+//    // Enforce that the computed date is recalculated.
+//    if ($property_name == 'value') {
 //      $this->date = NULL;
-    }
+//    }
     parent::onChange($property_name, $notify);
   }
-
 
   /**
    * {@inheritdoc}
@@ -109,8 +112,8 @@ class WorkflowItem extends FieldItemBase {
     $constraints = parent::getConstraints();
 
 //  dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
-
-/*    $max_length = 256;
+/*
+    $max_length = 128;
     $constraints[] = $constraint_manager->create('ComplexData', array(
       'value' => array(
         'Length' => array(
@@ -131,23 +134,23 @@ class WorkflowItem extends FieldItemBase {
       'workflow_type' => '',
 
 // TODO D8-port: below settings may be removed.
-/*
-      'allowed_values_function' => 'workflowfield_allowed_values', // For the list.module formatter
-      // 'allowed_values_function' => 'WorkflowItem::getAllowedValues', // For the list.module formatter.
-      'widget' => array(
-        'options' => 'select',
-        'name_as_title' => 1,
-        'hide' => 0,
-        'schedule' => 1,
-        'schedule_timezone' => 1,
-        'comment' => 1,
-      ),
-      'watchdog_log' => 1,
-      'history' => array(
-        'history_tab_show' => 1,
-        'roles' => array(),
-      ),
-*/
+      /*
+            'allowed_values_function' => 'workflowfield_allowed_values', // For the list.module formatter
+            // 'allowed_values_function' => 'WorkflowItem::getAllowedValues', // For the list.module formatter.
+            'widget' => array(
+              'options' => 'select',
+              'name_as_title' => 1,
+              'hide' => 0,
+              'schedule' => 1,
+              'schedule_timezone' => 1,
+              'comment' => 1,
+            ),
+            'watchdog_log' => 1,
+            'history' => array(
+              'history_tab_show' => 1,
+              'roles' => array(),
+            ),
+      */
     ) + parent::defaultStorageSettings();
   }
 
@@ -156,6 +159,8 @@ class WorkflowItem extends FieldItemBase {
    */
   public function storageSettingsForm(array &$form, FormStateInterface $form_state, $has_data) {
     $element = array();
+
+//    dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
 
     // Create list of all Workflow types. Include an initial empty value.
     // Validate each workflow, and generate a message if not complete.
@@ -179,15 +184,15 @@ class WorkflowItem extends FieldItemBase {
     $wid = $this->getSetting('workflow_type');
     $url = Url::fromRoute('entity.workflow_workflow.collection');
     $element['workflow_type'] = array( // TODO D8-port: check this change-record.
-       '#type' => 'select',
-       '#title' => t('Workflow type'),
-       '#options' => $workflows,
-       '#default_value' => $wid,
-       '#required' => TRUE,
-       '#disabled' => $has_data,
+      '#type' => 'select',
+      '#title' => t('Workflow type'),
+      '#options' => $workflows,
+      '#default_value' => $wid,
+      '#required' => TRUE,
+      '#disabled' => $has_data,
       // FIXME TODO D8-port: repair link.
-       '#description' => t('Choose the Workflow type. Maintain workflows !url.', array('!url' => t('here'), $url)),
-     );
+      '#description' => t('Choose the Workflow type. Maintain workflows !url.', array('!url' => t('here'), $url)),
+    );
 
     // Inform the user of possible states.
     // If no Workflow type is selected yet, do not show anything.
@@ -344,26 +349,10 @@ class WorkflowItem extends FieldItemBase {
     return $element;
   }
 
-  /*
-   * Currently, there are no instance Settings.
-   * hook_field_instance_settings_form() -> ConfigFieldItemInterface::instanceSettingsForm()
-   */
-  // public function instanceSettingsForm(array $form, array &$form_state, $has_data) {
-  // }
-
-  /**
-   * Does NOT not implement hook_field_presave().
-   *
-   * Since $nid is needed, but not yet known at this moment.
-   * hook_field_presave() -> FieldItemInterface::preSave()
-   */
-  // function workflowfield_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
-  // }
-
   /**
    * Implements hook_field_insert() -> FieldItemInterface::insert().
    */
-  public function insert() {
+  public function insertTODO() {
 //  dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
 
     return $this->update();
@@ -380,7 +369,7 @@ class WorkflowItem extends FieldItemBase {
    * It is called also from hook_field_insert, since we need $nid to store workflow_node_history.
    * We cannot use hook_field_presave, since $nid is not yet known at that moment.
    */
-  public function update() {
+  public function updateTODO() {
 //    function workflowfield_field_update($entity_type, $entity, array $field, $instance, $langcode, &$items) {
 //  dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
 
@@ -463,11 +452,20 @@ class WorkflowItem extends FieldItemBase {
    *   and used for all nodes on a page.
    */
   public function getAllowedValues() {
-  //  dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
+//    dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
 
     // Get all state names, including inactive states.
     $options = workflow_get_workflow_state_names(0, $grouped = FALSE, $all = TRUE);
     return $options;
   }
+
+
+  /**
+   * {@inheritdoc}
+   */
+//  public static function generateSampleValue(FieldDefinitionInterface $field_definition) {
+//    $values['value'] = rand(pow(10, 8), pow(10, 9)-1);
+//    return $values;
+//  }
 
 }

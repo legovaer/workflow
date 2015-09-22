@@ -7,8 +7,12 @@
 
 namespace Drupal\workflow\Entity;
 
+use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
+use Drupal\Core\Entity\Entity;
+use Drupal\Core\Field\EntityReferenceFieldItemList;
+use Drupal\Core\Session\AccountProxy;
 
 /**
  * Workflow configuration entity to persistently store configuration.
@@ -48,7 +52,7 @@ class WorkflowState extends ConfigEntityBase {
 
   // TODO D8-port WorkflowState: rename variable $sid, $name to $id.
   // TODO D8-port WorkflowState: rename variable $state to $label.
-  // TODO D8-port WorkflowState:remove variable $states, cached by D8(??).
+  // TODO D8-port WorkflowState: remove static variable $states, cached by D8(??).
 
   /**
    * The machine name.
@@ -272,7 +276,7 @@ class WorkflowState extends ConfigEntityBase {
 //        $entity = Node::load($workflow_node->nid);
 //        $field_name = '';
 //        $transition = WorkflowTransition::create();
-//        $transition->setValues($entity_type, $entity, $field_name, $current_sid, $new_sid, $user->uid, REQUEST_TIME, $comment);
+//        $transition->setValues($entity_type, $entity, $field_name, $current_sid, $new_sid, $user->id(), REQUEST_TIME, $comment);
 //        $transition->force($force);
 //        // Execute Transition, invoke 'pre' and 'post' events, save new state in workflow_node, save also in workflow_node_history.
 //        // For Workflow Node, only {workflow_node} and {workflow_node_history} are updated. For Field, also the Entity itself.
@@ -383,8 +387,7 @@ class WorkflowState extends ConfigEntityBase {
    * @return array
    *   An array of id=>transition pairs with allowed transitions for State.
    */
-  public function getTransitions($entity_type = '', $entity = NULL, $field_name = '', $user = NULL, $force = FALSE) {
-//    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ );
+  public function getTransitions($entity_type = '', Entity $entity = NULL, $field_name = '', AccountProxy $user = NULL, $force = FALSE) {
     $transitions = array();
 
     $current_sid = $this->id();
@@ -396,31 +399,41 @@ class WorkflowState extends ConfigEntityBase {
     }
 
     // Get the role IDs of the user, to get the proper permissions.
-    $roles = $user ? array_keys($user->roles) : array();
+    $roles = $user ? $user->getRoles() : array();
 
+    // TODO D8-port: get the uid from the entity.
     // Some entities (e.g., taxonomy_term) do not have a uid.
-    $entity_uid = isset($entity->uid) ? $entity->uid : 0;
+    $entity_uid = $entity->get('uid')->getEntity();// ; isset($entity->uid) ? $entity->uid : 0;
+    $entity_uid = 0;
 
     // Fetch entity_id from entity for _newness_ check
-    $entity_id = ($entity) ? entity_id($entity_type, $entity) : '';
+    $entity_id = ($entity) ? $entity->id() : '';
 
-    if ($force || ($user && $user->uid == 1)) {
+//    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ );
+
+    if ($force || ($user && $user->id() == 1)) {
+//      dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__.'/'.__LINE__ );
       // Superuser is special. And $force allows Rules to cause transition.
       $roles = 'ALL';
     }
     elseif ($entity && (!empty($entity->is_new) || empty($entity_id))) {
+//      dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__.'/'.__LINE__ );
       // Add 'author' role to user, if this is a new entity.
       // - $entity can be NULL (E.g., on a Field settings page).
       // - on display of new entity, $entity_id and $is_new are not set.
       // - on submit of new entity, $entity_id and $is_new are both set.
       $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
     }
-    elseif (($entity_uid > 0) && ($user->uid > 0) && ($entity_uid == $user->uid)) {
+    elseif (($entity_uid > 0) && ($user->id() > 0) && ($entity_uid == $user->id())) {
+//      dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__.'/'.__LINE__ );
       // Add 'author' role to user, if user is author of this entity.
       // - Some entities (e.g, taxonomy_term) do not have a uid.
       // - If 'anonymous' is the author, don't allow access to History Tab,
       //   since anyone can access it, and it will be published in Search engines.
       $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
+    }
+    else {
+//      dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__.'/'.__LINE__ );
     }
 
     // Set up an array with states - they are already properly sorted.
@@ -484,12 +497,12 @@ class WorkflowState extends ConfigEntityBase {
    *   Workflow are returned.
    */
   public function getOptions($entity_type, $entity, $field_name, $user, $force = FALSE) {
+    $options = array();
+
     // Define an Entity-specific cache per page load.
     static $cache = array();
 
-    $options = array();
-
-    $entity_id = ($entity) ? entity_id($entity_type, $entity) : '';
+    $entity_id = ($entity) ? $entity->id() : '';
     $current_sid = $this->id();
 
     // Get options from page cache, using a non-empty index (just to be sure).
@@ -508,18 +521,10 @@ class WorkflowState extends ConfigEntityBase {
       // We cannot use getTransitions, since there are no ConfigTransitions
       // from State with ID 0, and we do not want to repeat States.
       foreach ($workflow->getStates() as $state) {
-        $options[$state->id()] = \Drupal\Component\Utility\SafeMarkup::checkPlain(t($state->label()));
+        $options[$state->id()] = SafeMarkup::checkPlain(t($state->label()));
       }
     }
     else {
-
-//      dpm('TODO D8-port: test below of function WorkflowState::' . __FUNCTION__ );
-      foreach ($workflow->getStates() as $state) {
-        $options[$state->id()] = \Drupal\Component\Utility\SafeMarkup::checkPlain(t($state->label()));
-      }
-      return $options;
-
-
       $transitions = $this->getTransitions($entity_type, $entity, $field_name, $user, $force);
       foreach ($transitions as $transition) {
         // Get the label of the transition, and if empty of the target state.
@@ -530,7 +535,7 @@ class WorkflowState extends ConfigEntityBase {
           $label = $target_state ? $target_state->label() : '';
         }
         $new_sid = $transition->target_sid;
-        $options[$new_sid] = \Drupal\Component\Utility\SafeMarkup::checkPlain(t($label));
+        $options[$new_sid] = SafeMarkup::checkPlain(t($label));
       }
 
       // Include current state for same-state transitions, except when $sid = 0.
@@ -538,7 +543,7 @@ class WorkflowState extends ConfigEntityBase {
       // but only if the transitions have been saved at least one time.
       if ($current_sid && ($current_sid != $workflow->getCreationSid())) {
         if (!isset($options[$current_sid])) {
-          $options[$current_sid] = \Drupal\Component\Utility\SafeMarkup::checkPlain(t($this->label()));
+          $options[$current_sid] = SafeMarkup::checkPlain(t($this->label()));
         }
       }
 

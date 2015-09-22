@@ -170,6 +170,7 @@ function workflow_tab_access($entity_type, $entity) {
   // 'Workflow history per entity' instead!
   if (workflow_get_workflows_by_type($entity_bundle, $entity_type)) {
     // Get the role IDs of the user. Workflow only stores Ids, not role names.
+    // TODO D8: add usage of api user_has_role().
     $roles = array_keys($user->roles);
 
     // Some entities (e.g., taxonomy_term) do not have a uid.
@@ -406,7 +407,7 @@ function workflow_state_formatter($entity_type, $entity, $field = array(), $inst
   }
   else {
     // This is a Workflow Node workflow.
-    $current_state = workflow_state_load_single($current_sid);
+    $current_state = WorkflowState::load($current_sid);
     $args = array(
       'state' => $current_state ? workflow_get_sid_label($current_sid) : 'unknown state',
       'state_system_name' => $current_state ? $current_state->getName() : 'unknown state',
@@ -428,33 +429,6 @@ function workflow_state_formatter($entity_type, $entity, $field = array(), $inst
 
   }
   return $list_element;
-}
-
-/**
- * Form builder. Allow workflow comment change from menu item/Views link.
- *
- * @todo D8: This is used, because the D7 form workflow_transition_form
- * has the wrong parameters for the EntityUIController.
- * But changing it breaks backwards compatibility.
- */
-function workflow_transition_wrapper_form(array $form, array &$form_state, $transition, $op, $form_id) {
-  // Override the default function 'entity_ui_controller_form_<op>'; we're not ready for that yet.
-  $form['#validate'] = array('workflow_transition_form_validate');
-  $form['#submit'] = array('workflow_transition_form_submit');
-
-  // The Workflow transition is provided as such:
-  // $form_state['entity_type'] = 'WorkflowTransition';
-  // $form_state['WorkflowTransition'] = (Object) WorkflowTransition;
-  return workflow_transition_form($form, $form_state, array(), array(), '', NULL);
-}
-
-function workflow_transition_form(array $form, array &$form_state, array $field, $instance, $entity_type, $entity) {
-  if (!isset ($instance['widget']['settings']['submit_function'])) {
-    $instance['widget']['settings']['submit_function'] = 'workflow_transition_form_submit';
-  }
-
-  $transition_form = new WorkflowTransitionForm($field, $instance, $entity_type, $entity);
-  return $transition_form->buildForm($form, $form_state);
 }
 
 /**
@@ -617,7 +591,7 @@ function workflow_form_alter(&$form, FormStateInterface &$form_state, $form_id) 
  */
 function workflow_transition_form_validate($form, &$form_state) {
   // Empty. But required.
-  // $transition_form = new WorkflowTransitionForm($field, $instance, $entity_type, $entity);
+  // $transition_form = WorkflowTransitionForm::create($field, $instance, $entity_type, $entity);
   // return $transition_form->submitForm($form, $form_state, $items);
 }
 
@@ -628,6 +602,8 @@ function workflow_transition_form_validate($form, &$form_state) {
  * a transition to be executed later by cron.
  */
 function workflow_transition_form_submit($form, &$form_state) {
+//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__);
+
   // Retrieve the data from the form.
   if (isset($form_state['values']['workflow_field'])) {
     // If $entity filled: We are on a Entity View page or Workflow History Tab page.
@@ -638,7 +614,7 @@ function workflow_transition_form_submit($form, &$form_state) {
     $entity = $form_state['values']['workflow_entity'];
 
     $items = array();
-    $transition_form = new WorkflowTransitionForm($field, $instance, $entity_type, $entity);
+    $transition_form = WorkflowTransitionForm::create($field, $instance, $entity_type, $entity);
     return $transition_form->submitForm($form, $form_state, $items);
   }
   else {
@@ -801,7 +777,7 @@ function workflow_get_roles($permission = 'participate in workflow') {
  * @return array $options
  *   An array of $sid => state->label(), grouped per Workflow.
  */
-function workflow_get_workflow_state_names($wid = 0, $grouped = FALSE, $all = FALSE) {
+function workflow_get_workflow_state_names($wid = '', $grouped = FALSE, $all = FALSE) {
   $options = array();
   // TODO D8-port: replace by  \Drupal\Core\TypedData\OptionsProviderInterface.
 
@@ -812,7 +788,7 @@ function workflow_get_workflow_state_names($wid = 0, $grouped = FALSE, $all = FA
   foreach ($workflows = Workflow::loadMultiple($wid ? array($wid) : FALSE) as $workflow) {
     $workflow_options = array();
 
-    $state = new WorkflowState(array('wid' => $workflow->id()));
+    $state = WorkflowState::create(array('wid' => $workflow->id()));
     $workflow_options = $state->getOptions('', NULL, '', $user, FALSE);
     if (!$grouped) {
       $options += $workflow_options;
@@ -891,6 +867,8 @@ function workflow_node_current_state($entity, $entity_type = 'node', &$field_nam
 
   // If $field_name is not known, yet, determine it.
   if ($field_name === NULL) {
+    //  dpm('TODO D8-port: test part of function workflow.module::' . __FUNCTION__);
+
     $fields = _workflow_info_fields($entity, $entity_type);
     if (count($fields)) {
       // Workflow Field API: if $field_name is not known, yet, determine it.
@@ -903,24 +881,14 @@ function workflow_node_current_state($entity, $entity_type = 'node', &$field_nam
     }
   }
 
-  if ($field_name === '') {
-    // Workflow Node API: Get current/previous state for a Workflow Node.
-    // Multi-language not supported.
-    // N.B. Do not use a page cache. This gives problems with Rules.
-    $sid = isset($entity->workflow) ? $entity->workflow : FALSE;
-  }
-  else {
-    // At this point, we may have redetermined and altered the field_name.
-    if (!$sid && $field_name !== NULL) {
-      $wrapper = entity_metadata_wrapper($entity_type, $entity);
-      // Get State ID for existing nodes (A new node has no sid - will be fetched later.)
-      // and normal node, on Node view page / Workflow history tab.
-      $sid = $wrapper->{$field_name}->value();
-    }
+  // At this point, we may have redetermined and altered the field_name.
+  if (!$sid) {
+    $field_value = $entity->get($field_name)->getValue();
+    $sid = isset($field_value[0]['value']) ? $field_value[0]['value'] : '';
   }
 
   // No current state. Use creation state.
-  if (!$sid && $field_name !== NULL) {
+  if (!$sid) {
     $sid = _workflow_get_workflow_creation_sid($entity_type, $entity, $field_name);
   }
 
@@ -934,6 +902,8 @@ function workflow_node_previous_state($entity, $entity_type, $field_name) {
   // @todo D8: return State object, not $sid integer.
   $sid = FALSE;
   $langcode = Language::LANGCODE_NOT_SPECIFIED;
+
+//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__);
 
   if (!$entity) {
     return $sid;
@@ -977,7 +947,7 @@ function workflow_node_previous_state($entity, $entity_type, $field_name) {
     // Get Id. Is empty when creating a node.
     $entity_id = 0;
     if (!$sid) {
-      $entity_id = entity_id($entity_type, $entity);
+      $entity_id = $entity->id();
     }
     if (!$sid && $entity_id) {
       // Read the history with an explicit langcode.
@@ -1040,7 +1010,7 @@ function workflow_get_workflows_by_type($entity_bundle, $entity_type = 'node') {
     // Set the cache with a workflow object.
     if ($wid) {
       // $wid can be numeric or named.
-      $workflow = workflow_load_single($wid);
+      $workflow = Workflow::load($wid);
       $map[$entity_type][$entity_bundle] = $workflow;
     }
   }
@@ -1149,20 +1119,13 @@ function _workflow_get_sid_by_items(array $items) {
  * Gets the creation sid for a given $entity and $field_name.
  */
 function _workflow_get_workflow_creation_sid($entity_type, $entity, $field_name) {
-  $sid = 0;
-  $wid = 0;
-  if ($field_name) {
-    // A new Node with Workflow Field.
-    $field = field_info_field($field_name);
-    // $field['settings']['wid'] can be numeric or named.
-    $wid = $field['settings']['wid'];
-    $workflow = workflow_load_single($wid);
-  }
-  else {
-    // A new Node with Workflow Node.
-    list(, , $entity_bundle) = entity_extract_ids($entity_type, $entity);
-    $workflow = workflow_get_workflows_by_type($entity_bundle, $entity_type);
-  }
+  $sid = '';
+
+  $field_config = $entity->get($field_name)->getFieldDefinition();
+  $field_storage = $field_config->getFieldStorageDefinition();
+  $wid = $field_storage->getSetting('workflow_type');
+  $workflow = Workflow::load($wid);
+
   if ($workflow) {
     $sid = $workflow->getCreationSid();
   }
