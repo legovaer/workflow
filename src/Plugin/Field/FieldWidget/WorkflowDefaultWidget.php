@@ -407,8 +407,7 @@ class WorkflowDefaultWidget extends WidgetBase {
     // Display scheduling form, but only if entity is being edited and user has
     // permission. State change cannot be scheduled at entity creation because
     // that leaves the entity in the (creation) state.
-
-    if (TRUE  ) { // } || $settings_schedule == TRUE && $user->hasPermission('schedule workflow transitions')) {
+    if ($settings_schedule == TRUE && $user->hasPermission('schedule workflow transitions')) {
 // // @FIXME
 // // This looks like another module's variable. You'll need to rewrite this call
 // // to ensure that it uses the correct configuration object.
