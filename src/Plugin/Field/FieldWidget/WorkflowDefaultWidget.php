@@ -385,8 +385,12 @@ class WorkflowDefaultWidget extends WidgetBase {
       return $element; // <---- exit.
     }
     else {
+// TODO: repair the usage of $settings_title_as_name: no container if no details (schedule/comment)
       // Prepare a UI wrapper. This might be a fieldset.
-      $element['workflow']['#type'] = 'container'; // 'fieldset';
+      $element['workflow']['#type'] = 'container'; // 'details';
+//      $element['workflow']['#type'] = 'details';
+//      $element['workflow']['#description'] = $settings_title_as_name ? t('Change !name state', array('!name' => $workflow_label)) : t('Target state');
+//      $element['workflow']['#open'] = TRUE; // Controls the HTML5 'open' attribute. Defaults to FALSE.
       $element['workflow']['#attributes'] = array('class' => array('workflow-form-container'));
 
       // The 'options' widget. May be removed later if 'Action buttons' are chosen.
@@ -404,7 +408,7 @@ class WorkflowDefaultWidget extends WidgetBase {
     // permission. State change cannot be scheduled at entity creation because
     // that leaves the entity in the (creation) state.
 
-    if ($settings_schedule == TRUE && $user->hasPermission('schedule workflow transitions')) {
+    if (TRUE  ) { // } || $settings_schedule == TRUE && $user->hasPermission('schedule workflow transitions')) {
 // // @FIXME
 // // This looks like another module's variable. You'll need to rewrite this call
 // // to ensure that it uses the correct configuration object.
@@ -433,8 +437,9 @@ class WorkflowDefaultWidget extends WidgetBase {
         ),
       );
       $element['workflow']['workflow_scheduled_date_time'] = array(
-        '#type' => 'fieldset',
+         '#type' => 'details',
         '#title' => t('At'),
+        '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
         '#attributes' => array('class' => array('container-inline')),
         '#prefix' => '<div style="margin-left: 1em;">',
         '#suffix' => '</div>',

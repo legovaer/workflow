@@ -44,9 +44,11 @@ class WorkflowForm extends EntityForm {
     ];
 
     $form['basic'] = array(
-      '#type' => 'fieldset',
+      '#type' => 'details',
       '#title' => t('Workflow form settings'),
-    );
+      // '#description' => t('Lorem ipsum.'),
+      '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
+     );
 
     $form['basic']['options'] = array(
       '#type' => 'select',
@@ -76,8 +78,11 @@ class WorkflowForm extends EntityForm {
     );
 
     $form['schedule'] = array(
-      '#type' => 'fieldset',
+      '#type' => 'details',
       '#title' => t('Scheduling for Workflow'),
+      '#description' => t('Workflow transitions may be scheduled to a moment in the future.
+        Soon after the desired moment, the transition is executed by Cron.'),
+      '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
     );
 
     $form['schedule']['schedule'] = array(
@@ -86,8 +91,6 @@ class WorkflowForm extends EntityForm {
       '#attributes' => array('class' => array('container-inline')),
       '#title' => t('Allow scheduling of workflow transitions?'),
       '#default_value' => isset($workflow->options['schedule']) ? $workflow->options['schedule'] : 1,
-      '#description' => t('Workflow transitions may be scheduled to a moment in the future.
-      Soon after the desired moment, the transition is executed by Cron.'),
     );
 
     $form['schedule']['schedule_timezone'] = array(
@@ -99,8 +102,14 @@ class WorkflowForm extends EntityForm {
     );
 
     $form['comment'] = array(
-      '#type' => 'fieldset',
+      '#type' => 'details',
       '#title' => t('Comment for Workflow Log'),
+      '#description' => t(
+        'A Comment form can be shown on the Workflow Transition form so that the person
+         making a state change can record reasons for doing so. The comment is
+         then included in the node\'s workflow history.'
+      ),
+      '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
     );
 
     $form['comment']['comment_log_node'] = array(
@@ -113,13 +122,11 @@ class WorkflowForm extends EntityForm {
         2 => t('required'),
       ),
       '#attributes' => array('class' => array('container-inline')),
-      '#title' => t('Show a comment field in the workflow section of the editing form?'),
+      '#title' => t('Show comment on the Content edit form'),
       '#default_value' => isset($workflow->options['comment_log_node']) ? $workflow->options['comment_log_node'] : 0,
-      '#description' => t(
-        'On the node editing form, a Comment form can be shown so that the person
-         making the state change can record reasons for doing so. The comment is
-         then included in the node\'s workflow history.'
-      ),
+//      '#description' => t(
+//        'On the node editing form.'
+//      ),
     );
 
     $form['comment']['comment_log_tab'] = array(
@@ -132,44 +139,42 @@ class WorkflowForm extends EntityForm {
         2 => t('required'),
       ),
       '#attributes' => array('class' => array('container-inline')),
-      '#title' => t('Show a comment field in the workflow section of the workflow tab form?'),
+      '#title' => t('Show comment on the Workflow history tab of content'),
       '#default_value' => isset($workflow->options['comment_log_tab']) ? $workflow->options['comment_log_tab'] : 0,
-      '#description' => t(
-        'On the workflow tab, a Comment form can be shown so that the person
-        making the state change can record reasons for doing so. The comment
-        is then included in the node\'s workflow history.'
-      ),
+//      '#description' => t(
+//        'On the workflow tab.'
+//      ),
     );
 
     $form['watchdog'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Watchdog Logging for Workflow'),
+      '#type' => 'details',
+      '#title' => t('Watchdog'),
+      // '#description' => t('Lorem ipsum.'),
+      '#description' => t('Informational watchdog messages can be logged when a transition is executed (state of a node is changed).'),
+      '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
     );
 
     $form['watchdog']['watchdog_log'] = array(
       '#type' => 'radios',
       '#options' => $noyes,
       '#attributes' => array('class' => array('container-inline')),
-      '#title' => t('Log informational watchdog messages when a transition is executed (state of a node is changed)?'),
+      '#title' => t('Log watchdog messages'),
       '#default_value' => isset($workflow->options['watchdog_log']) ? $workflow->options['watchdog_log'] : 0,
-      '#description' => t('Optionally log transition state changes to watchdog.'),
     );
 
     $form['tab'] = array(
-      '#type' => 'fieldset',
+      '#type' => 'details',
       '#title' => t('Workflow tab permissions'),
-      '#collapsible' => TRUE,
-      '#collapsed' => FALSE,
+      '#description' => t("Every state change is recorded in database table
+        {workflow_node_history}. The history of the workflow can be shown on a
+        tab 'Workflow', which is shown on the entity view page."),
+      '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
     );
     $form['tab']['history_tab_show'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Use the workflow history, and show it on a separate tab.'),
+      '#title' => t('Use the workflow history, and show it on a separate tab. (If user has proper permissions.)'),
       '#required' => FALSE,
       '#default_value' => isset($workflow->options['history_tab_show']) ? $workflow->options['history_tab_show'] : 1,
-      '#description' => t("Every state change is recorded in table
-      {workflow_node_history}. If checked and user has proper permission, a
-      tab 'Workflow' is shown on the entity view page, which gives access to
-      the History of the workflow."),
     );
 
     $form['tab']['tab_roles'] = array(

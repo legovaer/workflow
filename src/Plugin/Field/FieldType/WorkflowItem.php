@@ -191,7 +191,8 @@ class WorkflowItem extends FieldItemBase {
       '#required' => TRUE,
       '#disabled' => $has_data,
       // FIXME TODO D8-port: repair link.
-      '#description' => t('Choose the Workflow type. Maintain workflows !url.', array('!url' => t('here'), $url)),
+//      '#description' => t('Choose the Workflow type. Maintain workflows !url.', array('!url' => t('here'), $url)),
+      '#description' => t('Choose the Workflow type. Maintain workflows first.'),
     );
 
     // Inform the user of possible states.
@@ -230,10 +231,11 @@ class WorkflowItem extends FieldItemBase {
         );
 
         $element['widget'] = array(
-          '#type' => 'fieldset',
+          '#type' => 'details',
           '#title' => t('Workflow widget'),
           '#description' => t('Set some global properties of the widgets for this
             workflow. Some can be altered per widget instance.'
+          '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
           ),
         );
         $element['widget']['options'] = array(
@@ -321,10 +323,9 @@ class WorkflowItem extends FieldItemBase {
         );
 
         $element['history'] = array(
-          '#type' => 'fieldset',
+          '#type' => 'details',
           '#title' => t('Workflow history'),
-          '#collapsible' => TRUE,
-          '#collapsed' => FALSE,
+          '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
         );
         $element['history']['history_tab_show'] = array(
           '#type' => 'checkbox',
