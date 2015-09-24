@@ -27,12 +27,11 @@ use Drupal\workflow\Entity\WorkflowState;
 /**
  * Implements hook_help().
  */
-function workflow_help($path, $arg) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
+function workflow_help($route_name, RouteMatchInterface $route_match) {
   $output = '';
-  switch ($path) {
-    case 'admin/help#workflow':
+
+  switch ($route_name) {
+    case 'help.page.workflow':
       $output .= '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t('The Workflow module adds a field to Entities to
         store field values as Workflow states. You can control "state transitions"

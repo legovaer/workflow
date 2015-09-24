@@ -14,6 +14,10 @@ use Drupal\workflow\Entity\Workflow;
 function workflow_ui_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
     case 'entity.workflow_workflow.collection':
+      return t('This page allows you to maintain Workflows. Once a workflow is
+        created, you can maintain your entity type and add a Field of type
+        \'Workflow\'.');
+
     case 'entity.workflow_workflow.add_form':
       return '';
 
