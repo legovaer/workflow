@@ -39,7 +39,7 @@ use Drupal\workflow\Entity\WorkflowConfigTransition;
  * @return mixed
  *   Only 'transition permitted' expects a boolean result.
  */
-function hook_workflow($op, $id, $new_sid, $entity, $force, $entity_type = '', $field_name = '', $transition = NULL, $user = NULL) {
+function hook_workflow($op, $id, $new_sid, $entity, $force, $entity_type = '', $field_name = '', $transition = NULL, AccountInterface $user = NULL) {
   switch ($op) {
     case 'transition permitted':
       // This is called in the following situations:

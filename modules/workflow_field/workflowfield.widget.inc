@@ -12,6 +12,8 @@
  * Implements hook_field_widget_info().
  */
 function workflowfield_field_widget_info() {
+//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
+
   return WorkflowDefaultWidget::settings();
 }
 
@@ -19,6 +21,8 @@ function workflowfield_field_widget_info() {
  * Implements hook_field_widget_settings_form().
  */
 function workflowfield_field_widget_settings_form($field, $instance) {
+//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
+
   $form = array();
   $form_state = array();
 
@@ -36,6 +40,8 @@ function workflowfield_field_widget_settings_form($field, $instance) {
  * This is a wrapper function for the 'workflow form' Widget. $form is modified by reference.
  */
 function workflowfield_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
+
   if (!isset($element['#entity'])) {
     // We are now on the 'Manage Fields | Edit' settings page, so do nothing.
     return $element;

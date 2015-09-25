@@ -8,6 +8,7 @@
 namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\workflow\Entity\WorkflowConfigTransition;
 
 /**
@@ -381,7 +382,7 @@ class Workflow extends ConfigEntityBase {
    * Uses WorkflowState::getOptions(), because this does a access check.
    * The first State ID is user-dependent!
    */
-  public function getFirstSid($entity_type, $entity, $field_name, $user, $force) {
+  public function getFirstSid($entity_type, $entity, $field_name, AccountInterface $user, $force) {
 //    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     $creation_state = $this->getCreationState();

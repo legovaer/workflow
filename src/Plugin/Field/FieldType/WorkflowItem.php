@@ -13,8 +13,12 @@ use Drupal\Core\Field\FieldConfigStorageBase;
 use Drupal\Core\Field\FieldItemBase;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Form\OptGroup;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\TypedData\DataDefinition;
+use Drupal\Core\TypedData\OptionsProviderInterface;
 use Drupal\Core\Url;
+use Drupal\options\Plugin\Field\FieldType\ListItemBase;
 use Drupal\workflow\Entity\Workflow;
 use Drupal\workflow\Entity\WorkflowState;
 
@@ -27,10 +31,13 @@ use Drupal\workflow\Entity\WorkflowState;
  *   description = @Translation("This field stores Workflow values for a certain Workflow type from a list of allowed 'value => label' pairs, i.e. 'Publishing': 1 => unpublished, 2 => draft, 3 => published."),
  *   category = @Translation("Workflow"),
  *   default_widget = "workflow_default",
- *   default_formatter = "basic_string",
+ *   default_formatter = "list_default",
  * )
  */
-class WorkflowItem extends FieldItemBase {
+class WorkflowItem extends ListItemBase {
+//class WorkflowItem extends FieldItemBase  implements OptionsProviderInterface {
+// TODO D8-port: perhaps even:
+//class WorkflowItem extends FieldStringItem {
 
   /**
    * {@inheritdoc}
@@ -43,16 +50,8 @@ class WorkflowItem extends FieldItemBase {
           'description' => 'The {workflow_states}.sid that this node is currently in.',
           'type' => 'varchar',
           'length' => 128,
-//          'unsigned' => TRUE,
-//          'not null' => TRUE,
-//          'default' => 0,
-//          'disp-width' => '10',
         ),
       ),
-      // 'primary key' => array('nid'),
-      // 'indexes' => array(
-      // 'nid' => array('nid', 'sid'),
-      // ),
       'indexes' => array(
         'value' => array('value'),
       ),
@@ -67,16 +66,18 @@ class WorkflowItem extends FieldItemBase {
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
 
     $properties['value'] = DataDefinition::create('string') // TODO D8-port : or 'any'
-      ->setLabel(t('Workflow state'))
+    ->setLabel(t('Workflow state'))
+      ->addConstraint('Length', array('max' => 128))
       ->setRequired(TRUE);
 
+//    TODO D8-port: test this.
     /*
     $properties['date'] = DataDefinition::create('WorkflowTransition')
       ->setLabel(t('Computed date'))
       ->setDescription(t('The computed DateTime object.'))
       ->setComputed(TRUE)
       ->setClass('\Drupal\datetime\DateTimeComputed')
-      ->setSetting('date source', 'value');
+       ->setSetting('date source', 'value');
 */
 
     return $properties;
@@ -86,8 +87,8 @@ class WorkflowItem extends FieldItemBase {
    * {@inheritdoc}
    */
   public function isEmpty() {
-    $value = $this->get('value')->getValue();
-    return $value === NULL || $value === '';
+    $is_empty = empty($this->value);
+    return $is_empty;
   }
 
   /**
@@ -112,7 +113,7 @@ class WorkflowItem extends FieldItemBase {
     $constraints = parent::getConstraints();
 
 //  dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
-/*
+    /*
     $max_length = 128;
     $constraints[] = $constraint_manager->create('ComplexData', array(
       'value' => array(
@@ -122,7 +123,7 @@ class WorkflowItem extends FieldItemBase {
         )
       ),
     ));
-*/
+    */
     return $constraints;
   }
 
@@ -132,11 +133,11 @@ class WorkflowItem extends FieldItemBase {
   public static function defaultStorageSettings() {
     return array(
       'workflow_type' => '',
+//      'allowed_values' => array(),
+      'allowed_values_function' => 'workflow_state_allowed_values',
 
-// TODO D8-port: below settings may be removed.
+// TODO D8-port: below settings may be (re)moved.
       /*
-            'allowed_values_function' => 'workflowfield_allowed_values', // For the list.module formatter
-            // 'allowed_values_function' => 'WorkflowItem::getAllowedValues', // For the list.module formatter.
             'widget' => array(
               'options' => 'select',
               'name_as_title' => 1,
@@ -160,11 +161,10 @@ class WorkflowItem extends FieldItemBase {
   public function storageSettingsForm(array &$form, FormStateInterface $form_state, $has_data) {
     $element = array();
 
-//    dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
-
     // Create list of all Workflow types. Include an initial empty value.
     // Validate each workflow, and generate a message if not complete.
     $workflows = array();
+    // $workflows = workflow_get_workflow_names();
     $workflows[''] = t('- Select a value -');
     foreach (Workflow::LoadMultiple() as $wid => $workflow) {
       if ($workflow->isValid()) {
@@ -195,40 +195,45 @@ class WorkflowItem extends FieldItemBase {
       '#description' => t('Choose the Workflow type. Maintain workflows first.'),
     );
 
-    // Inform the user of possible states.
-    // If no Workflow type is selected yet, do not show anything.
-    if ($wid) {
-      // Get a string representation to show all options.
-      $allowed_values_string = $this->_allowed_values_string($wid);
-      $element['allowed_values_string'] = array(
-        '#type' => 'textarea',
-        '#title' => t('Allowed values for the selected Workflow type'),
-        '#default_value' => $allowed_values_string,
-        '#rows' => 10,
-        '#access' => TRUE, // User can see the data,
-        '#disabled' => TRUE, // .. but cannot change them.
-      );
-    }
+    // Get a string representation to show all options.
+
+    /*
+     * Overwrite ListItemBase::storageSettingsForm().
+     */
+
+    $allowed_values = WorkflowState::loadMultiple([], $wid);
+    $allowed_values_function = $this->getSetting('allowed_values_function');
+
+    $element['allowed_values'] = array(
+      '#type' => ($wid) ? 'textarea' : 'hidden',
+      '#title' => t('Allowed values for the selected Workflow type'),
+      '#default_value' => $this->allowedValuesString($allowed_values),
+      '#rows' => 10,
+      '#access' => TRUE, // User can see the data,
+      '#disabled' => TRUE, // .. but cannot change them.
+      '#element_validate' => array(array(get_class($this), 'validateAllowedValues')),
+
+      '#field_has_data' => $has_data,
+      '#field_name' => $this->getFieldDefinition()->getName(),
+      '#entity_type' => $this->getEntity()->getEntityTypeId(),
+      '#allowed_values' => $allowed_values,
+    );
+
+    $element['allowed_values']['#description'] = $this->allowedValuesDescription();
 
 //    dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
 
-    /*
-     * TODO D8-port: check if all below features are in WorkflowForm::form().
-     */
     return $element;
 
+//    return $element + parent::storageSettingsForm($form, $form_state, $has_data)
+
+//  TODO D8-port: below settings may be (re)moved.
     /*
     $field_info = self::getInfo();
     $settings = [];
     //TODO     $settings = $this->field['settings'];
     $settings += $field_info['workflow']['settings'];
     $settings['widget'] += $field_info['workflow']['settings']['widget'];
-
-        // The allowed_values_functions is used in the formatter from list.module.
-        $element['allowed_values_function'] = array(
-          '#type' => 'value',
-          '#value' => $settings['allowed_values_function'], // = 'workflowfield_allowed_values',
-        );
 
         $element['widget'] = array(
           '#type' => 'details',
@@ -351,6 +356,52 @@ class WorkflowItem extends FieldItemBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  protected function allowedValuesDescription() {
+    return '';
+  }
+
+  /*
+   * Generates a string representation of an array of 'allowed values'.
+   *
+   * This string format is suitable for edition in a textarea.
+   *
+   * @param array $states
+   *   An array of WorkflowStates, where array keys are values and array values are
+   *   labels.
+   * @param $wid
+   *   A Workflow ID.
+   *
+   * @return string
+   *   The string representation of the $states array:
+   *    - Values are separated by a carriage return.
+   *    - Each value is in the format "value|label" or "value".
+   */
+  protected function allowedValuesString($states) {
+    $lines = array();
+
+    $wid = $this->getSetting('workflow_type');
+
+    $previous_wid = -1;
+    foreach ($states as $key => $state) {
+      // Only show enabled states.
+      if ($state->isActive()) {
+        // Show a Workflow name between Workflows, if more then 1 in the list.
+        if ((!$wid) && ($previous_wid <> $state->wid)) {
+          $previous_wid = $state->wid;
+          $workflow = Workflow::load($previous_wid);
+          $lines[] = $workflow->label() . "'s states: ";
+        }
+        $label = SafeMarkup::checkPlain(t($state->label()));
+        $lines[] = '   ' . $key. '|' . $label;
+//        $lines[] = "$key|$value";
+      }
+    }
+    return implode("\n", $lines);
+  }
+
+  /**
    * Implements hook_field_insert() -> FieldItemInterface::insert().
    */
   public function insertTODO() {
@@ -401,72 +452,85 @@ class WorkflowItem extends FieldItemBase {
     }
   }
 
-  /**
-   * Helper functions for the Field Settings page.
-   *
-   * Generates a string representation of an array of 'allowed values'.
-   * This is a copy from list.module's list_allowed_values_string().
-   * The string format is suitable for edition in a textarea.
-   *
-   * @param int $wid
-   *   The Workflow Id.
-   *
-   * @return
-   *   The string representation of the $values array:
-   *    - Values are separated by a carriage return.
-   *    - Each value is in the format "value|label" or "value".
-   */
-  protected function _allowed_values_string($wid = '') {
-    $lines = array();
+//  /**
+//   * {@inheritdoc}
+//   */
+//  public static function generateSampleValue(FieldDefinitionInterface $field_definition) {
+//    // @todo Implement this once https://www.drupal.org/node/2238085 lands.
+//    $values['value'] = rand(pow(10, 8), pow(10, 9)-1);
+//    return $values;
+//  }
 
-    $states = WorkflowState::loadMultiple([], $wid);
-    $previous_wid = -1;
-    foreach ($states as $state) {
-      // Only show enabled states.
-      if ($state->isActive()) {
-        // Show a Workflow name between Workflows, if more then 1 in the list.
-        if ((!$wid) && ($previous_wid <> $state->wid)) {
-          $previous_wid = $state->wid;
-          $workflow = Workflow::load($previous_wid);
-          $lines[] = $workflow->label() . "'s states: ";
-        }
-        $label = SafeMarkup::checkPlain(t($state->label()));
-        $lines[] = '   ' . $state->id() . ' | ' . $label;
-      }
-    }
-    return implode("\n", $lines);
-  }
 
   /**
-   * Helper function for list.module formatter.
-   *
-   * Callback function for the list module formatter.
-   *
-   * @see list_allowed_values
-   *   "The strings are not safe for output. Keys and values of the array should
-   *   "be sanitized through field_filter_xss() before being displayed.
-   *
    * @return array
-   *   The array of allowed values. Keys of the array are the raw stored values
-   *   (number or text), values of the array are the display labels.
-   *   It contains all possible values, beause the result is cached,
-   *   and used for all nodes on a page.
+   *   An array of settable options for the object that may be used in an
+   *   Options widget, usually when new data should be entered. It may either be
+   *   a flat array of option labels keyed by values, or a two-dimensional array
+   *   of option groups (array of flat option arrays, keyed by option group
+   *   label). Note that labels should NOT be sanitized.
    */
-  public function getAllowedValues() {
-//    dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
-
-    // Get all state names, including inactive states.
-    $options = workflow_get_workflow_state_names(0, $grouped = FALSE, $all = TRUE);
-    return $options;
-  }
-
 
   /**
    * {@inheritdoc}
    */
-//  public static function generateSampleValue(FieldDefinitionInterface $field_definition) {
-//    $values['value'] = rand(pow(10, 8), pow(10, 9)-1);
-//    return $values;
-//  }
+  public function getPossibleValues(AccountInterface $account = NULL) {
+    // Flatten options firstly, because Possible Options may contain group
+    // arrays.
+    $flatten_options = OptGroup::flattenOptions($this->getPossibleOptions($account));
+    return array_keys($flatten_options);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getPossibleOptions(AccountInterface $account = NULL) {
+    $allowed_options = array();
+
+    $definition = $this->getFieldDefinition()->getFieldStorageDefinition();
+    $entity = $this->getEntity();
+    $cacheable = TRUE;
+
+    // Use the 'allowed_values_function' to calculate the options.
+    $allowed_options = workflow_state_allowed_values($definition, $entity, $cacheable, $account);
+
+    return $allowed_options;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getSettableValues(AccountInterface $account = NULL) {
+    // Flatten options firstly, because Settable Options may contain group
+    // arrays.
+    $flatten_options = OptGroup::flattenOptions($this->getSettableOptions($account));
+    return array_keys($flatten_options);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getSettableOptions(AccountInterface $account = NULL) {
+    $allowed_options = array();
+
+    // Do not show the TransitionForm in the 'Default value' of a Field on
+    //  page /admin/structure/types/manage/MY_CONTENT_TYPE/fields/MY_FIELD_NAME .
+    $url_components = explode('/', $_SERVER['REQUEST_URI']);
+    if (isset($url_components[6])
+        && ($url_components[1] == 'admin')
+        && ($url_components[2] == 'structure')
+        && ($url_components[6] == 'fields')) {
+      return $allowed_options = array();
+    };
+
+    $definition = $this->getFieldDefinition()->getFieldStorageDefinition();
+    $entity = $this->getEntity();
+    $cacheable = TRUE;
+
+    // Use the 'allowed_values_function' to calculate the options.
+    $allowed_options = workflow_state_allowed_values($definition, $entity, $cacheable, $account);
+
+    return $allowed_options;
+  }
 
 }

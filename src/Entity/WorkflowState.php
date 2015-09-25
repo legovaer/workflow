@@ -12,6 +12,7 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\Entity;
 use Drupal\Core\Field\EntityReferenceFieldItemList;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountProxy;
 
 /**
@@ -358,7 +359,7 @@ class WorkflowState extends ConfigEntityBase {
    * @return bool $show_widget
    *   TRUE = a form (a.k.a. widget) must be shown; FALSE = no form, a formatter must be shown instead.
    */
-  public function showWidget($entity_type, $entity, $field_name, $user, $force) {
+  public function showWidget($entity_type, $entity, $field_name, AccountInterface $user, $force) {
 //    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ );
     $options = $this->getOptions($entity_type, $entity, $field_name, $user, $force);
     $count = count($options);
@@ -387,7 +388,7 @@ class WorkflowState extends ConfigEntityBase {
    * @return array
    *   An array of id=>transition pairs with allowed transitions for State.
    */
-  public function getTransitions($entity_type = '', Entity $entity = NULL, $field_name = '', AccountProxy $user = NULL, $force = FALSE) {
+  public function getTransitions($entity_type = '', Entity $entity = NULL, $field_name = '', AccountInterface $user = NULL, $force = FALSE) {
     $transitions = array();
 
     $current_sid = $this->id();
@@ -468,6 +469,7 @@ class WorkflowState extends ConfigEntityBase {
       // Modules may veto a choice by returning FALSE.
       // In this case, the choice is never presented to the user.
       if ($roles != 'ALL') {
+        // TODO: D8-port: simplify interface for workflow_hook
         $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition permitted', $current_sid, $new_sid, $entity, $force, $entity_type, $field_name, $transition, $user]);
       }
 
@@ -494,7 +496,7 @@ class WorkflowState extends ConfigEntityBase {
    *   If $this->id() is 0 or FALSE, then labels of ALL states of the State's
    *   Workflow are returned.
    */
-  public function getOptions($entity_type, $entity, $field_name, $user, $force = FALSE) {
+  public function getOptions($entity_type, $entity, $field_name, AccountInterface $user = NULL, $force = FALSE) {
     $options = array();
 
     // Define an Entity-specific cache per page load.

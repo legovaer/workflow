@@ -1,0 +1,10 @@
+name: 'Workflow Field'
+description: 'Defines a Workflow field, widget and formatter.'
+package: Workflow
+type: module
+core: 8.x
+
+dependencies:
+  - field
+  - options
+  - workflow

@@ -10,10 +10,13 @@
  * All hooks are wrapper functions for a D8-style WorkflowDefaultWidget object.
  */
 
+use Drupal\Core\Language\Language;
+
 /**
  * Implements hook_field_formatter_info().
  */
 function workflowfield_field_formatter_info() {
+//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
   return WorkflowDefaultWidget::settings();
 }
 
@@ -22,8 +25,10 @@ function workflowfield_field_formatter_info() {
  *
  * Shows current State + Widget on a Node View page or a Workflow History tab.
  */
-function workflowfield_field_formatter_view($entity_type, $entity, $field, $instance, $langcode = LANGUAGE_NONE, $items = array(), $display = array()) {
-  global $user; // @todo #2287057: OK?
+function workflowfield_field_formatter_view($entity_type, $entity, $field, $instance, $langcode = Language::LANGCODE_NOT_SPECIFIED, $items = array(), $display = array()) {
+//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
+
+  $user = \Drupal::currentUser(); // @todo #2287057: OK?
   // @todo: Perhaps global user is not always the correct user.
   // E.g., on ScheduledTransition->execute()? But this function is mostly used in UI.
 
@@ -44,7 +49,7 @@ function workflowfield_field_formatter_view($entity_type, $entity, $field, $inst
 
   // Check permission, so that even with state change rights,
   // the form can be suppressed from the node view (#1893724).
-  if (!user_access('show workflow transition form')) {
+  if (!\Drupal::currentUser()->hasPermission('show workflow transition form')) {
     return $list_element;
   }
   if ($entity_type == 'comment') {
@@ -62,7 +67,7 @@ function workflowfield_field_formatter_view($entity_type, $entity, $field, $inst
   // Ultimately, this is a wrapper for WorkflowDefaultWidget.
   $entity_id = entity_id($entity_type, $entity);
   $form_id = implode('_', array('workflow_transition_form', $entity_type, $entity_id, $field_id));
-  $element = drupal_get_form($form_id, $field, $instance, $entity_type, $entity);
+  $element = \Drupal::formBuilder()->getForm($form_id, $field, $instance, $entity_type, $entity);
 
   return $element;
 }

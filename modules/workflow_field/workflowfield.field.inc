@@ -5,6 +5,12 @@
  * Defines a Workflow field, widget and formatter. (copied from list field).
  */
 
+use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\workflow\Entity\WorkflowState;
+
 /**
  * Implements hook_form_FORM_ID_alter().
  *
@@ -14,23 +20,35 @@
  * @todo: perhaps this is core functionality, but these values are only saved
  *        when the site builder explicitly save the instance settings. :-(
  */
-function workflowfield_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
-//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
+function workflowfield_form_field_storage_config_edit_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  $field_name = $form_state->getFormObject()->getEntity()->getType();
 
-  if ($form['#field']['type'] == 'workflow') {
+  if ($field_name == 'workflow') {
+    // Make sure only 1 value can be entered in the Workflow field.
+    $form['cardinality_container']['cardinality']['#default_value'] = 'number';
+    $form['cardinality_container']['cardinality']['#disabled'] = TRUE;
+    $form['cardinality_container']['cardinality_number']['#default_value'] = 1;
+    $form['cardinality_container']['cardinality_number']['#disabled'] = TRUE;
+    $form['cardinality_container']['cardinality_number']['#states'] = [];
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function workflowfield_form_field_config_edit_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  $field_name = $form_state->getFormObject()->getEntity()->getType();
+
+  if ($field_name == 'workflow') {
     // The Workflow field must have a value, so set to required.
-    $form['instance']['required']['#default_value'] = 1;
-    $form['instance']['required']['#disabled'] = TRUE;
+    $form['required']['#default_value'] = 1;
+    $form['required']['#disabled'] = TRUE;
 
     // User may not set a default value (this is done by the Workflow module).
     // @see WorkflowState::getOptions()
-    $form['instance']['default_value_widget']['#type'] = 'hidden';
-    $form['instance']['default_value_widget']['#disabled'] = TRUE;
-    unset($form['instance']['default_value_widget']);
-
-    // Make sure only 1 value can be entered in the Workflow field.
-    $form['field']['cardinality']['#default_value'] = 1;
-    $form['field']['cardinality']['#disabled'] = TRUE;
+    $form['default_value']['#type'] = 'hidden';
+    $form['default_value']['widget']['#default_value'] = '';
+    $form['default_value']['widget']['#disabled'] = TRUE;
   }
 }
 
@@ -119,9 +137,8 @@ function _workflowfield_metadata_property_set($entity, $name, $value, $langcode,
  * The module reuses the formatters defined in list.module.
  */
 function workflowfield_field_formatter_info_alter(&$info) {
-//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
-
-  $info['list_default']['field types'][] = 'workflow';
+  $info['list_default']['field_types'][] = 'workflow';
+  $info['basic_string']['field_types'][] = 'workflow';
 }
 
 /**
@@ -133,101 +150,52 @@ function workflowfield_field_formatter_info_alter(&$info) {
  * @see workflowfield_options_list()
  */
 function workflowfield_field_widget_info_alter(&$info) {
-//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
-
-  $info['options_select']['field types'][] = 'workflow';
-  $info['options_buttons']['field types'][] = 'workflow';
+  $info['options_select']['field_types'][] = 'workflow';
+  $info['options_buttons']['field_types'][] = 'workflow';
 }
 
 /**
- * Implements hook_field_prepare_view().
+ * {@inheritdoc}
  *
- * This hook is needed in the following case:
- * - Edit a node with Workflow Field;
- * - Change the value of the widget;
- * - Click [Preview] button;
- * See the "Notice: Undefined index: value in list_field_formatter_view() (line 467+472 of \modules\field\modules\list\list.module)."
- * This is because in the Workflow Widget, the data is stored in a 'workflow'
- * structure, not a 'value' value.
+ * @see callback_allowed_values_function()
  *
- * However, it is a pity that we run this hook in every view :-(
- *
- * TODO D8-port: hook_field_prepare_view()	Removed, in favour of prepareView() on Formatters.
- * Field types that implemented specific prepare_view steps with this hook should consider providing
- * a base prepareView() implementation in an abstract base formatter class instead.
+ * deprecated: workflowfield_options_list --> workflow_state_allowed_values
  */
-function workflowfield_field_prepare_view($entity_type, $entities, $field, $instances, $langcode, &$items) {
-//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
+function workflow_state_allowed_values(FieldStorageDefinitionInterface $definition, FieldableEntityInterface $entity = NULL, &$cacheable = TRUE, AccountInterface $user = NULL) {
+//function callback_allowed_values_function(FieldStorageDefinitionInterface $definition, FieldableEntityInterface $entity = NULL, &$cacheable = TRUE) {
+// N.B. the parameter $user is added by Workflow module.
+  $allowed_options = array();
 
-  // I guess Preview mode is only with 1 entity at a time.
-  if (count ( $items ) !== 1) {
-    return;
+  if (!$user) {
+    $user = \Drupal::currentUser(); // @todo #2287057: OK?
+    // @todo: Perhaps global user is not always the correct user.
+    // E.g., on ScheduledTransition->execute()? But this function is mostly used in UI.
   }
 
-  foreach ($items as $id => &$item_array) {
-    foreach ($item_array as $index => &$item) {
-      if (!isset($item['value'])) {
-        $item['value'] = isset($item['workflow']['workflow_sid']) ? $item['workflow']['workflow_sid'] : '';
-      }
-    }
-  }
-}
-
-/**
- * Implements hook_field_storage_config_delete()().
- *
- * @todo: implement functionality from workflow_node_delete().
- */
-/*
-// function workflow_hook_field_storage_config_delete()($entity_type, $entity, $field, $instance, $langcode, &$items) {
-// }
- */
-
-/**
- * Callback function for list.module formatter.
- *
- * Returns array of allowed values when using a 'core' list formatter,
- * instead of the 'workflow' formatter.
- *
- * @see list_allowed_values()
- */
-function workflowfield_allowed_values($field, $instance, $entity_type, $entity) {
-//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
-
-  $workflow_field = new WorkflowItem($field, $instance, $entity_type, $entity);
-  return $workflow_field->getAllowedValues();
-}
-
-/**
- * Implements hook_options_list().
- *
- * Callback function for the default Options widgets.
- *
- * @todo: move to a class.
- */
-function workflowfield_options_list($field, $instance, $entity_type, $entity) {
-//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
-
-  $user = \Drupal::currentUser(); // @todo #2287057: OK?
-  // @todo: Perhaps global user is not always the correct user.
-  // E.g., on ScheduledTransition->execute()? But this function is mostly used in UI.
-
-  $options = array();
+  $entity_type = $entity->getEntityTypeId();
+  $field_name = $definition->getName();
 
   if ($entity) {
     // Get the allowed new states for the entity's current state.
-    $field_name = $field['field_name'];
+    // TODO D8-port: overwrite getValue().
+    // $sid = $value = $this->getValue();
     $sid = workflow_node_current_state($entity, $entity_type, $field_name);
-    $state = workflow_state_load_single($sid);
-    $options = $state->getOptions($entity_type, $entity, $field_name, $user, FALSE);
+    /* @var $state Drupal\workflow\Entity\WorkflowState */
+    $state = WorkflowState::load($sid);
+    $allowed_options = $state->getOptions($entity_type, $entity, $field_name, $user, FALSE);
   }
   else {
-    // $field['settings']['wid'] can be numeric or named.
-    if ($workflow = workflow_load_single($field['settings']['wid'])) {
+  //  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__.'/'.__LINE__);
+
+    // Create an empty State. This triggers to show all possible states for the Workflow.
+    $wid = $definition->getSetting('workflow_type');
+    if ($workflow = Workflow::load($wid)) {
       // There is no entity, E.g., on the Rules action "Set a data value".
-      $state = new WorkflowState(array('wid' => $workflow->wid));
-      $options = $state->getOptions('', NULL, '', $user, FALSE);
+      /* @var $state Drupal\workflow\Entity\WorkflowState */
+      $state = WorkflowState::create(['wid' => $wid, 'id' => '']);
+      $allowed_options = $state->getOptions('', NULL, '', $user, FALSE);
     }
   }
-  return $options;
+
+  return $allowed_options;
 }

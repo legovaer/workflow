@@ -807,6 +807,8 @@ function workflow_get_roles($permission = 'participate in workflow') {
  *
  * @return array $options
  *   An array of $sid => state->label(), grouped per Workflow.
+ *
+ * @todo D8-port: deprecate workflow_get_workflow_state_names() --> workflow_state_allowed_values()
  */
 function workflow_get_workflow_state_names($wid = '', $grouped = FALSE, $all = FALSE) {
 //  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
@@ -842,13 +844,14 @@ function workflow_get_workflow_state_names($wid = '', $grouped = FALSE, $all = F
  *
  * @return array $options
  *   An array of $wid => workflow->label().
+ *
+ * @todo D8-port: deprecate workflow_get_workflow_names() --> workflow_allowed_values()
  */
 function workflow_get_workflow_names() {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
   $options = array();
-  foreach (workflow_load_multiple() as $workflow) {
-    $options[$workflow->wid] = $workflow->label();
+
+  foreach (Workflow::LoadMultiple() as $wid => $workflow) {
+    $options[$wid] = $workflow->label();
   }
 
   return $options;

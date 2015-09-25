@@ -17,6 +17,7 @@ use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Render\Element\Container;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\workflow\Entity\Workflow;
 use Drupal\workflow\Entity\WorkflowState;
@@ -95,14 +96,7 @@ class WorkflowDefaultWidget extends WidgetBase {
    * @todo D8: change "array $items" to "FieldInterface $items"
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
-
-    // Do not show the TransitionForm in the 'Default value' of a Field on
-    //  page /admin/structure/types/manage/MY_CONTENT_TYPE/fields/MY_FIELD_NAME .
-    $url_components = explode('/', $_SERVER['REQUEST_URI']);
-    if (isset($url_components[6]) && ('fields' == $url_components[6])) {
-      //     $form = array();
-      return $element = array();
-    };
+      dpm('TODO D8-port (with transition): test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
 
     /* @var items Drupal\workflow\Plugin\Field\FieldType\WorkflowItem[] */
     $item = $items[$delta];
@@ -753,7 +747,7 @@ class WorkflowDefaultWidget extends WidgetBase {
    *
    * This merely extracts the transition from the form/widget. No validation.
    */
-  public function getTransition($old_sid, array $items, $field_name, stdClass $user) {
+  public function getTransition($old_sid, array $items, $field_name, AccountInterface $user) {
 //    dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__);
 
     $entity_type = $this->entity_type;
