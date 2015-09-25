@@ -23,12 +23,12 @@ workflow.ui.workflow_states:
   base_route: entity.workflow_workflow.edit_form
   weight: 11
 workflow.ui.workflow_transitions:
-  title: 'Transitions'
+  title: 'Transition roles'
   route_name: entity.workflow_transition.collection
   base_route: entity.workflow_workflow.edit_form
   weight: 12
 workflow.ui.workflow_labels:
-  title: 'Labels'
+  title: 'Transition labels'
   route_name: entity.workflow_label.collection
   base_route: entity.workflow_workflow.edit_form
   weight: 13

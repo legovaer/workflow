@@ -45,11 +45,11 @@ use Drupal\workflow\Entity\ConfigEntityStorage;
 class WorkflowConfigTransition extends ConfigEntityBase {
 
   // Transition data.
-  public $id = 0;
+  public $id;
   // public $old_sid = 0;
   // public $new_sid = 0;
-  public $sid = 0; // @todo D8: remove $sid, use $new_sid. (requires conversion of Views displays.)
-  public $target_sid = 0;
+  public $sid; // @todo D8: remove $sid, use $new_sid. (requires conversion of Views displays.)
+  public $target_sid;
   public $roles = array();
 
   // Extra fields.
@@ -63,7 +63,9 @@ class WorkflowConfigTransition extends ConfigEntityBase {
 
   public function __construct(array $values = array(), $entityType = NULL) {
     // Please be aware that $entity_type and $entityType are different things!
-    return parent::__construct($values, $entityType = 'workflow_config_transition');
+    $result = parent::__construct($values, $entityType = 'workflow_config_transition');
+
+    return $result;
   }
 
   /**

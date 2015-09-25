@@ -92,3 +92,13 @@ function workflow_ui_url_get_title() {
   $title = t('Edit Workflow %label', ['$entity' => 'Workflow', '%label' => $label]);
   return $title;
 }
+
+/**
+ * Helper function to determine Workflow from Workflow UI URL.
+ */
+function workflow_ui_url_get_form_type($url = '' ) {
+  // For some reason, $_SERVER is not alowed as default.
+  $url = ($url == '') ? $_SERVER['REQUEST_URI'] : $url;
+  $type = explode('/', $url)[6];
+  return $type;
+}
