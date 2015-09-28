@@ -89,7 +89,7 @@ function workflow_requirements($phase) {
  * Implements hook_schema().
  */
 function workflow_schema() {
-
+    dpm('TODO D8-port: test function workflow.install::' . __FUNCTION__ .' ');
   $schema['workflow_scheduled_transition'] = array(
     'fields' => array(
       'entity_type' => array(
@@ -99,98 +99,8 @@ function workflow_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      'nid' => array(
+      'entity_id' => array(
         'description' => 'The entity ID of the object this transition belongs to.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-        'disp-width' => '10',
-      ),
-      'field_name' => array(
-        'description' => 'The name of the field the transition relates to.',
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'language' => array(
-        'description' => 'The {languages}.language of the entity.',
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'delta' => array(
-        'description' => 'The sequence number for this data item, used for multi-value fields',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'old_sid' => array(
-        'description' => 'The {workflow_states}.sid this state starts at.',
-        'type' => 'varchar_ascii',
-        'length' => 128,
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-        'disp-width' => '10',
-      ),
-      'sid' => array(
-        'description' => 'The {workflow_states}.sid this state transitions to.',
-        'type' => 'varchar_ascii',
-        'length' => 128,
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-        'disp-width' => '10',
-      ),
-      'uid' => array(
-        'description' => 'The user who scheduled this state transition.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-        'disp-width' => '10',
-      ),
-      'scheduled' => array(
-        'description' => 'The date this transition is scheduled for.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-        'disp-width' => '10',
-      ),
-      'comment' => array(
-        'description' => 'The comment explaining this transition.',
-        'type' => 'text',
-        'size' => 'big',
-        'not null' => FALSE,
-      ),
-    ),
-    'indexes' => array(
-      'entity_type' => array('entity_type'),
-      'entity_id' => array('entity_type', 'nid'),
-    ),
-  );
-
-  $schema['workflow_node_history'] = array(
-    'fields' => array(
-      'hid' => array(
-        'description' => 'The unique ID for this record.',
-        'type' => 'serial',
-        'not null' => TRUE,
-      ),
-      'entity_type' => array(
-        'description' => 'The type of entity this transition belongs to.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'nid' => array(
-        'description' => 'The {node}.nid this record is for.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -212,8 +122,8 @@ function workflow_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      'language' => array(
-        'description' => 'The {languages}.language of the entity.',
+      'langcode' => array(
+        'description' => 'The {languages}.langcode of the entity.',
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
@@ -226,7 +136,105 @@ function workflow_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'old_sid' => array(
+      'from_sid' => array(
+        'description' => 'The {workflow_states}.sid this transition starts at.',
+        'type' => 'varchar_ascii',
+        'length' => 128,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'disp-width' => '10',
+      ),
+      'to_sid' => array(
+        'description' => 'The {workflow_states}.sid this transitions ended.',
+        'type' => 'varchar_ascii',
+        'length' => 128,
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'disp-width' => '10',
+      ),
+      'uid' => array(
+        'description' => 'The user who scheduled this state transition.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'disp-width' => '10',
+      ),
+      'comment' => array(
+        'description' => 'The comment explaining this transition.',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ),
+      'scheduled' => array(
+        'description' => 'The date this transition is scheduled for.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'disp-width' => '10',
+      ),
+    ),
+    'indexes' => array(
+      'entity_type' => array('entity_type'),
+      'entity_id' => array('entity_type', 'entity_id'),
+    ),
+  );
+
+  $schema['workflow_node_history'] = array(
+    'fields' => array(
+      'hid' => array(
+        'description' => 'The unique ID for this record.',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'entity_type' => array(
+        'description' => 'The type of entity this transition belongs to.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'entity_id' => array(
+        'description' => 'The {entity}.entity_id this record is for.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'disp-width' => '10',
+      ),
+      'revision_id' => array(
+        'description' => 'The current version identifier.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'length' => 10,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'field_name' => array(
+        'description' => 'The name of the field the transition relates to.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'langcode' => array(
+        'description' => 'The {languages}.langcode of the entity.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'delta' => array(
+        'description' => 'The sequence number for this data item, used for multi-value fields',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'from_sid' => array(
         'description' => 'The {workflow_states}.sid this transition started as.',
         'type' => 'varchar_ascii',
         'length' => 128,
@@ -235,7 +243,7 @@ function workflow_schema() {
         'default' => 0,
         'disp-width' => '10',
       ),
-      'sid' => array(
+      'to_sid' => array(
         'description' => 'The {workflow_states}.sid this transition transitioned to.',
         'type' => 'varchar_ascii',
         'length' => 128,
@@ -252,8 +260,8 @@ function workflow_schema() {
         'default' => 0,
         'disp-width' => '10',
       ),
-      'stamp' => array(
-        'description' => 'The unique stamp for this transition.',
+      'timestamp' => array(
+        'description' => 'The unique timestamp for this transition.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -269,7 +277,7 @@ function workflow_schema() {
     ),
     'primary key' => array('hid'),
     'indexes' => array(
-      'sid' => array('entity_type', 'nid', 'sid'),
+      'sid' => array('entity_type', 'entity_id', 'to_sid'),
     ),
   );
 

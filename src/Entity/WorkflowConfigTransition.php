@@ -9,6 +9,7 @@ namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\workflow\Entity\ConfigEntityStorage;
 
 /**
@@ -33,8 +34,8 @@ use Drupal\workflow\Entity\ConfigEntityStorage;
  *     "id",
  *     "label",
  *     "module",
- *     "sid",
- *     "target_sid",
+ *     "from_sid",
+ *     "to_sid",
  *     "roles",
  *   },
  *   links = {
@@ -46,10 +47,8 @@ class WorkflowConfigTransition extends ConfigEntityBase {
 
   // Transition data.
   public $id;
-  // public $old_sid = 0;
-  // public $new_sid = 0;
-  public $sid; // @todo D8: remove $sid, use $new_sid. (requires conversion of Views displays.)
-  public $target_sid;
+  public $from_sid;
+  public $to_sid;
   public $roles = array();
 
   // Extra fields.
@@ -69,6 +68,14 @@ class WorkflowConfigTransition extends ConfigEntityBase {
   }
 
   /**
+   * Helper function for __construct. Used for all children of WorkflowTransition (aka WorkflowScheduledTransition)
+   */
+  public function setValues($from_sid, $to_sid) {
+    $this->from_sid = $from_sid;
+    $this->to_sid = $to_sid;
+  }
+
+  /**
    * {@inheritdoc}
    *
    * @return static[]
@@ -85,7 +92,7 @@ class WorkflowConfigTransition extends ConfigEntityBase {
     // To avoid double posting, check if this (new) transition already exist.
     if (empty($this->id())) {
       if ($workflow) {
-        $config_transitions = $workflow->getTransitionsBySidTargetSid($this->sid, $this->target_sid);
+        $config_transitions = $workflow->getTransitionsByStateId($this->from_sid, $this->to_sid);
         $config_transition = reset($config_transitions);
         if ($config_transition) {
           $this->set('id', $config_transition->id());
@@ -95,7 +102,7 @@ class WorkflowConfigTransition extends ConfigEntityBase {
 
     // Create the machine_name. This can be used to rebuild/revert the Feature in a target system.
     if (empty($this->id())) {
-      $this->set('id', implode('_', [$workflow->id(), $this->sid, $this->target_sid]));
+      $this->set('id', implode('_', [$workflow->id(), $this->from_sid, $this->to_sid]));
     }
 
 //    dpm('TODO D8-port: test function WorkflowConfigTransition::' . __FUNCTION__ .' '. $this->id());
@@ -136,16 +143,16 @@ class WorkflowConfigTransition extends ConfigEntityBase {
     // See \Drupal\Core\Config\Entity\ConfigEntityBase::sort().
 
     // First sort on From-State.
-    $old_state_a = $a->getOldState();
-    $old_state_b = $b->getOldState();
-    if ($old_state_a->weight < $old_state_b->weight) return -1;
-    if ($old_state_a->weight > $old_state_b->weight) return +1;
+    $from_state_a = $a->getFromState();
+    $from_state_b = $b->getFromState();
+    if ($from_state_a->weight < $from_state_b->weight) return -1;
+    if ($from_state_a->weight > $from_state_b->weight) return +1;
 
     // Then sort on To-State.
-    $new_state_a = $a->getNewState();
-    $new_state_b = $b->getNewState();
-    if ($new_state_a->weight < $new_state_b->weight) return -1;
-    if ($new_state_a->weight > $new_state_b->weight) return +1;
+    $to_state_a = $a->getToState();
+    $to_state_b = $b->getToState();
+    if ($to_state_a->weight < $to_state_b->weight) return -1;
+    if ($to_state_a->weight > $to_state_b->weight) return +1;
 
     return 0;
   }
@@ -175,25 +182,38 @@ class WorkflowConfigTransition extends ConfigEntityBase {
     return Workflow::load($this->wid);
   }
 
-  public function getOldState() {
-    return WorkflowState::load($this->sid);
-  }
-
-  public function getNewState() {
-    return WorkflowState::load($this->target_sid);
+  /**
+   * {@inheritdoc}
+   */
+  public function getFromState() {
+    return WorkflowState::load($this->from_sid);
   }
 
   /**
-   * Verifies if the given transition is allowed.
-   *
-   * - In settings;
-   * - In permissions;
-   * - By permission hooks, implemented by other modules.
-   *
-   * @return bool
-   *   TRUE if OK, else FALSE.
+   * {@inheritdoc}
    */
-  public function isAllowed($user_roles) {
+  public function getToState() {
+    return WorkflowState::load($this->to_sid);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFromSid() {
+    return $this->from_sid;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getToSid() {
+    return $this->to_sid;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isAllowed(array $user_roles, AccountInterface $user = NULL, $force = FALSE) {
 //    dpm('TODO D8-port: test function WorkflowConfigTransition::' . __FUNCTION__ );
 // TODO D8: add usage of api user_has_role().
     /*

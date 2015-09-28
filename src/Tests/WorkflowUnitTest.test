@@ -32,7 +32,7 @@ class WorkflowExampleTestCase extends DrupalWebTestCase {
     $wid = 1;
     $workflow = workflow_load_single($wid);
     $this->assertEqual($workflow->wid, $wid, t('The wid of the Workflow should be the same as we decided.'));
-    $workflow = new Workflow($wid);
+    $workflow = Workflow::create($wid);
     $this->assertEqual($workflow->wid, $wid, t('The wid of the Workflow should be the same as we decided.'));
 
 //    $creation_state = $workflow->getCreationState();

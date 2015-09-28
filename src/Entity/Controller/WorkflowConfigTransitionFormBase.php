@@ -94,7 +94,7 @@ abstract class WorkflowConfigTransitionFormBase implements FormInterface {
 //          }
 
           // Load existing config_transitions. Create if not found.
-          $config_transitions = $workflow->getTransitionsBySidTargetSid($from_sid, $to_sid);
+          $config_transitions = $workflow->getTransitionsByStateId($from_sid, $to_sid);
           if (!$config_transition = reset($config_transitions)) {
             $config_transition = $workflow->createTransition($from_sid, $to_sid);
             $tid = $config_transition->id();

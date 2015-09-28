@@ -156,11 +156,11 @@ function hook_workflow_permitted_state_transitions_alter(array &$transitions, ar
   $values = array(
     // Fixed values for new transition.
     'wid' => $context['workflow']->wid,
-    'sid' => $context['state']->sid,
+    'from_sid' => $context['state']->sid,
 
     // Custom values for new transition.
     // The ID must be an integer, due to db-table constraints.
-    'target_sid' => '998',
+    'to_sid' => '998',
     'label' => 'go to my new fantasy state',
   );
   $new_transition = WorkflowConfigTransition::create($values);

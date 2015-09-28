@@ -11,6 +11,7 @@ use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\Entity;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemList;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountProxy;
@@ -77,13 +78,6 @@ class WorkflowState extends ConfigEntityBase {
   public $wid;
 
   /**
-   * The attached Workflow.
-   *
-   * @var Drupal\workflow\Entity\Workflow
-   */
-  protected $workflow;
-
-  /**
    * The weight of this Workflow state.
    *
    * @var int
@@ -95,6 +89,13 @@ class WorkflowState extends ConfigEntityBase {
 
   // Since workflows do not change, it is implemented as a singleton.
   protected static $states = array();
+
+  /**
+   * The attached Workflow.
+   *
+   * @var Drupal\workflow\Entity\Workflow
+   */
+  protected $workflow;
 
   /**
    * CRUD functions.
@@ -149,7 +150,7 @@ class WorkflowState extends ConfigEntityBase {
    * @param int $wid
    *   An optional Workflow ID, to check if the requested State is valid for the Workflow.
    *
-   * @return mixed $state
+   * @return WorkflowState|NULL $state
    *   WorkflowState if state is successfully loaded,
    *   NULL if not loaded,
    *   FALSE if state does not belong to requested Workflow.
@@ -266,6 +267,7 @@ class WorkflowState extends ConfigEntityBase {
     // Re-parent any nodes that we don't want to orphan, whilst deactivating a State.
     // This is called in WorkflowState::deactivate().
     // @todo: reparent Workflow Field, whilst deactivating a state.
+    // TODO D8- State should not know about Transition: move this to Workflow->DeactivateState.
 //    if ($new_sid) {
 //      // A candidate for the batch API.
 //      // @TODO: Future updates should seriously consider setting this with batch.
@@ -273,15 +275,14 @@ class WorkflowState extends ConfigEntityBase {
 //      $comment = t('Previous state deleted');
 //      foreach (workflow_get_workflow_node_by_sid($current_sid) as $workflow_node) {
 //        // @todo: add Field support in 'state delete', by using workflow_node_history or reading current field.
-//        $entity_type = 'node';
 //        $entity = Node::load($workflow_node->nid);
 //        $field_name = '';
 //        $transition = WorkflowTransition::create();
-//        $transition->setValues($entity_type, $entity, $field_name, $current_sid, $new_sid, $user->id(), REQUEST_TIME, $comment);
+//        $transition->setValues($entity, $field_name, $current_sid, $new_sid, $user->id(), REQUEST_TIME, $comment);
 //        $transition->force($force);
 //        // Execute Transition, invoke 'pre' and 'post' events, save new state in workflow_node, save also in workflow_node_history.
 //        // For Workflow Node, only {workflow_node} and {workflow_node_history} are updated. For Field, also the Entity itself.
-//        $new_sid = workflow_execute_transition($entity_type, $entity, $field_name, $transition, $force);
+//        $new_sid = workflow_execute_transition($entity, $field_name, $transition, $force);
 //      }
 //    }
 //
@@ -290,10 +291,10 @@ class WorkflowState extends ConfigEntityBase {
 
     // Delete the transitions this state is involved in.
     $workflow = Workflow::load($this->wid);
-    foreach ($workflow->getTransitionsBySid($current_sid, 'ALL') as $transition) {
+    foreach ($workflow->getTransitionsByStateId($current_sid, '', 'ALL') as $transition) {
       $transition->delete();
     }
-    foreach ($workflow->getTransitionsByTargetSid($current_sid, 'ALL') as $transition) {
+    foreach ($workflow->getTransitionsByStateId('', $current_sid, 'ALL') as $transition) {
       $transition->delete();
     }
 
@@ -359,9 +360,9 @@ class WorkflowState extends ConfigEntityBase {
    * @return bool $show_widget
    *   TRUE = a form (a.k.a. widget) must be shown; FALSE = no form, a formatter must be shown instead.
    */
-  public function showWidget($entity_type, $entity, $field_name, AccountInterface $user, $force) {
+  public function showWidget($entity, $field_name, AccountInterface $user, $force) {
 //    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ );
-    $options = $this->getOptions($entity_type, $entity, $field_name, $user, $force);
+    $options = $this->getOptions($entity, $field_name, $user, $force);
     $count = count($options);
     // The easiest case first: more then one option: always show form.
     if ($count > 1) {
@@ -380,15 +381,15 @@ class WorkflowState extends ConfigEntityBase {
   /**
    * Returns the allowed transitions for the current state.
    *
-   * @param string $entity_type
-   *   The type of the entity at hand.
-   * @param object $entity
+   * @param EntityInterface $entity
    *   The entity at hand. May be NULL (E.g., on a Field settings page).
+   * @param string $field_name
+   * @param AccountInterface $user
    *
    * @return array
    *   An array of id=>transition pairs with allowed transitions for State.
    */
-  public function getTransitions($entity_type = '', Entity $entity = NULL, $field_name = '', AccountInterface $user = NULL, $force = FALSE) {
+  public function getTransitions($entity = NULL, $field_name = '', AccountInterface $user = NULL, $force = FALSE) {
     $transitions = array();
 
     $current_sid = $this->id();
@@ -411,10 +412,15 @@ class WorkflowState extends ConfigEntityBase {
     $entity_id = ($entity) ? $entity->id() : '';
 
 
-    if ($force || ($user && $user->id() == 1)) {
-      // Superuser is special. And $force allows Rules to cause transition.
+    if ($force) {
+      // $force allows Rules to cause transition.
       $roles = 'ALL';
     }
+//      dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__.'/'.__LINE__ . 'Make user 1 special' (seveal locationss);
+//    elseif($user && $user->id() == 1) {
+//      // Superuser is special. And $force allows Rules to cause transition.
+//      $roles = 'ALL';
+//    }
     elseif ($entity && (!empty($entity->is_new) || empty($entity_id))) {
 //      dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__.'/'.__LINE__ );
       // Add 'author' role to user, if this is a new entity.
@@ -439,13 +445,13 @@ class WorkflowState extends ConfigEntityBase {
     // Unfortunately, the config_transitions are not sorted.
     // Also, $transitions does not contain the 'stay on current state' transition.
     // The allowed objects will be replaced with names.
-    $transitions = $workflow->getTransitionsBySid($current_sid, $roles);
+    $transitions = $workflow->getTransitionsByStateId($current_sid, '', $roles);
 
     // Let custom code add/remove/alter the available transitions.
     // Using the new drupal_alter.
     // Modules may veto a choice by removing a transition from the list.
     $context = array(
-      'entity_type' => $entity_type,
+      'entity_type' => $entity->getEntityTypeId(),
       'entity' => $entity,
       'field_name' => $field_name,
       'force' => $force,
@@ -454,14 +460,14 @@ class WorkflowState extends ConfigEntityBase {
       'user' => $user,
       'user_roles' => $roles, // @todo: can be removed in D8, since $user is in.
     );
-    // @todo D8: rename to 'workflow_permitted_transitions'.
+    // @todo D8: rename to 'workflow_permitted_transitions'. / Remove redundant context.
     \Drupal::moduleHandler()->alter('workflow_permitted_state_transitions', $transitions, $context);
 
     // Let custom code change the options, using old_style hook.
     // @todo D8: delete below foreach/hook for better performance and flexibility.
     // Above drupal_alter() calls hook_workflow_permitted_state_transitions_alter() only once.
     foreach ($transitions as $transition) {
-      $new_sid = $transition->target_sid;
+      $to_sid = $transition->to_sid;
       $permitted = array();
 
       // We now have a list of config_transitions. Check each against the Entity.
@@ -469,8 +475,8 @@ class WorkflowState extends ConfigEntityBase {
       // Modules may veto a choice by returning FALSE.
       // In this case, the choice is never presented to the user.
       if ($roles != 'ALL') {
-        // TODO: D8-port: simplify interface for workflow_hook
-        $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition permitted', $current_sid, $new_sid, $entity, $force, $entity_type, $field_name, $transition, $user]);
+        // TODO: D8-port: simplify interface for workflow_hook. Remove redundant context.
+        $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition permitted', $current_sid, $to_sid, $entity, $force, $entity_type = '', $field_name, $transition, $user]);
       }
 
       // If vetoed by a module, remove from list.
@@ -485,8 +491,6 @@ class WorkflowState extends ConfigEntityBase {
   /**
    * Returns the allowed values for the current state.
    *
-   * @param string $entity_type
-   *   The type of the entity at hand.
    * @param object $entity
    *   The entity at hand. May be NULL (E.g., on a Field settings page).
    *
@@ -496,13 +500,14 @@ class WorkflowState extends ConfigEntityBase {
    *   If $this->id() is 0 or FALSE, then labels of ALL states of the State's
    *   Workflow are returned.
    */
-  public function getOptions($entity_type, $entity, $field_name, AccountInterface $user = NULL, $force = FALSE) {
+  public function getOptions($entity, $field_name, AccountInterface $user = NULL, $force = FALSE) {
     $options = array();
 
     // Define an Entity-specific cache per page load.
     static $cache = array();
 
     $entity_id = ($entity) ? $entity->id() : '';
+    $entity_type = ($entity) ? $entity->getEntityTypeId() : '';
     $current_sid = $this->id();
 
     // Get options from page cache, using a non-empty index (just to be sure).
@@ -525,17 +530,17 @@ class WorkflowState extends ConfigEntityBase {
       }
     }
     else {
-      $transitions = $this->getTransitions($entity_type, $entity, $field_name, $user, $force);
+      $transitions = $this->getTransitions($entity, $field_name, $user, $force);
       foreach ($transitions as $transition) {
         // Get the label of the transition, and if empty of the target state.
         // Beware: the target state may not exist, since it can be invented
         // by custom code in the above drupal_alter() hook.
         if (!$label = $transition->label()) {
-          $target_state = $transition->getNewState();
-          $label = $target_state ? $target_state->label() : '';
+          $to_state = $transition->getToState();
+          $label = $to_state ? $to_state->label() : '';
         }
-        $new_sid = $transition->target_sid;
-        $options[$new_sid] = SafeMarkup::checkPlain(t($label));
+        $to_sid = $transition->to_sid;
+        $options[$to_sid] = SafeMarkup::checkPlain(t($label));
       }
 
       // Include current state for same-state transitions, except when $sid = 0.

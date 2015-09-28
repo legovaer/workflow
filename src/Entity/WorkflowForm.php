@@ -19,7 +19,7 @@ class WorkflowForm extends EntityForm {
    * {@inheritdoc}
    */
   public function form(array $form, FormStateInterface $form_state) {
-    $noyes = array(0=> t('No'), 1 => t('Yes'));
+    $noyes = array(0 => t('No'), 1 => t('Yes'));
     $workflow = $this->entity;
 
     $form['label'] = [

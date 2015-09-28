@@ -140,8 +140,8 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
       '#title' => NULL,  // Thes hides the red 'required' asterisk.
       '#size' => 30,
 //       '#description' => t('A unique machine-readable name. Can only contain lowercase letters, numbers, and underscores.'),
-      '#description' => NULL, '#disabled' => !$state->isNew(),
-      '#disabled' => !empty($label), // If needed this would disable updating machine name, once set.
+      '#description' => NULL,
+      '#disabled' => !$state->isNew(),
       '#default_value' => $state->id(),
       // N.B.: Keep machine_name in WorkflowState and ~ListBuillder aligned.
       '#required' => FALSE,
@@ -192,7 +192,6 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
     if (!$state->isActive()) {
       $row['label_new']['#disabled'] = TRUE;
     }
-
     return $row + parent::buildRow($entity);
   }
 
@@ -212,7 +211,7 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
     // Create a placeholder WorkflowState (It must NOT be saved to DB). Add it to the item list.
     $sid = '';
     $placeholder = $workflow->createState($sid, FALSE);
-//    $placeholder->set('label', '');
+    $placeholder->set('label', '');
     $this->entities['placeholder'] = $placeholder;
     $form['entities']['placeholder'] = $this->buildRow($placeholder);
 

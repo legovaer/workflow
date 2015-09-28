@@ -10,6 +10,7 @@ namespace Drupal\workflow\Entity;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\workflow\Entity\WorkflowConfigTransition;
+use Drupal\workflow\Entity\WorkflowState;
 
 /**
  * Workflow configuration entity to persistently store configuration.
@@ -86,7 +87,7 @@ class Workflow extends ConfigEntityBase {
    */
 
   public function __clone() {
-    // TODO D8-port Workflow: test below function.
+  //  dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     // Clone the arrays of States and Transitions.
     foreach ($this->states as &$state) {
@@ -174,10 +175,10 @@ class Workflow extends ConfigEntityBase {
             // Convert the old sids of each transitions before saving.
             // @todo: is this be done in 'clone $transition'?
             // (That requires a list of transitions without tid and a wid-less conversion table.)
-            if (isset($sid_conversion[$transition->sid])) {
+            if (isset($sid_conversion[$transition->from_sid])) {
               $transition->set('id', FALSE);
-              $transition->set('sid', $sid_conversion[$transition->sid]);
-              $transition->set('target_sid', $sid_conversion[$transition->target_sid]);
+              $transition->set('from_sid', $sid_conversion[$transition->from_sid]);
+              $transition->set('to_sid', $sid_conversion[$transition->to_sid]);
               $transition->save();
             }
           }
@@ -263,7 +264,7 @@ class Workflow extends ConfigEntityBase {
     }
 
     // Also check for transitions, at least out of the creation state. Use 'ALL' role.
-    $transitions = $this->getTransitionsBySid($this->getCreationSid(), $roles = 'ALL');
+    $transitions = $this->getTransitionsByStateId($this->getCreationSid(), '',  $roles = 'ALL');
     if (count($transitions) < 1) {
       // That's all, so let's remind them to create some transitions.
       $message = t('Workflow %workflow has no transitions defined, so it cannot be assigned to content yet.',
@@ -284,9 +285,10 @@ class Workflow extends ConfigEntityBase {
    *   TRUE if a Workflow may safely be deleted.
    */
   public function isDeletable() {
-//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
-
     $is_deletable = FALSE;
+
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+    return TRUE; // TODO D8-port.
 
     // May not be deleted if assigned to a Field.
     foreach (_workflow_info_fields() as $field) {
@@ -319,13 +321,14 @@ class Workflow extends ConfigEntityBase {
    *   saved directly in the database. This is because you can use States only
    *   with Transitions, and they rely on State IDs which are generated
    *   magically when saving the State. But you may need a temporary state.
+   *
+   * @return WorkflowState
+   *   The new state.
    */
   public function createState($sid, $save = TRUE) {
     $wid = $this->id();
-    $state = WorkflowState::load($sid, $wid);
 
-    // TODO D8-port Workflow: test below function.
-//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+    $state = WorkflowState::load($sid, $wid);
 
     if (!$state) {
       $state = WorkflowState::create($values = array('id' => $sid, 'wid' => $wid));
@@ -333,7 +336,8 @@ class Workflow extends ConfigEntityBase {
         $status = $state->save();
       }
     }
-    $state->setWorkflow($this);
+
+//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
     // Maintain the new object in the workflow.
     $this->states[$state->id()] = $state;
 
@@ -382,11 +386,11 @@ class Workflow extends ConfigEntityBase {
    * Uses WorkflowState::getOptions(), because this does a access check.
    * The first State ID is user-dependent!
    */
-  public function getFirstSid($entity_type, $entity, $field_name, AccountInterface $user, $force) {
+  public function getFirstSid($entity, $field_name, AccountInterface $user, $force) {
 //    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     $creation_state = $this->getCreationState();
-    $options = $creation_state->getOptions($entity_type, $entity, $field_name, $user, $force);
+    $options = $creation_state->getOptions($entity, $field_name, $user, $force);
     if ($options) {
       $keys = array_keys($options);
       $sid = $keys[0];
@@ -465,22 +469,19 @@ class Workflow extends ConfigEntityBase {
   /**
    * Creates a Transition for this workflow.
    */
-  public function createTransition($sid, $target_sid, $values = array()) {
+  public function createTransition($from_sid, $to_sid, $values = array()) {
     $transition = NULL;
 
     $workflow = $this;
 
-    $state = $workflow->getState($sid);
-    $target_state = $workflow->getState($target_sid);
-
     // First check if this transition already exists.
-    if ($transitions = $this->getTransitionsBySidTargetSid($sid, $target_sid)) {
+    if ($transitions = $this->getTransitionsByStateId($from_sid, $to_sid)) {
       $transition = reset($transitions);
     }
     else {
       $values['wid'] = $workflow->id();
-      $values['sid'] = $sid;
-      $values['target_sid'] = $target_sid;
+      $values['from_sid'] = $from_sid;
+      $values['to_sid'] = $to_sid;
       $transition = WorkflowConfigTransition::create($values);
       $transition->save();
     }
@@ -507,19 +508,19 @@ class Workflow extends ConfigEntityBase {
    * @param mixed $ids
    *   Array of Transitions IDs. If NULL, show all transitions.
    * @param array $conditions
-   *   $conditions['sid'] : if provided, a 'from' State ID.
-   *   $conditions['target_sid'] : if provided, a 'to' state ID.
+   *   $conditions['from_sid'] : if provided, a 'from' State ID.
+   *   $conditions['to_sid'] : if provided, a 'to' state ID.
    *   $conditions['roles'] : if provided, an array of roles, or 'ALL'.
    */
-  public function getTransitions($ids = NULL, array $conditions = array(), $reset = FALSE) {
+  public function getTransitions(array $ids = NULL, array $conditions = array(), $reset = FALSE) {
     $config_transitions = array();
 
     // Get valid + creation states.
     $states = $this->getStates('CREATION');
 
     // Get filters on 'from' states, 'to' states, roles.
-    $sid = isset($conditions['sid']) ? $conditions['sid'] : FALSE;
-    $target_sid = isset($conditions['target_sid']) ? $conditions['target_sid'] : FALSE;
+    $from_sid = isset($conditions['from_sid']) ? $conditions['from_sid'] : FALSE;
+    $to_sid = isset($conditions['to_sid']) ? $conditions['to_sid'] : FALSE;
     $roles = isset($conditions['roles']) ? $conditions['roles'] : 'ALL';
 
     // Cache all transitions in the workflow.
@@ -528,9 +529,10 @@ class Workflow extends ConfigEntityBase {
       $this->transitions = array();
 
       // Get all transitions. (Even from other workflows. :-( )
+      /* @var $config_transitions WorkflowConfigTransition[] */
       $config_transitions = WorkflowConfigTransition::loadMultiple($ids, array(), $reset);
       foreach ($config_transitions as &$config_transition) {
-        if (isset($states[$config_transition->sid])) {
+        if (isset($states[$config_transition->from_sid])) {
           $config_transition->setWorkflow($this);
           $this->transitions[$config_transition->id()] = $config_transition;
         }
@@ -540,13 +542,13 @@ class Workflow extends ConfigEntityBase {
     }
 
     foreach ($this->transitions as &$config_transition) {
-      if (!isset($states[$config_transition->sid])) {
+      if (!isset($states[$config_transition->from_sid])) {
         // Not a valid transition for this workflow.
       }
-      elseif ($sid && $sid != $config_transition->sid) {
+      elseif ($from_sid && $from_sid != $config_transition->from_sid) {
         // Not the requested 'from' state.
       }
-      elseif ($target_sid && $target_sid != $config_transition->target_sid) {
+      elseif ($to_sid && $to_sid != $config_transition->to_sid) {
         // Not the requested 'to' state.
       }
       elseif ($roles == 'ALL') {
@@ -574,29 +576,20 @@ class Workflow extends ConfigEntityBase {
     return $this->getTransitions(array($tid), $conditions, $reset);
   }
 
-  public function getTransitionsBySid($sid, $roles = '', $reset = FALSE) {
-    $conditions = array(
-      'sid' => $sid,
-      'roles' => $roles,
-    );
-    return $this->getTransitions(NULL, $conditions, $reset);
-  }
-
-  public function getTransitionsByTargetSid($target_sid, $roles = '', $reset = FALSE) {
-    $conditions = array(
-      'target_sid' => $target_sid,
-      'roles' => $roles,
-    );
-    return $this->getTransitions(NULL, $conditions, $reset);
-  }
-
   /**
+   *
    * Get a specific transition. Therefore, use $roles = 'ALL'.
+   * @param string $from_sid
+   * @param string $to_sid
+   * @param array||string $to_sid
+   * @param bool $reset
+   *
+   * @return WorkflowConfigTransition[]
    */
-  public function getTransitionsBySidTargetSid($sid, $target_sid, $roles = 'ALL', $reset = FALSE) {
+  public function getTransitionsByStateId($from_sid, $to_sid, $roles = 'ALL', $reset = FALSE) {
     $conditions = array(
-      'sid' => $sid,
-      'target_sid' => $target_sid,
+      'from_sid' => $from_sid,
+      'to_sid' => $to_sid,
       'roles' => $roles,
     );
     return $this->getTransitions(NULL, $conditions, $reset);
@@ -606,7 +599,6 @@ class Workflow extends ConfigEntityBase {
    * Gets a setting from the state object.
    */
   public function getSetting($key, array $field = array()) {
-    // TODO D8-port Workflow: test below function.
 //    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
 
     switch ($key) {

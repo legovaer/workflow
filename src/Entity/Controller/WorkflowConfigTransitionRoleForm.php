@@ -10,6 +10,7 @@ namespace Drupal\workflow\Entity\Controller;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\workflow\Entity\WorkflowConfigTransition;
 
 /**
  * Defines a class to build a listing of Workflow Config Transitions entities.
@@ -110,7 +111,7 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
             $stay_on_this_state = ($to_sid == $from_sid);
 
             // Load existing config_transitions. Create if not found.
-            $config_transitions = $workflow->getTransitionsBySidTargetSid($from_sid, $to_sid);
+            $config_transitions = $workflow->getTransitionsByStateId($from_sid, $to_sid);
             if (!$config_transition = reset($config_transitions)) {
               $config_transition = $workflow->createTransition($from_sid, $to_sid);
             }
@@ -132,11 +133,17 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
   /**
    * {@inheritdoc}
    */
+  public function buildForm(array $form, FormStateInterface $form_state) {
+    return parent::buildForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     $workflow = $this->workflow;
     // Make sure 'author' is checked for (creation) -> [something].
     $creation_state = $workflow->getCreationState();
-    $creation_sid = $creation_state->id();
 
     if (empty($form_state->getValue($this->entitiesKey))) {
       $author_has_permission = TRUE;
@@ -167,6 +174,7 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
 
     foreach ($form_state->getValue($this->entitiesKey) as $from_sid => $to_data) {
       foreach ($to_data as $to_sid => $transition_data) {
+        /* @var $config_transition WorkflowConfigTransition */
         if ($config_transition = $transition_data['workflow_config_transition']) {
           $config_transition->roles = $transition_data['roles'];
           $config_transition->save();
@@ -188,7 +196,7 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
                     $config_transition->save();
                 }
                 else {
-                  foreach ($workflow->getTransitionsBySidTargetSid($from, $to_sid, 'ALL') as $config_transition) {
+                  foreach ($workflow->getTransitionsByStateId($from, $to_sid, 'ALL') as $config_transition) {
                     $config_transition->delete();
                   }
                 }

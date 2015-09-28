@@ -46,9 +46,10 @@ function workflowfield_form_field_config_edit_form_alter(&$form, FormStateInterf
 
     // User may not set a default value (this is done by the Workflow module).
     // @see WorkflowState::getOptions()
-    $form['default_value']['#type'] = 'hidden';
+    $form['default_value']['#description'] .= ' ' . t('It can\'t be set here, since it may be different per user.');
     $form['default_value']['widget']['#default_value'] = '';
     $form['default_value']['widget']['#disabled'] = TRUE;
+    unset($form['default_value']['widget']);
   }
 }
 
@@ -172,17 +173,16 @@ function workflow_state_allowed_values(FieldStorageDefinitionInterface $definiti
     // E.g., on ScheduledTransition->execute()? But this function is mostly used in UI.
   }
 
-  $entity_type = $entity->getEntityTypeId();
   $field_name = $definition->getName();
 
   if ($entity) {
     // Get the allowed new states for the entity's current state.
     // TODO D8-port: overwrite getValue().
     // $sid = $value = $this->getValue();
-    $sid = workflow_node_current_state($entity, $entity_type, $field_name);
+    $sid = workflow_node_current_state($entity, $field_name);
     /* @var $state Drupal\workflow\Entity\WorkflowState */
     $state = WorkflowState::load($sid);
-    $allowed_options = $state->getOptions($entity_type, $entity, $field_name, $user, FALSE);
+    $allowed_options = $state->getOptions($entity, $field_name, $user, FALSE);
   }
   else {
   //  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__.'/'.__LINE__);
@@ -193,7 +193,7 @@ function workflow_state_allowed_values(FieldStorageDefinitionInterface $definiti
       // There is no entity, E.g., on the Rules action "Set a data value".
       /* @var $state Drupal\workflow\Entity\WorkflowState */
       $state = WorkflowState::create(['wid' => $wid, 'id' => '']);
-      $allowed_options = $state->getOptions('', NULL, '', $user, FALSE);
+      $allowed_options = $state->getOptions(NULL, '', $user, FALSE);
     }
   }
 

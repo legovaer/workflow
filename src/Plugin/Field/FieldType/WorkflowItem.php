@@ -72,7 +72,14 @@ class WorkflowItem extends ListItemBase {
 
 //    TODO D8-port: test this.
     /*
-    $properties['date'] = DataDefinition::create('WorkflowTransition')
+    $properties['date'] = DataDefinition::create('any')
+//    $properties['workflow_transition'] = DataDefinition::create('WorkflowTransition')
+      ->setLabel(t('Computed date'))
+      ->setDescription(t('The computed DateTime object.'))
+      ->setComputed(TRUE)
+      ->setClass('\Drupal\workflow\WorkflowTransition')
+      ->setSetting('date source', 'value');
+
       ->setLabel(t('Computed date'))
       ->setDescription(t('The computed DateTime object.'))
       ->setComputed(TRUE)
@@ -200,7 +207,6 @@ class WorkflowItem extends ListItemBase {
     /*
      * Overwrite ListItemBase::storageSettingsForm().
      */
-
     $allowed_values = WorkflowState::loadMultiple([], $wid);
     $allowed_values_function = $this->getSetting('allowed_values_function');
 

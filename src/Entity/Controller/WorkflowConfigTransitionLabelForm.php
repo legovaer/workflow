@@ -54,8 +54,8 @@ class WorkflowConfigTransitionLabelForm extends WorkflowConfigtransitionFormBase
 
       static $previous_from_sid = -1;
       // Get transitions, sorted by weight of the old state.
-      $from_state = $config_transition->getOldState();
-      $to_state = $config_transition->getNewState();
+      $from_state = $config_transition->getFromState();
+      $to_state = $config_transition->getToState();
       $from_sid = $from_state->id();
 
       $row['from'] = [
@@ -81,6 +81,13 @@ class WorkflowConfigTransitionLabelForm extends WorkflowConfigtransitionFormBase
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function buildForm(array $form, FormStateInterface $form_state) {
+    return parent::buildForm($form, $form_state);
+  }
+
+    /**
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
