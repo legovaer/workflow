@@ -175,10 +175,10 @@ class Workflow extends ConfigEntityBase {
             // Convert the old sids of each transitions before saving.
             // @todo: is this be done in 'clone $transition'?
             // (That requires a list of transitions without tid and a wid-less conversion table.)
-            if (isset($sid_conversion[$transition->from_sid])) {
+            if (isset($sid_conversion[$transition->getFromSid()])) {
               $transition->set('id', FALSE);
-              $transition->set('from_sid', $sid_conversion[$transition->from_sid]);
-              $transition->set('to_sid', $sid_conversion[$transition->to_sid]);
+              $transition->set('from_sid', $sid_conversion[$transition->getFromSid()]);
+              $transition->set('to_sid', $sid_conversion[$transition->getToSid()]);
               $transition->save();
             }
           }
@@ -532,7 +532,7 @@ class Workflow extends ConfigEntityBase {
       /* @var $config_transitions WorkflowConfigTransition[] */
       $config_transitions = WorkflowConfigTransition::loadMultiple($ids, array(), $reset);
       foreach ($config_transitions as &$config_transition) {
-        if (isset($states[$config_transition->from_sid])) {
+        if (isset($states[$config_transition->getFromSid()])) {
           $config_transition->setWorkflow($this);
           $this->transitions[$config_transition->id()] = $config_transition;
         }
@@ -542,13 +542,13 @@ class Workflow extends ConfigEntityBase {
     }
 
     foreach ($this->transitions as &$config_transition) {
-      if (!isset($states[$config_transition->from_sid])) {
+      if (!isset($states[$config_transition->getFromSid()])) {
         // Not a valid transition for this workflow.
       }
-      elseif ($from_sid && $from_sid != $config_transition->from_sid) {
+      elseif ($from_sid && $from_sid != $config_transition->getFromSid()) {
         // Not the requested 'from' state.
       }
-      elseif ($to_sid && $to_sid != $config_transition->to_sid) {
+      elseif ($to_sid && $to_sid != $config_transition->getToSid()) {
         // Not the requested 'to' state.
       }
       elseif ($roles == 'ALL') {

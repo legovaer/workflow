@@ -15,7 +15,14 @@ define('MARK_STATE_IS_DELETED', '*');
  *      'Workflow history per entity' instead!
  */
 function workflow_tab_page($entity_type, $entity = NULL) {
-  drupal_set_title(entity_label($entity_type, $entity));
+  // @FIXME
+// drupal_set_title() has been removed. There are now a few ways to set the title
+// dynamically, depending on the situation.
+// 
+// 
+// @see https://www.drupal.org/node/2067859
+// drupal_set_title(entity_label($entity_type, $entity));
+
 
   $form = array();
   $field_name = NULL;
@@ -26,7 +33,7 @@ function workflow_tab_page($entity_type, $entity = NULL) {
   $entity_id = entity_id($entity_type, $entity);
 
   // Get the current sid. $field_name is updated with relevant value.
-  $current_sid = workflow_node_current_state($entity, $entity_type, $field_name);
+  $current_sid = workflow_node_current_state($entity, $field_name);
   $current_state = workflow_state_load_single($current_sid);
   $workflow = $current_state->getWorkflow();
 
@@ -44,15 +51,15 @@ function workflow_tab_page($entity_type, $entity = NULL) {
   }
 
   $form_id = implode('_', array('workflow_transition_form', $entity_type, $entity_id, $field_id));
-  $form += drupal_get_form($form_id, $field, $instance, $entity_type, $entity);
+  $form += \Drupal::formBuilder()->getForm($form_id, $field, $instance, $entity_type, $entity);
 
-  $output = drupal_render($form);
+  $output = \Drupal::service("renderer")->render($form);
 
 
   // Show the history table.
   $rows = array();
   $current_themed = FALSE;
-  $limit = variable_get('workflow_states_per_page', 20);
+  $limit = \Drupal::config('workflow.settings')->get('workflow_states_per_page');
   foreach (workflow_transition_load_multiple($entity_type, array($entity_id), $field_name, $limit) as $history) {
     $old_state_name = $new_state_name = '';
 
@@ -60,7 +67,7 @@ function workflow_tab_page($entity_type, $entity = NULL) {
     $new_state = $history->getNewState();
     if ($new_state) {
       $name = $new_state->getName();
-      $label = check_plain(t($new_state->label()));
+      $label = \Drupal\Component\Utility\SafeMarkup::checkPlain(t($new_state->label()));
     }
 
     if (!$new_state) {
@@ -69,22 +76,40 @@ function workflow_tab_page($entity_type, $entity = NULL) {
     }
     elseif ($history->new_sid == $current_sid && $new_state->isActive() && !$current_themed) {
       // Theme the current state differently so it stands out.
-      $new_state_name = theme('workflow_history_current_state', array(
-        'state_name' => $label,
-        'state_system_name' => $name,
-        'sid' => $history->new_sid,
-      ));
+      // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $new_state_name = theme('workflow_history_current_state', array(
+//         'state_name' => $label,
+//         'state_system_name' => $name,
+//         'sid' => $history->new_sid,
+//       ));
+
       // Make a note that we have themed the current state; other times in the history
       // of this node where the node was in this state do not need to be specially themed.
       $current_themed = TRUE;
     }
     elseif (!$new_state->isActive()) {
       // The state has been deleted, but we include it in the history.
-      $new_state_name = theme('workflow_deleted_state', array(
-        'state_name' => $label,
-        'state_system_name' => $name,
-        'sid' => $history->new_sid,
-      ));
+      // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $new_state_name = theme('workflow_deleted_state', array(
+//         'state_name' => $label,
+//         'state_system_name' => $name,
+//         'sid' => $history->new_sid,
+//       ));
+
       $footer_needed = TRUE;
     }
     else {
@@ -97,7 +122,7 @@ function workflow_tab_page($entity_type, $entity = NULL) {
     $old_state = $history->getOldState();
     if ($old_state) {
       $name = $old_state->getName();
-      $label = check_plain(t($old_state->label()));
+      $label = \Drupal\Component\Utility\SafeMarkup::checkPlain(t($old_state->label()));
     }
 
     if (!$old_state) {
@@ -105,11 +130,20 @@ function workflow_tab_page($entity_type, $entity = NULL) {
       $old_state_name = $label;
     }
     elseif (!$old_state->isActive()) {
-      $old_state_name = theme('workflow_deleted_state', array(
-        'state_name' => $label,
-        'state_system_name' => $name,
-        'sid' => $history->old_sid,
-      ));
+      // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $old_state_name = theme('workflow_deleted_state', array(
+//         'state_name' => $label,
+//         'state_system_name' => $name,
+//         'sid' => $history->old_sid,
+//       ));
+
       $footer_needed = TRUE;
     }
     else {
@@ -132,9 +166,18 @@ function workflow_tab_page($entity_type, $entity = NULL) {
 
     // Allow other modules to modify the row.
     // $todo D8: pass only a $transition object.
-    drupal_alter('workflow_history', $variables);
+    \Drupal::moduleHandler()->alter('workflow_history', $variables);
 
-    $rows[] = theme('workflow_history_table_row', $variables);
+    // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $rows[] = theme('workflow_history_table_row', $variables);
+
   }
 
   // Mark the first and last rows.
@@ -147,8 +190,26 @@ function workflow_tab_page($entity_type, $entity = NULL) {
 
   // Only display the table if there's anything in it.
   if ($rows) {
-    $output .= theme('workflow_history_table', array('header' => $header, 'rows' => $rows, 'footer' => !empty($footer_needed)));
-    $output .= theme('pager', array('tags' => $limit));
+    // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $output .= theme('workflow_history_table', array('header' => $header, 'rows' => $rows, 'footer' => !empty($footer_needed)));
+
+    // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $output .= theme('pager', array('tags' => $limit));
+
   }
   return $output;
 }
@@ -164,17 +225,26 @@ function theme_workflow_history_table_row($variables) {
   $old_state_name = $variables['old_state_name'];
   $state_name = $variables['state_name'];
   $transition = $variables['transition'];
-  $row = array(
-    'data' => array(
-      array('data' => format_date($transition->stamp), 'class' => array('timestamp')),
-      array('data' => $old_state_name, 'class' => array('previous-state-name')),
-      array('data' => $state_name, 'class' => array('state-name')),
-      array('data' => theme('username', array('account' => $transition->getUser())), 'class' => array('user-name')),
-      array('data' => filter_xss($transition->comment), 'class' => array('log-comment')),
-      $variables['extra'],
-    ),
-    'class' => array('workflow_history_row'),
-  );
+  // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $row = array(
+//     'data' => array(
+//       array('data' => format_date($transition->getTimestamp()), 'class' => array('timestamp')),
+//       array('data' => $old_state_name, 'class' => array('previous-state-name')),
+//       array('data' => $state_name, 'class' => array('state-name')),
+//       array('data' => theme('username', array('account' => $transition->getUser())), 'class' => array('user-name')),
+//       array('data' => filter_xss($transition->comment), 'class' => array('log-comment')),
+//       $variables['extra'],
+//     ),
+//     'class' => array('workflow_history_row'),
+//   );
+
 
   return $row;
 }
@@ -200,7 +270,16 @@ function theme_workflow_history_table($variables) {
     }
   }
 
-  $output = theme('table', array('header' => $header, 'rows' => $rows, 'caption' => t('Workflow History')));
+  // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $output = theme('table', array('header' => $header, 'rows' => $rows, 'caption' => t('Workflow History')));
+
   if ($footer) {
     $output .= MARK_STATE_IS_DELETED . ' ' . t('State is no longer available.');
   }

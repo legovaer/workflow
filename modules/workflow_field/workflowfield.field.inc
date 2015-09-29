@@ -54,81 +54,6 @@ function workflowfield_form_field_config_edit_form_alter(&$form, FormStateInterf
 }
 
 /**
- * Implements property_callbacks for hook_field_info().
- */
-function workflowfield_property_info_callback(&$info, $entity_type, $field, $instance, $field_type) {
-//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
-
-  $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
-  $property['getter callback'] = 'entity_metadata_field_property_get';
-  $property['getter callback'] = '_workflowfield_metadata_property_get';
-  // $property['setter callback'] = 'entity_metadata_field_property_set';
-  // $property['setter callback'] = '_workflowfield_metadata_property_set';
-  $property['options list'] = 'entity_metadata_field_options_list';
-  $property['property info'] = array(
-    'value' => array(
-      'type' => 'integer',
-      'label' => t('State ID'),
-      'setter callback' => 'entity_property_verbatim_set',
-    ),
-    'workflow' => array(
-      'type' => 'array',
-      'label' => t('Workflow details'),
-      'setter callback' => 'entity_property_verbatim_set',
-    ),
-  );
-}
-
-/**
- * Getter callback for Workflow defined in hook_entity_property_info_alter.
- *
- * This is different from the default, because 'value' is not always set
- * and 'workflow' may be set, but is not in the field data.
- */
-function _workflowfield_metadata_property_get($entity, array $options, $name, $entity_type, $info) {
-//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
-
-  $values = array();
-
-  // return entity_metadata_field_property_get($entity, array $options, $name, $entity_type, $info);
-  $field = field_info_field($name);
-  $columns = array_keys($field['columns']);
-  $langcode = isset($options['language']) ? $options['language']->language : \Drupal\Core\Language\Language::LANGCODE_NOT_SPECIFIED;
-  $langcode = entity_metadata_field_get_language($entity_type, $entity, $field, $langcode, TRUE);
-
-  if (isset($entity->{$name}[$langcode])) {
-    foreach ($entity->{$name}[$langcode] as $delta => $data) {
-      // In workflowfield_property_info_callback(), we needed to set a column 'value'.
-      // This is now filled from the widget data.
-      // Sometimes that is not widget, or the submit function has not been processed yet.
-
-      // On a normal widget:
-      $data[$columns[0]] = $sid = isset($data['value']) ? $data['value'] : 0;
-      // On a workflow form widget:
-      $data[$columns[0]] = $sid = isset($data['workflow']['workflow_sid']) ? $data['workflow']['workflow_sid'] : $sid;
-
-      $values[$delta] = $data[$columns[0]];
-    }
-  }
-  // For an empty single-valued field, we have to return NULL.
-  return $field['cardinality'] == 1 ? ($values ? reset($values) : NULL) : $values;
-}
-
-/**
- * Callback for setting field property values.
- */
-function _workflowfield_metadata_property_set($entity, $name, $value, $langcode, $entity_type, $info) {
-//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
-
-  // return entity_metadata_field_property_set($entity, $name, $value, $langcode, $entity_type, $info);
-  $field = field_info_field($name);
-  $columns = array_keys($field['columns']);
-  $langcode = entity_metadata_field_get_language($entity_type, $entity, $field, $langcode);
-  $values = $field['cardinality'] == 1 ? array($value) : (array) $value;
-}
-
-
-/**
  * We will be using some default formatters and widgets from the List and Options modules.
  */
 
@@ -180,7 +105,6 @@ function workflow_state_allowed_values(FieldStorageDefinitionInterface $definiti
     // TODO D8-port: overwrite getValue().
     // $sid = $value = $this->getValue();
     $sid = workflow_node_current_state($entity, $field_name);
-    /* @var $state Drupal\workflow\Entity\WorkflowState */
     $state = WorkflowState::load($sid);
     $allowed_options = $state->getOptions($entity, $field_name, $user, FALSE);
   }

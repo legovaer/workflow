@@ -344,7 +344,7 @@ class WorkflowItem extends ListItemBase {
           '#required' => FALSE,
           '#default_value' => $settings['history']['history_tab_show'],
           '#description' => t("Every state change is recorded in table
-            {workflow_node_history}. If checked and user has proper permission, a
+            {workflow_transition_history}. If checked and user has proper permission, a
             tab 'Workflow' is shown on the entity view page, which gives access to
             the History of the workflow. If you have multiple workflows per bundle,
             better disable this feature, and use, clone & adapt the Views display
@@ -373,7 +373,7 @@ class WorkflowItem extends ListItemBase {
    *
    * This string format is suitable for edition in a textarea.
    *
-   * @param array $states
+   * @param WorkflowState[] $states
    *   An array of WorkflowStates, where array keys are values and array values are
    *   labels.
    * @param $wid
@@ -390,12 +390,13 @@ class WorkflowItem extends ListItemBase {
     $wid = $this->getSetting('workflow_type');
 
     $previous_wid = -1;
+    /* @var $state WorkflowState */
     foreach ($states as $key => $state) {
       // Only show enabled states.
       if ($state->isActive()) {
         // Show a Workflow name between Workflows, if more then 1 in the list.
-        if ((!$wid) && ($previous_wid <> $state->wid)) {
-          $previous_wid = $state->wid;
+        if ((!$wid) && ($previous_wid <> $state->getWorkflowId())) {
+          $previous_wid = $state->getWorkflowId();
           $workflow = Workflow::load($previous_wid);
           $lines[] = $workflow->label() . "'s states: ";
         }
@@ -424,7 +425,7 @@ class WorkflowItem extends ListItemBase {
    * Implements hook_field_update().
    *
    * It is the D7-wrapper for D8-style WorkflowDefaultWidget::submit.
-   * It is called also from hook_field_insert, since we need $nid to store workflow_node_history.
+   * It is called also from hook_field_insert, since we need $nid to store workflow_transition_history.
    * We cannot use hook_field_presave, since $nid is not yet known at that moment.
    */
   public function updateTODO() {

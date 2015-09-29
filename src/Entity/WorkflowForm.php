@@ -166,7 +166,7 @@ class WorkflowForm extends EntityForm {
       '#type' => 'details',
       '#title' => t('Workflow tab permissions'),
       '#description' => t("Every state change is recorded in database table
-        {workflow_node_history}. The history of the workflow can be shown on a
+        {workflow_transition_history}. The history of the workflow can be shown on a
         tab 'Workflow', which is shown on the entity view page."),
       '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
     );

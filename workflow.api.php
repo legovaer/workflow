@@ -6,6 +6,7 @@
 
 namespace Drupal\workflow\Entity;
 
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\workflow\Entity\WorkflowState;
 use Drupal\workflow\Entity\WorkflowConfigTransition;
 
@@ -61,8 +62,8 @@ function hook_workflow($op, $id, $new_sid, $entity, $force, $entity_type = '', $
       break;
 
     case 'transition post':
-      // This is called by Workflow Node during update of the state, directly
-      // after updating {workflow_node}. Workflow Field does not call this,
+      // In D7, this is called by Workflow Node during update of the state, directly
+      // after updating the Workflow. Workflow Field does not call this,
       // since you can call a hook_entity_* event after saving the entity.
       // @see https://api.drupal.org/api/drupal/includes%21module.inc/group/hooks/7
       break;
@@ -96,7 +97,7 @@ function hook_workflow($op, $id, $new_sid, $entity, $force, $entity_type = '', $
  *   'old_state_name' - The state name of the previous state.
  *   'sid' - The state ID of the current state.
  *   'state_name' - The state name of the current state.
- *   'history' - The row from the workflow_node_history table.
+ *   'history' - The row from the workflow_transition_history table.
  *   'transition' - a WorkflowTransition object, containing all of the above.
  */
 function hook_workflow_history_alter(array &$variables) {
@@ -124,8 +125,9 @@ function hook_workflow_history_alter(array &$variables) {
  *   'transition' - The current transition itself.
  */
 function hook_workflow_comment_alter(&$comment, array &$context) {
+  /* @var $transition WorkflowTransitionInterface */
   $transition = $context->transition;
-  $comment = $transition->uid . 'says: ' . $comment;
+  $comment = $transition->getUser()->getUsername() . ' says: ' . $comment;
 }
 
 /**
@@ -180,7 +182,7 @@ function hook_workflow_permitted_state_transitions_alter(array &$transitions, ar
  * If you change the state on the Node Form (Edit modus), you need the hook
  * hook_form_alter(). See below for more info.
  */
-function workflowfield_form_workflow_transition_form_alter(&$form, &$form_state, $form_id) {
+function hook_form_workflow_transition_form_alter(&$form, FormStateInterface $form_state, $form_id) {
 
   // Get the Entity.
   $entity = $form['workflow']['workflow_entity']['#value'];
@@ -191,7 +193,7 @@ function workflowfield_form_workflow_transition_form_alter(&$form, &$form_state,
   list(, , $entity_bundle) = entity_extract_ids($entity_type, $entity);
 
   // Get the current State ID.
-  $sid = workflow_node_current_state($entity, $entity_type, $field_name = NULL);
+  $sid = workflow_node_current_state($entity, $field_name = NULL);
   // Get the State object, if needed.
   $state = WorkflowState::load($sid);
 
@@ -216,7 +218,7 @@ function workflowfield_form_workflow_transition_form_alter(&$form, &$form_state,
  *
  * Use this hook to alter the form on a Node Form, Comment Form (Edit page).
  */
-function workflowfield_form_alter(&$form, $form_state, $form_id) {
+function hook_form_alter(&$form, FormStateInterface $form_state, $form_id) {
 
   // Get the Entity.
   $entity = $form['#entity'];
@@ -233,7 +235,7 @@ function workflowfield_form_alter(&$form, $form_state, $form_id) {
 /*
  * Implements hook_field_attach_form().
  */
-function workflow_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode){
+function hook_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode){
   // @see http://drupal.stackexchange.com/questions/101857/difference-between-hook-form-alter-and-hook-field-attach-form
 }
 

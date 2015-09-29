@@ -39,7 +39,7 @@ function workflow_block_view($delta) {
     list($entity_id, , $entity_bundle) = entity_extract_ids($entity_type, $entity);
 
     // Get the current sid. $field_name is updated with relevant value.
-    $current_sid = workflow_node_current_state($entity, $entity_type, $field_name);
+    $current_sid = workflow_node_current_state($entity, $field_name);
     $current_state = workflow_state_load_single($current_sid);
     $workflow = $current_state->getWorkflow();
 
@@ -57,7 +57,7 @@ function workflow_block_view($delta) {
     }
 
     $form_id = implode('_', array('workflow_transition_form', $entity_type, $entity_id, $field_id));
-    $form += drupal_get_form($form_id, $field, $instance, $entity_type, $entity);
+    $form += \Drupal::formBuilder()->getForm($form_id, $field, $instance, $entity_type, $entity);
 
     $block['content'] = $form;
     if ($block['content']) {

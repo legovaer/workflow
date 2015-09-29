@@ -258,13 +258,14 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
 
     foreach ($form_state->getValue($this->entitiesKey) as $sid => $value) {
       if (isset($this->entities[$sid])) {
+        /* @var $state WorkflowState */
         $state = $this->entities[$sid];
 
         // Skip states of other workflows.
         // TODO D8-port: filter entities for correct $wid with array_filter in $this::load().
         // This function lists ALL states for ALL workfows. We only need for ONE workflow.
         // For backwards code-compatibility, @see D7.x-2.x, file workflow_admin_ui.page.states.inc
-        if ($state->wid != $url_wid) {
+        if ($state->getWorkflowId() != $url_wid) {
           continue;
         }
 
@@ -317,16 +318,17 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
     }
     $wid = $url_wid = $workflow->id();
 
-    $maxweight = $minweight = -50;
+    $maxweight = $minweight = -9;
     foreach ($form_state->getValue($this->entitiesKey) as $sid => $value) {
       if (isset($this->entities[$sid])) {
+        /* @var $state WorkflowState */
         $state = $this->entities[$sid];
 
         // Skip states of other workflows.
         // TODO D8-port: filter entities for correct $wid with array_filter in $this::load().
         // This function lists ALL states for ALL workfows. We only need for ONE workflow.
         // For backwards code-compatibility, @see D7.x-2.x, file workflow_admin_ui.page.states.inc
-        if ($state->wid != $url_wid) {
+        if ($state->getWorkflowId() != $url_wid) {
           continue;
         }
 

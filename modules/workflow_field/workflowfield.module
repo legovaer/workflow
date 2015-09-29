@@ -4,9 +4,6 @@
  * Supports workflows made up of arbitrary states.
  */
 
-// The name of the Workfow form and function, to be used in various callbacks.
-define('WORKFLOWFIELD_FORM', 'workflowfield_field_widget_form');
-
 module_load_include('inc', 'workflowfield', 'workflowfield.field');
 module_load_include('inc', 'workflowfield', 'workflowfield.widget');
 module_load_include('inc', 'workflowfield', 'workflowfield.formatter');

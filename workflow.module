@@ -24,6 +24,7 @@ use Drupal\Core\Language\Language;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\workflow\Entity\Workflow;
 use Drupal\workflow\Entity\WorkflowState;
+use Drupal\workflow\Entity\WorkflowScheduledTransition;
 use Drupal\workflow\Entity\WorkflowTransition;
 
 /**
@@ -170,14 +171,15 @@ function workflow_tab_access($entity_type, $entity) {
   dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
 
   $user = \Drupal::currentUser();
+  $uid = $user->id();
   static $access = array();
 
   // Figure out the $entity's bundle and id.
   $entity_bundle = $entity->bundle();
   $entity_id = $entity->id();
 
-  if (isset($access[$user->uid][$entity_type][$entity_id])) {
-    return $access[$user->uid][$entity_type][$entity_id];
+  if (isset($access[$uid][$entity_type][$entity_id])) {
+    return $access[$uid][$entity_type][$entity_id];
   }
 
   // When having multiple workflows per bundle, use Views display
@@ -198,7 +200,7 @@ function workflow_tab_access($entity_type, $entity) {
     // N.B.1: Some entities (e.g, taxonomy_term) do not have a uid.
     // N.B.2: If 'anonymous' is the author, don't allow access to History Tab,
     // since anyone can access it, and it will be published in Search engines.
-    elseif (($entity_uid > 0) && ($user->uid > 0) && ($entity_uid == $user->uid)) {
+    elseif (($entity_uid > 0) && ($uid > 0) && ($entity_uid == $uid)) {
       $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
     }
 
@@ -213,15 +215,15 @@ function workflow_tab_access($entity_type, $entity) {
     }
 
     if ($history_tab_show == FALSE) {
-      $access[$user->uid][$entity_type][$entity_id] = FALSE;
+      $access[$uid][$entity_type][$entity_id] = FALSE;
     }
     elseif ($user->hasPermission('administer nodes') || array_intersect($roles, $tab_roles)) {
-      $access[$user->uid][$entity_type][$entity_id] = TRUE;
+      $access[$uid][$entity_type][$entity_id] = TRUE;
     }
     else {
-      $access[$user->uid][$entity_type][$entity_id] = FALSE;
+      $access[$uid][$entity_type][$entity_id] = FALSE;
     }
-    return $access[$user->uid][$entity_type][$entity_id];
+    return $access[$uid][$entity_type][$entity_id];
   }
   return FALSE;
 }
@@ -237,6 +239,20 @@ function workflow_hook_info() {
 
   $hooks['workflow'] = array('group' => 'workflow');
   return $hooks;
+}
+
+/**
+ * Implements hook_entity_type_build().
+ *
+ * @see https://www.drupal.org/node/2196275 "hook_entity_info() renamed to hook_entity_type_build()"
+ */
+function TODOworkflow_entity_type_build(array &$entity_types) {
+  dpm('TODO D8-port: test (port hook-entity_info) function workflow.module::' . __FUNCTION__ );
+
+  /** @var $entity_types \Drupal\Core\Entity\EntityTypeInterface[] */
+  // Add a form controller for a custom node form without overriding the default
+  // node form. To override the default node form, use hook_entity_type_alter().
+  //$entity_types['node']->setFormClass('mymodule_foo', 'Drupal\mymodule\NodeFooFormController');
 }
 
 /**
@@ -313,20 +329,21 @@ function workflow_cron() {
   $clear_cache = FALSE;
   // If the time now is greater than the time to execute a transition, do it.
   foreach (WorkflowScheduledTransition::loadBetween(0, REQUEST_TIME) as $scheduled_transition) {
-    $entity_type = $scheduled_transition->entity_type;
     $entity = $scheduled_transition->getEntity();
-    $field_name = $scheduled_transition->field_name;
+    $entity_type = $entity->getEntityTypeId();
+    $field_name = $scheduled_transition->getFieldName();
 
     // If user didn't give a comment, create one.
-    if (empty($scheduled_transition->comment)) {
+    $comment = $scheduled_transition->getComment();
+      if (empty($comment)) {
       $scheduled_transition->addDefaultComment();
     }
 
-    $current_sid = workflow_node_current_state($entity, $entity_type, $field_name);
+    $current_sid = workflow_node_current_state($entity, $field_name);
 
     // Make sure transition is still valid: the node must still be in the state
     // it was in, when the transition was scheduled.
-    if ($current_sid == $scheduled_transition->old_sid) {
+    if ($current_sid == $scheduled_transition->getFromSid()) {
 
       // Do transition. Force it because user who scheduled was checked.
       // The scheduled transition is not scheduled anymore, and is also deleted from DB.
@@ -361,7 +378,7 @@ function workflow_user_delete($account) {
 
   // Update tables for deleted account, move account to user 0 (anon.)
   // ALERT: This may cause previously non-anon posts to suddenly be accessible to anon.
-  workflow_update_workflow_node_history_uid($account->uid, 0);
+  workflow_update_workflow_transition_history_uid($account->id(), 0);
 }
 
 /**
@@ -383,7 +400,8 @@ function workflow_user_role_insert($role) {
  * Implements hook_forms().
  *
  * Allows the workflow tab form to be repeated multiple times on a page.
- * See http://drupal.org/node/1970846.
+ * @see http://drupal.org/node/1970846
+ * @see https://www.drupal.org/node/2188851
  */
 function workflow_forms($form_id, $args) {
 //  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
@@ -418,7 +436,7 @@ function workflow_state_formatter($entity_type, $entity, $field = array(), $inst
   $list_element = array();
 
   $field_name = isset($field['field_name']) ? $field['field_name'] : '';
-  $current_sid = ($default_value == NULL) ? workflow_node_current_state($entity, $entity_type, $field_name) : $default_value;
+  $current_sid = ($default_value == NULL) ? workflow_node_current_state($entity, $field_name) : $default_value;
   if (!$current_sid) {
     $list_element = array();
   }
@@ -497,7 +515,7 @@ function _workflow_use_action_buttons($new_value = NULL) {
  *
  * @todo: move this to WorkflowTransitionForm::_addActionButtons();
  */
-function workflow_form_alter(&$form, FormStateInterface &$form_state, $form_id) {
+function workflow_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   // Use a fast, custom way to check if we need to do this.
   // @todo: Adapt to use with multiple workflows per entity.
   if (!_workflow_use_action_buttons()) {
@@ -944,22 +962,26 @@ function workflow_node_current_state($entity, &$field_name = NULL) {
 
 /**
  * Gets the previous state ID of a given entity.
+ *
+ * @param EntityInterface $entity
+ * @param string $field_name
+ *
+ * @return string $previous_sid
  */
 function workflow_node_previous_state($entity, $field_name) {
   // @todo D8: return State object, not $sid integer.
-  $sid = FALSE;
+  $previous_sid = FALSE;
   $langcode = Language::LANGCODE_NOT_SPECIFIED;
 
   if (!$entity) {
-    return $sid;
+    return $previous_sid;
   }
-  $entity_type = $entity->getEntityTypeId();
 
-  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ .' '.$field_name);
+  $entity_type = $entity->getEntityTypeId();
 
   // Determine the $field_name if unknown. Just get the 1st one.)
   if ($field_name === NULL) {
-    dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__.'/'.__LINE__);
+    dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
     $fields = _workflow_info_fields($entity, $entity_type);
     if (count($fields)) {
       $field = reset($fields);
@@ -969,48 +991,51 @@ function workflow_node_previous_state($entity, $field_name) {
 
   // At this point, we may have redetermined and altered the field_name.
   if ($field_name !== NULL && isset($entity->original)) {
-    dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__.'/'.__LINE__);
+    dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
     // A changed node.
 
     $wrapper = entity_metadata_wrapper($entity_type, $entity->original);
-    $sid = $wrapper->{$field_name}->value();
+    $previous_sid = $wrapper->{$field_name}->value();
 
     // Get language. Multi-language is not supported for Workflow Node.
     $langcode = _workflow_metadata_workflow_get_properties($entity->original, array(), 'langcode', $entity_type, $field_name);
   }
 
   // A node may not have a Workflow attached.
-  if (!$sid && $field_name) {
-    if (!empty($entity->is_new)) {
-      dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__.'/'.__LINE__);
-      // A new Node. $is_new is not set when saving terms, etc.
-      $sid = _workflow_get_workflow_creation_sid($entity_type, $entity, $field_name);
+  if (!$previous_sid && $field_name) {
+    // Get Id. Is empty when creating a node.
+    $entity_id = $entity->id();
+    if (!$entity_id && $entity->isNew()) {
+      // Test this situation.
+      dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
     }
 
-    // Get Id. Is empty when creating a node.
-    $entity_id = 0;
-    if (!$sid) {
-      dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__.'/'.__LINE__);
-      $entity_id = $entity->id();
+    if ($entity->isNew()) {
+      dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
+      // A new Node. $is_new is not set when saving terms, etc.
+      $previous_sid = _workflow_get_workflow_creation_sid($entity_type, $entity, $field_name);
     }
-    if (!$sid && $entity_id) {
-      dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__.'/'.__LINE__);
+    elseif (!$previous_sid && $entity_id) {
+      dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
+      // D8: This should be done via ->original.
+      //
       // Read the history with an explicit langcode.
 //      if ($last_transition = workflow_transition_load_single($entity_type, $entity_id, $field_name, $langcode)) {
-      if ($last_transition = WorkflowTransition::loadMultiple($entity_type, $entity_ids, $field_name, $limit, $langcode)) {
-        dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__.'/'.__LINE__);
-        $sid = $last_transition->new_sid;
+      if ($last_transition = WorkflowTransition::loadByProperties($entity_type, $entity_id, $field_name, $langcode)) {
+        dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
+        $previous_sid = $last_transition->new_sid;
       }
     }
   }
 
-  if (!$sid && $field_name !== NULL) {
-    dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__.'/'.__LINE__);
+  if (!$previous_sid && $field_name !== NULL) {
     // No history found on an existing entity.
-    $sid = _workflow_get_workflow_creation_sid($entity, $field_name);
+    $previous_sid = _workflow_get_workflow_creation_sid($entity, $field_name);
   }
 
-  return $sid;
+  dpm('TODO D8-port: result of function workflow.module::' . __FUNCTION__.'/'.__LINE__.' = '.$previous_sid);
+
+  return $previous_sid;
 }
 
 /**
@@ -1070,21 +1095,20 @@ function workflow_get_workflows_by_type($entity_bundle, $entity_type = 'node') {
 }
 
 /**
- * Functions related to table workflow_node_history.
+ * Functions related to table workflow_transition_history.
  */
 
 /**
  * Given a user id, re-assign history to the new user account. Called by user_delete().
  */
-function workflow_update_workflow_node_history_uid($uid, $new_value) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
+function workflow_update_workflow_transition_history_uid($uid, $new_value) {
+  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
 
-  return db_update('workflow_node_history')->fields(array('uid' => $new_value))->condition('uid', $uid, '=')->execute();
+  return db_update('workflow_transition_history')
+    ->fields(array('uid' => $new_value))
+    ->condition('uid', $uid, '=')
+    ->execute();
 }
-
-/**
- * Functions related to table workflow_node.
- */
 
 /**
  * Get a single value from an Field API $items array.
@@ -1098,6 +1122,7 @@ function workflow_update_workflow_node_history_uid($uid, $new_value) {
  *   A State ID.
  */
 function _workflow_get_sid_by_items(array $items) {
+//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
   // On a normal widget:
   $sid = isset($items[0]['value']) ? $items[0]['value'] : 0;
   // On a workflow form widget:
@@ -1146,20 +1171,7 @@ function _workflow_info_fields($entity = NULL) {
 
   dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
 
-  // Check if this is a workflow_node sid.
-  $workflow_node_sid = isset($entity->workflow) ? $entity->workflow : FALSE;
-  if ($workflow_node_sid) {
-    $field_name = '';
-    $workflow = NULL;
-    if ($state = workflow_state_load($workflow_node_sid)) {
-      $workflow = workflow_load($state->wid);
-    }
-    // Call field_info_field().
-    // Generates pseudo data for workflow_node to re-use Field API.
-    $field = _workflow_info_field($field_name, $workflow);
-    $field_info[$field_name] = $field;
-  }
-  else {
+  if (TRUE) {
     $field_list = Drupal::entityManager()->getFieldMapByFieldType('workflow');
 
     // Figure out the $entity's bundle and id.

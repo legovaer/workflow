@@ -89,8 +89,6 @@ class WorkflowDefaultWidget extends WidgetBase {
    * @todo D8: change "array $items" to "FieldInterface $items"
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
-    dpm('TODO D8-port (with transition): test function WorkflowDefaultWidget::' . __FUNCTION__);
-
     $wid = $this->getFieldSetting('workflow_type');
     $workflow = Workflow::load($wid);
     if (!$workflow){
@@ -113,46 +111,51 @@ class WorkflowDefaultWidget extends WidgetBase {
     /* @var \Drupal\Core\Session\AccountProxyInterface */
     $user = \Drupal::currentUser();
 
-    $transition = NULL;
-    $transition = $form_state->getValue('WorkflowTransition');
-    if (isset($transition)) {
-      dpm('TODO D8-port (with transition): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__);
-      // If provided, get data from WorkflowTransition.
-      // This happens when calling entity_ui_get_form(), like in the
-      // WorkflowTransition Comment Edit form.
-      $transition = $form_state['WorkflowTransition'];
-
-//      $field_name = $transition->field_name;
-//      $workflow = $transition->getWorkflow();
-//      $wid = $transition->wid;
-
-//      $entity = $this->entity = $transition->getEntity();
-//      $entity_type = $this->entity_type = $transition->entity_type;
-//      $entity_id = entity_id($entity_type, $entity);
-
-      // Show the current state and the Workflow form to allow state changing.
-      // N.B. This part is replicated in hook_node_view, workflow_tab_page, workflow_vbo, transition_edit.
-      // @todo: support multiple workflows per entity.
-      // For workflow_tab_page with multiple workflows, use a separate view. See [#2217291].
-      $field = _workflow_info_field($field_name, $workflow);
-//      $field_id = $field['id'];
-      $instance = field_info_instance($entity_type, $field_name, $entity_bundle);
-    }
-    else {
-      // OK. We have all data.
-    }
-
     $force = FALSE;
 
-    // Get values.
+    // Get settings from workflow.
     $workflow_settings = $workflow->options;
     $workflow_label = SafeMarkup::checkPlain(t($workflow->label()));
     // Current sid and default value may differ in a scheduled transition.
     // Set 'grouped' option. Only valid for select list and undefined/multiple workflows.
     $settings_options_type = $workflow_settings['options'];
     $grouped = ($settings_options_type == 'select');
+
+    /* @var $transition WorkflowTransition */
+    $transition = NULL;
+
+    // TODO D8-port: below part of code: $transition = $form_state['WorkflowTransition']
+    /*
+        $transition = $form_state->getValue('WorkflowTransition');
+        if (isset($transition)) {
+          dpm('TODO D8-port (with transition): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__);
+          // If provided, get data from WorkflowTransition.
+          // This happens when calling entity_ui_get_form(), like in the
+          // WorkflowTransition Comment Edit form.
+          $transition = $form_state['WorkflowTransition'];
+
+    //      $field_name = $transition->field_name;
+    //      $workflow = $transition->getWorkflow();
+    //      $wid = $transition->wid;
+
+    //      $entity = $this->entity = $transition->getEntity();
+    //      $entity_type = $this->entity_type = $transition->entity_type;
+    //      $entity_id = entity_id($entity_type, $entity);
+
+          // Show the current state and the Workflow form to allow state changing.
+          // N.B. This part is replicated in hook_node_view, workflow_tab_page, workflow_vbo, transition_edit.
+          // @todo: support multiple workflows per entity.
+          // For workflow_tab_page with multiple workflows, use a separate view. See [#2217291].
+          $field = _workflow_info_field($field_name, $workflow);
+    //      $field_id = $field['id'];
+          $instance = field_info_instance($entity_type, $field_name, $entity_bundle);
+        }
+        else {
+          // OK. We have all data.
+        }
+    */
     if ($transition) {
-    //  dpm('TODO D8-port (with transition): test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
+      dpm('TODO D8-port (with transition): test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
 
       // If a Transition is passed as parameter, use this.
       $current_state = $transition->getOldState();
@@ -164,15 +167,15 @@ class WorkflowDefaultWidget extends WidgetBase {
         $options = $current_state->getOptions($entity, $field_name, $user, $force);
       }
       $show_widget = $current_state->showWidget($entity, $field_name, $user, $force);
-      $current_sid = $transition->from_sid;
-      $default_value = $transition->to_sid;
+      $current_sid = $transition->getFromSid();
+      $default_value = $transition->getToSid();
       // You may not schedule an existing Transition.
       if ($transition->isExecuted()) {
         $workflow_settings['schedule'] = FALSE;
       }
     }
     elseif (!$entity) {
-    //  dpm('TODO D8-port (with transition): test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
+      dpm('TODO D8-port (with transition): test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
       // Sometimes, no entity is given. We encountered the following cases:
       // - the Field settings page,
       // - the VBO action form;
@@ -184,7 +187,10 @@ class WorkflowDefaultWidget extends WidgetBase {
       $default_value = $current_sid = isset($items[$delta]->value) ? $items[$delta]->value : '0';
     }
     else {
-    //  dpm('TODO D8-port (with transition): test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
+      // This happens..
+      // .. on the Field settings page
+      // ...
+      // dpm('TODO D8-port (with transition): test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
       $current_sid = workflow_node_current_state($entity, $field_name);
 
       if ($current_state = WorkflowState::load($current_sid)) {
@@ -194,7 +200,7 @@ class WorkflowDefaultWidget extends WidgetBase {
         $default_value = $current_state->isCreationState() ? key($options) : $current_sid;
       }
       else {
-      //  dpm('TODO D8-port (with transition): test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
+        dpm('TODO D8-port (with transition): test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
         // We are in trouble! A message is already set in workflow_node_current_state().
         $options = array();
         $show_widget = FALSE;
@@ -202,16 +208,16 @@ class WorkflowDefaultWidget extends WidgetBase {
       }
 
       // TODO D8-port: load Scheduled transitions.
+      //dpm('TODO D8-port (with transition): test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
       /*
       // Get the scheduling info. This may change the $default_value on the Form.
       // Read scheduled information, only if an entity exists.
       // Technically you could have more than one scheduled, but this will only add the soonest one.
       foreach (WorkflowScheduledTransition::load($entity_type, $entity_id, $field_name, 1) as $transition) {
-        $default_value = $transition->to_sid;
+        $default_value = $transition->getToSid();
         break;
       }
       */
-
     }
 
     // Prepare a new transition, if still not provided.
@@ -233,25 +239,25 @@ class WorkflowDefaultWidget extends WidgetBase {
     // then change the form id, too.
     $form_id = $this->getFormId();
 //    dpm('TODO D8-port (form_id) : test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
-/*
-    if (!isset($form_state->getValue('build_info')['base_form_id'])) {
-      // Strange: on node form, the base_form_id is node_form,
-      // but on term form, it is not set.
-      // In both cases, it is OK.
-    }
-    else {
-      // dpm('TODO D8-port (form_id) : test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
-      if ($form_state['build_info']['base_form_id'] == 'workflow_transition_wrapper_form') {
-        $form_state['build_info']['base_form_id'] = 'workflow_transition_form';
-      }
-      if ($form_state['build_info']['base_form_id'] == 'workflow_transition_form') {
-        $form_state['build_info']['form_id'] = $form_id;
-      }
-    }
-*/
+    /*
+        if (!isset($form_state->getValue('build_info')['base_form_id'])) {
+          // Strange: on node form, the base_form_id is node_form,
+          // but on term form, it is not set.
+          // In both cases, it is OK.
+        }
+        else {
+          // dpm('TODO D8-port (form_id) : test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
+          if ($form_state['build_info']['base_form_id'] == 'workflow_transition_wrapper_form') {
+            $form_state['build_info']['base_form_id'] = 'workflow_transition_form';
+          }
+          if ($form_state['build_info']['base_form_id'] == 'workflow_transition_form') {
+            $form_state['build_info']['form_id'] = $form_id;
+          }
+        }
+    */
 
     // TODO D8-port: check below code: ['comment_log_tab']; vs. ['comment_log_node'];
-    $workflow_settings['comment'] = isset($workflow_settings['comment_log_node']) ? $workflow_settings['comment_log_node'] : 1; // vs. ['comment_log_tab'];
+    $workflow_settings['comment'] = $workflow_settings['comment_log_node']; // vs. ['comment_log_tab'];
 
     // TODO D8-port: remove following code.
     /*
@@ -268,6 +274,7 @@ class WorkflowDefaultWidget extends WidgetBase {
           }
         }
     */
+
     // Capture settings to format the form/widget.
     $settings_title_as_name = !empty($workflow_settings['name_as_title']);
     $settings_options_type = $workflow_settings['options'];
@@ -286,6 +293,7 @@ class WorkflowDefaultWidget extends WidgetBase {
         $settings_schedule = !($entity && !$entity_id);
       }
     }
+
     $settings_schedule_timezone = !empty($workflow_settings['schedule_timezone']);
     // Show comment, when both Field and Instance allow this.
     $settings_comment = $workflow_settings['comment'];
@@ -294,61 +302,37 @@ class WorkflowDefaultWidget extends WidgetBase {
 
     // Save the current value of the node in the form, for later Workflow-module specific references.
     // We add prefix, since #tree == FALSE.
-//    $element['workflow']['workflow_entity'] = array(
-//      '#type' => 'value',
-//      '#value' => $entity,
-//    );
-//    $element['workflow']['workflow_entity_type'] = array(
-//      '#type' => 'value',
-//      '#value' => $entity_type,
-//    );
-//    $element['workflow']['workflow_field'] = array(
-//      '#type' => 'value',
-//      '#value' => $field,
-//    );
-//    $element['workflow']['workflow_field_name'] = array(
-//      '#type' => 'value',
-//      '#value' => $field_name,
-//    );
+    $element['workflow']['workflow_field_name'] = array(
+      '#type' => 'value',
+      '#value' => $field_name,
+    );
     $element['workflow']['workflow_transition'] = array(
       '#type' => 'value',
       '#value' => $transition,
     );
-//    $element['workflow']['workflow_instance'] = array(
-//      '#type' => 'value',
-//      '#value' => $instance,
-//    );
-
 //    // Save the form_id, so the form values can be retrieved in submit function.
 //    $element['workflow']['form_id'] = array(
 //      '#type' => 'value',
 //      '#value' => $form_id,
 //    );
 
-//    // Save the hid, when editing an existing transition.
-//    $element['workflow']['workflow_hid'] = array(
-//      '#type' => 'hidden',
-//      '#value' => $transition->hid,
-//    );
-
 //    // Add the default value in the place where normal fields
 //    // have it. This is to cater for 'preview' of the entity.
 //    $element['#default_value'] = $default_value;
-
 
     // Decide if we show a widget or a formatter.
     // There is no need for a widget when the only option is the current sid.
 
     // TODO D8-port: add workflow_state_formatter
     /*
-    // Show state formatter before the rest of the form,
-    // when transition is scheduled or widget is hidden.
-    if ((!$show_widget) || $transition_is_scheduled) ) {
-      $form['workflow_current_state'] = workflow_state_formatter($entity_type, $entity, $field, $instance, $current_sid);
-      // Set a proper weight, which works for Workflow Options in select list AND action buttons.
-      $form['workflow_current_state']['#weight'] = -0.005;
-    }
-*/
+        // Show state formatter before the rest of the form,
+        // when transition is scheduled or widget is hidden.
+        if ((!$show_widget) || $transition_is_scheduled) ) {
+          $form['workflow_current_state'] = workflow_state_formatter($entity_type, $entity, $field, $instance, $current_sid);
+          // Set a proper weight, which works for Workflow Options in select list AND action buttons.
+          $form['workflow_current_state']['#weight'] = -0.005;
+        }
+    */
     if (!$show_widget) {
       // Show no widget.
       $element['workflow']['workflow_sid']['#type'] = 'value';
@@ -357,7 +341,7 @@ class WorkflowDefaultWidget extends WidgetBase {
       return $element; // <---- exit.
     }
     else {
-// TODO: repair the usage of $settings_title_as_name: no container if no details (schedule/comment)
+      // TODO: repair the usage of $settings_title_as_name: no container if no details (schedule/comment).
       // Prepare a UI wrapper. This might be a fieldset.
       $element['workflow']['#type'] = 'container'; // 'details';
 //      $element['workflow']['#type'] = 'details';
@@ -383,7 +367,7 @@ class WorkflowDefaultWidget extends WidgetBase {
 // // @FIXME
 // // This looks like another module's variable. You'll need to rewrite this call
 // // to ensure that it uses the correct configuration object.
-// if (variable_get('configurable_timezones', 1) && $user->uid && drupal_strlen($user->timezone)) {
+// if (variable_get('configurable_timezones', 1) && $user->id() && drupal_strlen($user->timezone)) {
 //         $timezone = $user->timezone;
 //       }
 //       else {
@@ -391,10 +375,9 @@ class WorkflowDefaultWidget extends WidgetBase {
 //       }
       $timezone = $user->getTimeZone();
 
-      $timezones = array_combine(timezone_identifiers_list(), timezone_identifiers_list());
+      $timezone_options = array_combine(timezone_identifiers_list(), timezone_identifiers_list());
       $timestamp = $transition ? $transition->getTimestamp() : REQUEST_TIME;
       $hours = $transition_is_scheduled ? '00:00' : format_date($timestamp, 'custom', 'H:i', $timezone);
-
       $element['workflow']['workflow_scheduled'] = array(
         '#type' => 'radios',
         '#title' => t('Schedule'),
@@ -438,15 +421,15 @@ class WorkflowDefaultWidget extends WidgetBase {
       $element['workflow']['workflow_scheduled_date_time']['workflow_scheduled_timezone'] = array(
         '#type' => $settings_schedule_timezone ? 'select' : 'hidden',
         '#title' => t('Time zone'),
-        '#options' => $timezones,
+        '#options' => $timezone_options,
         '#default_value' => array($timezone => $timezone),
       );
       $element['workflow']['workflow_scheduled_date_time']['workflow_scheduled_help'] = array(
         '#type' => 'item',
         '#prefix' => '<br />',
         '#description' => t('Please enter a time.
-          If no time is included, the default will be midnight on the specified date.
-          The current time is: @time.', array('@time' => format_date(REQUEST_TIME, 'custom', 'H:i', $timezone))
+                      If no time is included, the default will be midnight on the specified date.
+                      The current time is: @time.', array('@time' => format_date(REQUEST_TIME, 'custom', 'H:i', $timezone))
         ),
       );
     }
@@ -456,7 +439,7 @@ class WorkflowDefaultWidget extends WidgetBase {
       '#required' => $settings_comment == '2',
       '#title' => t('Workflow comment'),
       '#description' => t('A comment to put in the workflow log.'),
-      '#default_value' => $transition ? $transition->comment : '',
+      '#default_value' => $transition ? $transition->getComment() : '',
       '#rows' => 2,
     );
 
@@ -483,7 +466,7 @@ class WorkflowDefaultWidget extends WidgetBase {
 
     $submit_functions = empty($instance['widget']['settings']['submit_function']) ? array() : array($instance['widget']['settings']['submit_function']);
     if ($settings_options_type == 'buttons' || $submit_functions) {
-    //  dpm('TODO D8-port (ActioButtons): test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
+      //  dpm('TODO D8-port (ActioButtons): test function WorkflowDefaultWidget::' . __FUNCTION__ .'/'.__LINE__);
       $element['workflow']['actions']['#type'] = 'actions';
       $element['workflow']['actions']['submit'] = array(
         '#type' => 'submit',
@@ -554,20 +537,19 @@ class WorkflowDefaultWidget extends WidgetBase {
     // back to the regular 'value' string format.
     foreach ($values as &$item) {
       if (!empty($item ['workflow']) ) { // } && $item ['value'] instanceof DrupalDateTime) {
+
+//        /* @var $field_name string */
+//        $field_name = $transition->getFieldName();
+        // TODO D8-port: get this from the transition, if all use casess are tested.
+        $field_name = $item['workflow']['workflow_field_name'];
         $to_sid = $item['workflow']['workflow_sid'];
-        $force = FALSE;
-
-        // Set the value at the proper location.
-        $item['value'] = $to_sid;
-//    dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__);
-        continue;
-
+        $from_sid = FALSE;
         /* @var $transition \Drupal\workflow\Entity\WorkflowTransitionInterface */
         $transition = NULL;
-        $transition = $item['workflow']['workflow_transition'];
-        /* @var $field_
-         * name string */
-        $field_name = $transition->getFieldName();
+//        $transition = $item['workflow']['workflow_transition'];
+        $transition = $this->getTransition($item, $field_name, $from_sid, $user);
+
+        $force = FALSE;
 
         // The following can also be retrieved from the WorkflowTransition.
         /* @var $entity Drupal\Core\Entity\EntityInterface */
@@ -578,7 +560,6 @@ class WorkflowDefaultWidget extends WidgetBase {
         $wid = $this->getFieldSetting('workflow_type');
         $workflow = Workflow::load($wid);
 
-        // TODO D8-port:
 //    dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__);
         /*
             // Retrieve the data from the form.
@@ -601,7 +582,7 @@ class WorkflowDefaultWidget extends WidgetBase {
         */
 
         // TODO D8-port:     // Determine if the transition is forced (on the form).
-//    dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__);
+//    dpm('TODO D8-port: test (if transition is forced) function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__);
         /*
             // Determine if the transition is forced (on the form).
             // This can be set by a 'workflow_vbo action' in an additional form element.
@@ -647,40 +628,44 @@ class WorkflowDefaultWidget extends WidgetBase {
 
         // Now, save/execute the transition.
         if (!$transition) {
-          // TODO D8-port: Save the WorkflowNodeHistory.
-          // Extract the data from $items, depending on the type of widget.
-          $from_sid = workflow_node_previous_state($entity, $field_name);
-          if (!$from_sid) {
-            dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__);
-            // At this moment, $from_sid should have a value. If the content does not
-            // have a state yet, from_sid contains '(creation)' state. But if the
-            // content is not associated to a workflow, from_sid is now 0. This may
-            // happen in workflow_vbo, if you assign a state to non-relevant nodes.
-            $entity_id = entity_id($entity_type, $entity);
-            drupal_set_message(t('Error: content !id has no workflow attached. The data is not saved.', array('!id' => $entity_id)), 'error');
-            // The new state is still the previous state.
-            $to_sid = $from_sid;
-          }
-          dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__);
-          $transition = $this->getTransition($item, $field_name, $from_sid, $user);
+          dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__.': '.$transition->getFromSid().' > '.$transition->getToSid());
+          // D8-port: for some reason, after Sumbit, this function is called twice.
+          // First time with Transition.
+          // Second time without Transition, but correct state value.
+          continu;
+
+          dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__.': '.$transition->getFromSid().' > '.$transition->getToSid());
+
+          /*
+                    // Extract the data from $items, depending on the type of widget.
+                    $from_sid = workflow_node_previous_state($entity, $field_name);
+                    if (!$from_sid) {
+                      dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__);
+                      // At this moment, $from_sid should have a value. If the content does not
+                      // have a state yet, from_sid contains '(creation)' state. But if the
+                      // content is not associated to a workflow, from_sid is now 0. This may
+                      // happen in workflow_vbo, if you assign a state to non-relevant nodes.
+                      $entity_id = entity_id($entity_type, $entity);
+                      drupal_set_message(t('Error: content !id has no workflow attached. The data is not saved.', array('!id' => $entity_id)), 'error');
+                      // The new state is still the previous state.
+                      $to_sid = $from_sid;
+                    }
+          */
         }
         else {
-          dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__);
-          $from_sid = $transition->getFromState()->id();
-          $transition = $this->getTransition($item, $field_name, $from_sid, $user);
+          $from_sid = $transition->getFromSid();
+          $force = $force || $transition->isForced();
         }
-        $force = $force || $transition->isForced();
 
         // Try to execute the transition. Return $from_sid when error.
         if (!$transition) {
-          dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__);
+          dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__.': '.$transition->getFromSid().' > '.$transition->getToSid());
           // This should only happen when testing/developing.
           drupal_set_message(t('Error: the transition from %from_sid to %to_sid could not be generated.'), 'error');
           // The current value is still the previous state.
           $to_sid = $from_sid;
         }
         elseif (!$transition->isScheduled()) {
-          dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__);
           // Now the data is captured in the Transition, and before calling the
           // Execution, restore the default values for Workflow Field.
           // For instance, workflow_rules evaluates this.
@@ -692,34 +677,33 @@ class WorkflowDefaultWidget extends WidgetBase {
           $to_sid = $transition->execute($force);
         }
         else {
-          dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__);
+          dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__.': '.$transition->getFromSid().' > '.$transition->getToSid());
           // A scheduled transition must only be saved to the database.
           // The entity is not changed.
           $transition->save();
 
+          dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__.': '.$transition->getFromSid().' > '.$transition->getToSid());
           // The current value is still the previous state.
           $to_sid = $from_sid;
+          dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__.': '.$transition->getFromSid().' > '.$transition->getToSid());
         }
-
-        // The entity is still to be saved, so set to a 'normal' value.
-//        $items = array();
-//        $entity->{$field_name}[$transition->langcode] = $items;
 
         // Set the value at the proper location.
         $item['value'] = $to_sid;
       }
     }
     return $values;
-
   }
 
   /**
    * Extract WorkflowTransition or WorkflowScheduledTransition from the form.
    *
    * This merely extracts the transition from the form/widget. No validation.
+   *
+   * @return WorkflowTransitionInterface $transition
    */
   private function getTransition($item, $field_name, $from_sid, AccountProxy $user) {
-    dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__);
+    $transition = NULL;
 
 //    $entity = $this->entity;
 
@@ -737,52 +721,41 @@ class WorkflowDefaultWidget extends WidgetBase {
 
       // If an existing Transition has been edited, $hid is set.
       $hid = $transition->id();
-//      $hid = isset($item['workflow']['workflow_hid']) ? $item['workflow']['workflow_hid'] : '';
       if ($hid) {
-        dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__.'/'.__LINE__);
         // We are editing an existing transition. Only comment may be changed.
-        $transition = workflow_transition_load($hid);
-        $transition->comment = $comment;
+        // $transition->setComment($comment);
       }
       elseif (!$scheduled) {
-//        $transition = $transition ? $transition : WorkflowTransition::create();
-//        $transition->setValues($entity, $field_name, $from_sid, $to_sid, $user->uid, REQUEST_TIME, $comment);
-        $transition->to_sid = $to_sid;
-        $transition->uid = $user->id();
-        $transition->timestamp = REQUEST_TIME;
-        $transition->comment = $comment;
+        $transition->set('to_sid', $to_sid);
+        $transition->setUser($user);
+        $transition->setComment($comment);
+        $transition->setTimestamp(REQUEST_TIME);
       }
       else {
-        dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__.'/'.__LINE__);
-        // Schedule the time to change the state.
-        // If Field Form is used, use plain values;
-        // If Node Form is used, use fieldset 'workflow_scheduled_date_time'.
-        $schedule = isset($item['workflow']['workflow_scheduled_date_time']) ? $item['workflow']['workflow_scheduled_date_time'] : $item['workflow'];
-        if (!isset($schedule['workflow_scheduled_hour'])) {
-          dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__.'/'.__LINE__);
-          $schedule['workflow_scheduled_hour'] = '00:00';
-        }
+        $transition->set('to_sid', $to_sid);
+        $transition->setUser($user);
+        $transition->setComment($comment);
+        $transition->setTimestamp(REQUEST_TIME);
 
+        // Schedule the time to change the state.
         $scheduled_date_time
-          = $schedule['workflow_scheduled_date']['year']
-          . substr('0' . $schedule['workflow_scheduled_date']['month'], -2, 2)
-          . substr('0' . $schedule['workflow_scheduled_date']['day'], -2, 2)
+          = $item['workflow']['workflow_scheduled_date_time']['workflow_scheduled_date']['year']
+          . substr('0' . $item['workflow']['workflow_scheduled_date_time']['workflow_scheduled_date']['month'], -2, 2)
+          . substr('0' . $item['workflow']['workflow_scheduled_date_time']['workflow_scheduled_date']['day'], -2, 2)
           . ' '
-          . $schedule['workflow_scheduled_hour']
+          . $item['workflow']['workflow_scheduled_date_time']['workflow_scheduled_hour']
           . ' '
-          . $schedule['workflow_scheduled_timezone'];
+          . $item['workflow']['workflow_scheduled_date_time']['workflow_scheduled_timezone'];
 
         if ($timestamp = strtotime($scheduled_date_time)) {
           dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__.'/'.__LINE__);
-          $transition = WorkflowScheduledTransition::create();
-          $transition->setValues($entity, $field_name, $from_sid, $to_sid, $user->uid, $timestamp, $comment);
+          $transition->setTimestamp($timestamp);
         }
         else {
           dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__.'/'.__LINE__);
-          $transition = NULL;
+          $transition->setTimestamp(REQUEST_TIME);
         }
       }
-
     }
     elseif (isset($item['transition'])) {
       dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__.'/'.__LINE__);
@@ -790,6 +763,10 @@ class WorkflowDefaultWidget extends WidgetBase {
       $transition = $item['transition'];
     }
     else {
+      dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__.'/'.__LINE__);
+      dpm('TODO D8-port (old D7-function): test function WorkflowDefaultWidget::' . __FUNCTION__.'/'.__LINE__.': '.$transition->getFromSid().' > '.$transition->getToSid());
+/*
+
       // Get the new Transition properties. First the new State ID.
       if (isset($item['workflow']['workflow_sid'])) {
         dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__.'/'.__LINE__);
@@ -817,7 +794,7 @@ class WorkflowDefaultWidget extends WidgetBase {
         }
       }
       // If an existing Transition has been edited, $hid is set.
-      $hid = isset($item['workflow']['workflow_hid']) ? $item['workflow']['workflow_hid'] : '';
+      $hid = $transition->id();
 
       // Get the comment.
       $comment = isset($item['workflow']['workflow_comment']) ? $item['workflow']['workflow_comment'] : '';
@@ -827,12 +804,12 @@ class WorkflowDefaultWidget extends WidgetBase {
         dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__.'/'.__LINE__);
         // We are editing an existing transition. Only comment may be changed.
         $transition = workflow_transition_load($hid);
-        $transition->comment = $comment;
+        $transition->setComment($comment);
       }
       elseif (!$scheduled) {
         dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__.'/'.__LINE__);
         $transition = $transition ? $transition : WorkflowTransition::create();
-        $transition->setValues($entity, $field_name, $from_sid, $to_sid, $user->uid, REQUEST_TIME, $comment);
+        $transition->setValues($entity, $field_name, $from_sid, $to_sid, $user->id(), REQUEST_TIME, $comment);
       }
       else {
         dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__.'/'.__LINE__);
@@ -857,13 +834,14 @@ class WorkflowDefaultWidget extends WidgetBase {
         if ($timestamp = strtotime($scheduled_date_time)) {
           dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__.'/'.__LINE__);
           $transition = WorkflowScheduledTransition::create();
-          $transition->setValues($entity, $field_name, $from_sid, $to_sid, $user->uid, $timestamp, $comment);
+          $transition->setValues($entity, $field_name, $from_sid, $to_sid, $user->id(), $timestamp, $comment);
         }
         else {
           dpm('TODO D8-port: test function WorkflowTransitionForm::' . __FUNCTION__.'/'.__LINE__);
           $transition = NULL;
         }
       }
+*/
     }
     return $transition;
   }

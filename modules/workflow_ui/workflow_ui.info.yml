@@ -1,10 +1,13 @@
 name: 'Workflow UI'
 description: 'Administrative UI for Workflow.'
 package: Workflow
+type: module
 core: 8.x
+# version: VERSION
+
 dependencies:
   - workflow
-stylesheets:
-  all:
-    - workflow_admin_ui.css
-type: module
+
+#stylesheets:
+#  all:
+#    - workflow_admin_ui.css

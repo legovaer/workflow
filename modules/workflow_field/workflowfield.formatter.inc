@@ -13,20 +13,12 @@
 use Drupal\Core\Language\Language;
 
 /**
- * Implements hook_field_formatter_info().
- */
-function workflowfield_field_formatter_info() {
-//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
-  return WorkflowDefaultWidget::settings();
-}
-
-/**
  * Implements hook_field_formatter_view().
  *
  * Shows current State + Widget on a Node View page or a Workflow History tab.
  */
 function workflowfield_field_formatter_view($entity_type, $entity, $field, $instance, $langcode = Language::LANGCODE_NOT_SPECIFIED, $items = array(), $display = array()) {
-//  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
+  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
 
   $user = \Drupal::currentUser(); // @todo #2287057: OK?
   // @todo: Perhaps global user is not always the correct user.
@@ -35,7 +27,7 @@ function workflowfield_field_formatter_view($entity_type, $entity, $field, $inst
   $field_name = isset($field['field_name']) ? $field['field_name'] : '';
   $field_id = isset($field['id']) ? $field['id'] : 0;
 
-  $current_sid = workflow_node_current_state($entity, $entity_type, $field_name);
+  $current_sid = workflow_node_current_state($entity, $field_name);
   $current_state = workflow_state_load_single($current_sid);
 
   $list_element = array();

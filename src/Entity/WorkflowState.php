@@ -274,14 +274,14 @@ class WorkflowState extends ConfigEntityBase {
 //
 //      $comment = t('Previous state deleted');
 //      foreach (workflow_get_workflow_node_by_sid($current_sid) as $workflow_node) {
-//        // @todo: add Field support in 'state delete', by using workflow_node_history or reading current field.
+//        // @todo: add Field support in 'state delete', by using workflow_transition_history or reading current field.
 //        $entity = Node::load($workflow_node->nid);
 //        $field_name = '';
 //        $transition = WorkflowTransition::create();
 //        $transition->setValues($entity, $field_name, $current_sid, $new_sid, $user->id(), REQUEST_TIME, $comment);
 //        $transition->force($force);
-//        // Execute Transition, invoke 'pre' and 'post' events, save new state in workflow_node, save also in workflow_node_history.
-//        // For Workflow Node, only {workflow_node} and {workflow_node_history} are updated. For Field, also the Entity itself.
+//        // Execute Transition, invoke 'pre' and 'post' events, save new state in Field-table, save also in workflow_transition_history.
+//        // For Workflow Node, only {workflow_node} and {workflow_transition_history} are updated. For Field, also the Entity itself.
 //        $new_sid = workflow_execute_transition($entity, $field_name, $transition, $force);
 //      }
 //    }
@@ -318,6 +318,16 @@ class WorkflowState extends ConfigEntityBase {
    */
   public function getWeight() {
     return $this->weight;
+  }
+
+  /**
+   * Returns the Workflow ID of this State.
+   *
+   * @return string
+   *   Workflow Id.
+   */
+  public function getWorkflowId() {
+    return $this->wid;
   }
 
   /**
