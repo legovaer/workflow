@@ -73,13 +73,13 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   protected $wid;
 
   // Cached data, from $this->entity_id and $this->uid.
-//  protected $entity = NULL; // Use WorkflowTransition->getEntity() to fetch this.
-//  protected $user = NULL; // Use WorkflowTransition->getUser() to fetch this.
+  protected $entity = NULL; // Use WorkflowTransition->getEntity() to fetch this.
+  protected $user = NULL; // Use WorkflowTransition->getUser() to fetch this.
 
   // Extra data.
-  protected $is_scheduled = NULL;
-  protected $is_executed = NULL;
-  protected $force = NULL;
+  protected $is_scheduled = FAlSE;
+  protected $is_executed = FALSE;
+  protected $is_forced = FALSE;
 
   /**
    * Entity class functions.
@@ -138,16 +138,13 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       $this->setUserId($uid);
       $this->setTimestamp($timestamp);
       $this->setComment($comment);
-
-      // Set language. Multi-language is not supported for Workflow Node.
-      // TODO D8-port: set language
-//      $this->langcode = _workflow_metadata_workflow_get_properties($entity, array(), 'langcode', $entity_type, $field_name);
     }
     elseif (!$from_sid) {
       dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__);
       // Not all parameters are passed programmatically.
       drupal_set_message(
-        t('Wrong call to constructor Workflow*Transition(@from_sid to @to_sid)', array('@from_sid' => $from_sid, '@to_sid' => $to_sid)),
+        t('Wrong call to constructor Workflow*Transition(@from_sid to @to_sid)',
+          array('@from_sid' => $from_sid, '@to_sid' => $to_sid)),
         'error');
     }
   }
@@ -160,9 +157,13 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function save() {
-//    return parent::save();
+    // return parent::save();
 
-//    dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__);
+    // Avoid custom actions for subclass WorkflowScheduledTransition.
+    if ($this->entityTypeId != 'workflow_transition') {
+      return parent::save();
+    }
+
     // Check for no transition.
     if ($this->getFromSid() == $this->getToSid()) {
       if (!$this->getComment()) {
@@ -173,24 +174,26 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 
     $hid = $this->id();
     if (!$hid) {
-//      dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__);
       // Insert the transition. Make sure it hasn't already been inserted.
-      $last_history = WorkflowTransition::loadByProperties($this->entity_type, $this->entity_id, $this->field_name, $this->language);
-      if ($last_history &&
-          $last_history->stamp == REQUEST_TIME &&
-          $last_history->new_sid == $this->new_sid) {
-//        dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__);
+      $found_transition = self::loadByProperties(
+        $this->getEntity()->getEntityTypeId(),
+        $this->getEntity()->id(),
+        array(),
+        $this->getFieldName(),
+        $this->getLangcode());
+      if ($found_transition &&
+        $found_transition->getTimestamp() == REQUEST_TIME &&
+        $found_transition->getToSid() == $this->getToSid()) {
+        dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__);
         return SAVED_UPDATED;
       }
       else {
-//        dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__);
-        unset($this->hid);
-        $this->stamp = REQUEST_TIME;
-
+        // $this->setTimestamp(REQUEST_TIME);
         return parent::save();
       }
     }
     else {
+      dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__.': ' . $from_sid .'> ' .$to_sid);
       // Update the transition.
       return parent::save();
     }
@@ -207,10 +210,11 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /**
    * {@inheritdoc}
    */
-  public static function loadByProperties($entity_type, $entity_id, $field_name = '', $langcode = '') {
+  public static function loadByProperties($entity_type, $entity_id, array $revision_ids, $field_name = '', $langcode = '', $transition_type = 'workflow_transition') {
     $limit = 1;
-    if ($transitions = self::loadMultipleByProperties($entity_type, array($entity_id), $field_name, $limit, $langcode)) {
-      return reset($transitions);
+    if ($transitions = self::loadMultipleByProperties($entity_type, [$entity_id], $revision_ids, $field_name, $limit, $langcode, $transition_type)) {
+      $transition = reset($transitions);
+      return $transition;
     }
     return NULL;
   }
@@ -218,73 +222,31 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /**
    * {@inheritdoc}
    */
-  public static function loadMultipleByProperties($entity_type, array $entity_ids, $field_name = '', $limit = NULL, $langcode = '') {
-//    dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__);
+  public static function loadMultipleByProperties($entity_type, array $entity_ids, array $revision_ids, $field_name, $limit = NULL, $langcode = '', $transition_type = 'workflow_transition') {
 
-    $query = db_select('workflow_transition_history', 'h');
-    $query->condition('h.entity_type', $entity_type);
-    if ($entity_ids) {
-      $query->condition('h.entity_id', $entity_ids);
+    /* @var $query \Drupal\Core\Entity\Query\QueryInterface */
+    $query = \Drupal::entityQuery($transition_type)
+      ->condition('entity_type', $entity_type)
+      ->condition('entity_id', $entity_ids, 'IN')
+      ->sort('timestamp', 'ASC')
+      ->addTag($transition_type);
+    if ($field_name != '') {
+      $query->condition('field_name', $field_name, '=');
     }
-    if ($field_name !== NULL) {
-      // If we do not know/care for the field_name, fetch all history.
-      // E.g., in workflow.tokens.
-      $query->condition('h.field_name', $field_name);
+    if ($langcode != '') {
+      $query->condition('langcode', $langcode, '=');
     }
-    // Add selection on language.
-    // Workflow Node: only has 'und'.
-    // Workflow Field: untranslated field have 'und'.
-    // Workflow Field: translated fields may be specified.
-
-    $query->fields('h');
-    // The timestamp is only granular to the second; on a busy site, we need the id.
-    // $query->orderBy('h.timestamp', 'DESC');
-    $query->orderBy('h.hid', 'DESC');
     if ($limit) {
       $query->range(0, $limit);
     }
-//    $result = $query->execute()->fetchAll(\PDO::FETCH_CLASS, 'WorkflowTransition');
-//    $result = $query->execute()->fetchAll(\PDO::FETCH_CLASS, 'workflow_transition');
-    $result = $query->execute()->fetchAll();
-
-    return $result;
-
-    /* @var $storage \Drupal\Core\Entity\EntityStorageInterface */
-    $storage = \Drupal::entityManager()->getStorage('workflow_transition'); // ->loadMultiple($uids);
-    $properties = [
-      'entity_type' => $entity_type,
-      'field_name' => $field_name,
-    ];
-    if ($entity_ids) {
-      $properties['entity_id'] = $entity_ids;
+    if ($transition_type == 'workflow_transition') {
+      // The timestamp is only granular to the second; on a busy site, we need the id.
+      // $query->orderBy('h.timestamp', 'DESC');
+      $query->sort('hid', 'DESC');
     }
-    if ($langcode) {
-      $properties['langcode'] = $langcode;
-    }
-    dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__);
-    $transitions = $storage->loadByProperties($properties);
-
+    $ids = $query->execute();
+    $transitions = self::loadMultiple($ids);
     return $transitions;
-
-    /*
-// Shorthand if you know that you have users:
-    $users = \Drupal\user\Entity\User::loadMultiple($uids);
-    $ids = $storage->getQuery()
-      ->condition('entity_type', $entity_type)
-      ->condition('node_count', 0, '>')
-      ->condition('last_created_node.entity.status', 1)
-      ->sort('login', 'DESC')
-      ->execute();
-    $result = $this->Storage->getQuery()
-      ->condition('uid', $user->id())
-      ->sort('created', 'DESC')
-      ->range(0, 1)
-      ->execute();
-
-    return $this->loadMultiple($entityids);
-*/
-
-    return workflow_load_workflow_transition_history($entity_type, $entity_ids, $field_name, $limit, $langcode);
   }
 
   /**
@@ -309,17 +271,16 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     // Check allow-ability of state change if user is not superuser (might be cron).
     // Get the WorkflowConfigTransition.
     // @todo: some day, WorkflowConfigTransition can be a parent of WorkflowTransition.
+    // @todo: There is a watchdog error, but no UI-error. Is this ok?
     $workflow = $this->getWorkflow();
     $config_transitions = $workflow->getTransitionsByStateId($this->getFromSid(), $this->getToSid());
     $config_transition = reset($config_transitions);
     if (!$config_transition || !$config_transition->isAllowed($roles)) {
-      dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__);
-
       $message = t('Attempt to go to nonexistent transition (from %from_sid to %to_sid)');
       $t_args = array(
         '%from_sid' => $this->getFromSid(),
         '%to_sid' => $this->getToSid(),
-//        'link' =>  $transition->link(t('View')),  // TODO
+        'link' =>  $this->getEntity()->link(t('View')),
       );
       \Drupal::logger('workflow')->error($message, $t_args);
       return FALSE;
@@ -336,8 +297,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $user = $this->getUser();
     $from_sid = $this->getFromSid();
     $to_sid = $this->getToSid();
-
-//    dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__);
+    $field_name = $this->getFieldName();
 
     // Load the entity, if not already loaded.
     // This also sets the (empty) $revision_id in Scheduled Transitions.
@@ -349,12 +309,34 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       $entity_id = $entity->id();
     }
     else {
-      dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__.': ' . $from_sid .'> ' .$to_sid);
-      // This happens in D8-port: when saving an entity, the function is called twice.
-      // The second time without entity. Why? When?
-      return $from_sid;
+      $message = 'User tried to execute a Transition without an entity.';
+      \Drupal::logger('workflow')->error($message, []);
+      return $from_sid;  // <--- exit !!!
     }
-    $field_name = $this->getFieldName();
+
+    static $static_last_tid;
+    static $static_last_sid = '';
+    if ($this->id() != $static_last_tid) {
+      // OK. Prepare for next round. Do not set last_sid!!
+      $static_last_tid = $this->id();
+    }
+    else {
+      // Error: this Transition is already executed.
+      // On the development machine, execute() is called twice, when
+      // on an Edit Page, the entity has a scheduled transition, and
+      // user changes it to 'immediately'.
+      // Why does this happen?? ( BTW. This happens with every submit.)
+      // Remedies:
+      // - search root cause of second call.
+      // - try adapting code of transtion->save() to avoid second record.
+      // - avoid executing twice.
+      $message = 'Transition is executed twice in a call. The second call is
+        not executed.';
+      \Drupal::logger('workflow')->error($message, []);
+      // Return the result of the last call.
+      return ($static_last_sid) ? $static_last_sid : $from_sid;  // <--- exit !!!
+    }
+
     // Make sure $force is set in the transition, too.
     if ($force) {
       $this->force($force);
@@ -373,7 +355,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       '%old' => $from_sid,
       '%new' => $to_sid,
       '%label' => $entity->label(),
-//      'link' =>  $entity->link(t('View')),
+//      'link' =>  ($entity_id) ? $entity->link(t('View')) : '', // TODO
     );
 
     if (!$this->getFromState()) {
@@ -406,7 +388,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
         }
       }
       else {
-        dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__.': ' . $from_sid .'> ' .$to_sid);
         // OK. All state changes allowed.
       }
 
@@ -414,16 +395,15 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
         // Make sure this transition is allowed by custom module.
         // @todo D8: remove, or replace by 'transition pre'. See WorkflowState::getOptions().
         // @todo D8: replace all parameters that are inlcuded in $transition.
+        // @todo: in case of error, ther is a log, but no UI error.
         $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition permitted', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this, $user]);
         // Stop if a module says so.
         if (in_array(FALSE, $permitted, TRUE)) {
-          dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__.': ' . $from_sid .'> ' .$to_sid);
           \Drupal::logger('workflow')->notice('Transition vetoed by module.', []);
           return $from_sid;
         }
       }
       else {
-        dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__.': ' . $from_sid .'> ' .$to_sid);
         // OK. All state changes allowed.
       }
 
@@ -478,15 +458,14 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
             '%old' => $from_sid,
             '%new' => $to_sid,
             '%label' => $this->entity->label(),
-            'link' =>  $this->entity->link(t('View')),
+            // 'link' =>  $this->entity->link(t('View')), // TODO
           );
           \Drupal::logger('workflow')->notice($message, $args);
         }
       }
 
       // Remove any scheduled state transitions.
-      foreach (WorkflowScheduledTransition::loadMultipleByProperties($entity_type, [$entity_id], $field_name) as $scheduled_transition) {
-        dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__.': ' . $from_sid .'> ' .$to_sid);
+      foreach (WorkflowScheduledTransition::loadMultipleByProperties($entity_type, [$entity_id], [], $field_name) as $scheduled_transition) {
         $scheduled_transition->delete();
       }
 
@@ -502,8 +481,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
         entity_get_controller('node')->resetCache(array($entity->id())); // from entity_load(), node_save();
       }
       else {
-        // TODO D8-port: figure out usage of $entity->workflow_transitions[$field_name]
-
         // module_invoke_all('workflow', 'transition post', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this);
         // We have a problem here with Rules, Trigger, etc. when invoking
         // 'transition post': the entity has not been saved, yet. we are still
@@ -512,11 +489,14 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
         // 2. Move the invoke to another place: hook_entity_insert(), hook_entity_update();
         // 3. Rely on the entity hooks. This works for Rules, not for Trigger.
         // --> We choose option 2:
+        // TODO D8-port: figure out usage of $entity->workflow_transitions[$field_name]
         // - First, $entity->workflow_transitions[] is set for easy re-fetching.
         // - Then, post_execute() is invoked via workflowfield_entity_insert(), _update().
       }
     }
 
+    // Save value in static from top of this function.
+    $static_last_sid = $to_sid;
     return $to_sid;
   }
 
@@ -544,6 +524,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    */
   public function getWorkflow() {
     $workflow = NULL;
+
     $from_sid = $this->getFromSid();
     $to_sid = $this->getToSid();
 
@@ -561,25 +542,11 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function getEntity() {
-    /* @var $entity \Drupal\Core\Entity\EntityInterface */
-    /*
-        if (empty($this->entity)) {
-          $entity_type = $this->entity_type;
-          $entity_id = $this->entity_id;
-          $entity = Entity::load($entity_type, $entity_id);
-
-          // Set the entity cache.
-          $this->entity = $entity;
-
-          // Make sure the vid of Entity and Transition are equal.
-          // Especially for Scheduled Transition, that do not have this set, yet,
-          // or may have an outdated revision ID.
-          $info = \Drupal::entityManager()->getDefinition($entity_type);
-          $revision_key = $info['entity keys']['revision'];
-          $this->revision_id = (isset($entity->{$revision_key})) ? $entity->{$revision_key} : NULL;
-        }
-    */
-
+    if (!$this->entity) {
+      $entity_type = $this->get('entity_type')->getValue()[0]['target_id'];
+      $entity_id = $this->get('entity_id')->getValue()[0]['value'];
+      $this->entity = \Drupal::entityManager()->getStorage($entity_type)->load($entity_id);
+    }
     return $this->entity;
   }
 
@@ -612,8 +579,14 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    */
   public function getFieldName() {
     return $this->get('field_name')->value;
+  }
 
-    return $this->field_name;
+  /**
+   * {@inheritdoc}
+   */
+  public function getLangcode() {
+    return $this->getEntity()->language()->getId();
+
   }
 
   /**
@@ -720,10 +693,10 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function isForced() {
-    return (bool) $this->force;
+    return (bool) $this->is_forced;
   }
   public function force($force = TRUE) {
-    return $this->force = $force;
+    return $this->is_forced = $force;
   }
 
   /**

@@ -129,17 +129,8 @@ class WorkflowState extends ConfigEntityBase {
     }
     parent::__construct($values, $entityType);
 
-//    dpm('TODO D8-port WorkflowState: test below part of function: ' . __FUNCTION__ );
-    /*
-    if (empty($values)) {
-      // Automatic constructor when casting an array or object.
-      // Add pre-existing states to cache (not new/temp ones).
-      if (!isset(self::$states[$this->id()])) {
-        self::$states[$this->id()] = $this;
-      }
-    }
-    */
-
+    // Reset cache.
+    self::$states = array();
   }
 
   /**
@@ -371,7 +362,6 @@ class WorkflowState extends ConfigEntityBase {
    *   TRUE = a form (a.k.a. widget) must be shown; FALSE = no form, a formatter must be shown instead.
    */
   public function showWidget($entity, $field_name, AccountInterface $user, $force) {
-//    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ );
     $options = $this->getOptions($entity, $field_name, $user, $force);
     $count = count($options);
     // The easiest case first: more then one option: always show form.
@@ -530,6 +520,7 @@ class WorkflowState extends ConfigEntityBase {
     $workflow = $this->getWorkflow();
     if (!$workflow) {
       // No workflow, no options ;-)
+      $options = array();
     }
     elseif (!$current_sid) {
       // If no State ID is given, we return all states.

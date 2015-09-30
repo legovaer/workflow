@@ -43,7 +43,6 @@ class WorkflowItem extends ListItemBase {
    * {@inheritdoc}
    */
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
-
     $schema = array(
       'columns' => array(
         'value' => array(
@@ -56,8 +55,8 @@ class WorkflowItem extends ListItemBase {
         'value' => array('value'),
       ),
     );
-    return $schema;
 
+    return $schema;
   }
 
   /**
@@ -65,30 +64,62 @@ class WorkflowItem extends ListItemBase {
    */
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
 
-    $properties['value'] = DataDefinition::create('string') // TODO D8-port : or 'any'
-    ->setLabel(t('Workflow state'))
-      ->addConstraint('Length', array('max' => 128))
-      ->setRequired(TRUE);
+    /**
+     * Property definitions of the contained properties.
+     *
+     * @see FileItem::getPropertyDefinitions()
+     *
+     * @var array
+     */
+    static $propertyDefinitions;
 
-//    TODO D8-port: test this.
-    /*
-    $properties['date'] = DataDefinition::create('any')
-//    $properties['workflow_transition'] = DataDefinition::create('WorkflowTransition')
-      ->setLabel(t('Computed date'))
-      ->setDescription(t('The computed DateTime object.'))
-      ->setComputed(TRUE)
-      ->setClass('\Drupal\workflow\WorkflowTransition')
-      ->setSetting('date source', 'value');
 
-      ->setLabel(t('Computed date'))
-      ->setDescription(t('The computed DateTime object.'))
-      ->setComputed(TRUE)
-      ->setClass('\Drupal\datetime\DateTimeComputed')
-       ->setSetting('date source', 'value');
+    $definition['settings']['target_type'] = 'workflow_transition';
+    // Definitions vary by entity type and bundle, so key them accordingly.
+    $key = $definition['settings']['target_type'] . ':';
+    $key .= isset($definition['settings']['target_bundle']) ? $definition['settings']['target_bundle'] : '';
+
+    if (!isset($propertyDefinitions[$key])) {
+
+      $propertyDefinitions[$key]['value'] = DataDefinition::create('string') // TODO D8-port : or 'any'
+      ->setLabel(t('Workflow state'))
+        ->addConstraint('Length', array('max' => 128))
+        ->setRequired(TRUE);
+
+//      dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__.'/'.__LINE__);
+/*
+ *
+       //    TODO D8-port: test this.
+      $propertyDefinitions[$key]['workflow_transition'] = DataDefinition::create('any')
+        //    $properties['workflow_transition'] = DataDefinition::create('WorkflowTransition')
+        ->setLabel(t('Transition'))
+        ->setDescription(t('The computed WokflowItem object.'))
+        ->setComputed(TRUE)
+        ->setClass('\Drupal\workflow\Entity\WorkflowTransition')
+        ->setSetting('date source', 'value');
+
+      $propertyDefinitions[$key]['display'] = array(
+        'type' => 'boolean',
+        'label' => t('Flag to control whether this file should be displayed when viewing content.'),
+      );
+      $propertyDefinitions[$key]['description'] = array(
+        'type' => 'string',
+        'label' => t('A description of the file.'),
+      );
+
+      $propertyDefinitions[$key]['display'] = array(
+        'type' => 'boolean',
+        'label' => t('Flag to control whether this file should be displayed when viewing content.'),
+      );
+      $propertyDefinitions[$key]['description'] = array(
+        'type' => 'string',
+        'label' => t('A description of the file.'),
+      );
 */
-
-    return $properties;
+    }
+    return $propertyDefinitions[$key];
   }
+
 
   /**
    * {@inheritdoc}
@@ -102,9 +133,9 @@ class WorkflowItem extends ListItemBase {
    * {@inheritdoc}
    */
   public function onChange($property_name, $notify = TRUE) {
-    // TODO D8: use this function for...
-//    dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
+//    dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__.': '.$this->value);
 
+    // TODO D8: use this function onChange for adding a line in table workfow_transition_*
 //    // Enforce that the computed date is recalculated.
 //    if ($property_name == 'value') {
 //      $this->date = NULL;
@@ -119,7 +150,7 @@ class WorkflowItem extends ListItemBase {
     $constraint_manager = \Drupal::typedDataManager()->getValidationConstraintManager();
     $constraints = parent::getConstraints();
 
-//  dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
+  //  dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
     /*
     $max_length = 128;
     $constraints[] = $constraint_manager->create('ComplexData', array(
@@ -138,6 +169,7 @@ class WorkflowItem extends ListItemBase {
    * {@inheritdoc}
    */
   public static function defaultStorageSettings() {
+
     return array(
       'workflow_type' => '',
 //      'allowed_values' => array(),
@@ -227,137 +259,6 @@ class WorkflowItem extends ListItemBase {
 
     $element['allowed_values']['#description'] = $this->allowedValuesDescription();
 
-//    dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
-
-    return $element;
-
-//    return $element + parent::storageSettingsForm($form, $form_state, $has_data)
-
-//  TODO D8-port: below settings may be (re)moved.
-    /*
-    $field_info = self::getInfo();
-    $settings = [];
-    //TODO     $settings = $this->field['settings'];
-    $settings += $field_info['workflow']['settings'];
-    $settings['widget'] += $field_info['workflow']['settings']['widget'];
-
-        $element['widget'] = array(
-          '#type' => 'details',
-          '#title' => t('Workflow widget'),
-          '#description' => t('Set some global properties of the widgets for this
-            workflow. Some can be altered per widget instance.'
-          '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
-          ),
-        );
-        $element['widget']['options'] = array(
-          '#type' => 'select',
-          '#title' => t('How to show the available states'),
-          '#required' => FALSE,
-          '#default_value' => $settings['widget']['options'],
-          // '#multiple' => TRUE / FALSE,
-          '#options' => array(
-            // These options are taken from options.module
-            'select' => 'Select list',
-            'radios' => 'Radio buttons',
-            // This option does not work properly on Comment Add form.
-            'buttons' => 'Action buttons',
-          ),
-          '#description' => t("The Widget shows all available states. Decide which
-            is the best way to show them. ('Action buttons' do not work on Comment form.)"
-          ),
-        );
-        $element['widget']['hide'] = array(
-          '#type' => 'checkbox',
-          '#attributes' => array('class' => array('container-inline')),
-          '#title' => t('Hide the widget on Entity form.'),
-          '#default_value' => $settings['widget']['hide'],
-          '#description' => t(
-            'Using Workflow Field, the widget is always shown when editing an
-            Entity. Set this checkbox in case you only want to change the status
-            on the Workflow History tab or on the Node View. (This checkbox is
-            only needed because Drupal core does not have a <hidden> widget.)'
-          ),
-        );
-        $element['widget']['name_as_title'] = array(
-          '#type' => 'checkbox',
-          '#attributes' => array('class' => array('container-inline')),
-          '#title' => t('Use the workflow name as the title of the workflow form'),
-          '#default_value' => $settings['widget']['name_as_title'],
-          '#description' => t(
-            'The workflow section of the editing form is in its own fieldset.
-             Checking the box will add the workflow name as the title of workflow
-             section of the editing form.'
-          ),
-        );
-        $element['widget']['schedule'] = array(
-          '#type' => 'checkbox',
-          '#title' => t('Allow scheduling of workflow transitions.'),
-          '#required' => FALSE,
-          '#default_value' => $settings['widget']['schedule'],
-          '#description' => t(
-            'Workflow transitions may be scheduled to a moment in the future.
-             Soon after the desired moment, the transition is executed by Cron.
-             This may be hidden by settings in widgets, formatters or permissions.'
-          ),
-        );
-        $element['widget']['schedule_timezone'] = array(
-          '#type' => 'checkbox',
-          '#title' => t('Show a timezone when scheduling a transition.'),
-          '#required' => FALSE,
-          '#default_value' => $settings['widget']['schedule_timezone'],
-        );
-        $element['widget']['comment'] = array(
-          '#type' => 'select',
-          '#title' => t('Allow adding a comment to workflow transitions'),
-          '#required' => FALSE,
-          '#options' => array(
-            // Use 0/1/2 to stay compatible with previous checkbox.
-            0 => t('hidden'),
-            1 => t('optional'),
-            2 => t('required'),
-          ),
-          '#default_value' => $settings['widget']['comment'],
-          '#description' => t('On the Workflow form, a Comment form can be included
-            so that the person making the state change can record reasons for doing
-            so. The comment is then included in the node\'s workflow history. This
-            may be altered by settings in widgets, formatters or permissions.'
-          ),
-        );
-
-        $element['watchdog_log'] = array(
-          '#type' => 'checkbox',
-          '#attributes' => array('class' => array('container-inline')),
-          '#title' => t('Log informational watchdog messages when a transition is
-            executed (a state value is changed)'),
-          '#default_value' => $settings['watchdog_log'],
-          '#description' => t('Optionally log transition state changes to watchdog.'),
-        );
-
-        $element['history'] = array(
-          '#type' => 'details',
-          '#title' => t('Workflow history'),
-          '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
-        );
-        $element['history']['history_tab_show'] = array(
-          '#type' => 'checkbox',
-          '#title' => t('Use the workflow history, and show it on a separate tab.'),
-          '#required' => FALSE,
-          '#default_value' => $settings['history']['history_tab_show'],
-          '#description' => t("Every state change is recorded in table
-            {workflow_transition_history}. If checked and user has proper permission, a
-            tab 'Workflow' is shown on the entity view page, which gives access to
-            the History of the workflow. If you have multiple workflows per bundle,
-            better disable this feature, and use, clone & adapt the Views display
-            'Workflow history per Entity'."),
-        );
-        $element['history']['roles'] = array(
-          '#type' => 'checkboxes',
-          '#options' => workflow_get_roles(),
-          '#title' => t('Workflow history permissions'),
-          '#default_value' => $settings['history']['roles'],
-          '#description' => t('Select any roles that should have access to the workflow tab on nodes that have a workflow.'),
-        );
-    */
     return $element;
   }
 
@@ -401,62 +302,11 @@ class WorkflowItem extends ListItemBase {
           $lines[] = $workflow->label() . "'s states: ";
         }
         $label = SafeMarkup::checkPlain(t($state->label()));
-        $lines[] = '   ' . $key. '|' . $label;
-//        $lines[] = "$key|$value";
+
+        $lines[] = "   $key|$label";
       }
     }
     return implode("\n", $lines);
-  }
-
-  /**
-   * Implements hook_field_insert() -> FieldItemInterface::insert().
-   */
-  public function insertTODO() {
-//  dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
-
-    return $this->update();
-  }
-
-  /**
-   * Implements hook_field_update() -> FieldItemInterface::update().
-   */
-
-  /**
-   * Implements hook_field_update().
-   *
-   * It is the D7-wrapper for D8-style WorkflowDefaultWidget::submit.
-   * It is called also from hook_field_insert, since we need $nid to store workflow_transition_history.
-   * We cannot use hook_field_presave, since $nid is not yet known at that moment.
-   */
-  public function updateTODO() {
-//    function workflowfield_field_update($entity_type, $entity, array $field, $instance, $langcode, &$items) {
-//  dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
-
-    $form = array();
-    $form_state = array();
-    $field_name = $field['field_name'];
-
-    if ($entity_type == 'comment') {
-      // This happens when we are on an entity's comment.
-      // We save the field of the node. The comment is saved automatically.
-      $referenced_entity_type = 'node'; // Comments only exist on nodes.
-      $referenced_entity_id = $entity->nid;
-      // Load the node again, since the passed node doesn't contain proper 'type' field.
-      $referenced_entity = entity_load_single($referenced_entity_type, $referenced_entity_id);
-      // Normalize the contents of the workflow field.
-      $items[0]['value'] = _workflow_get_sid_by_items($items);
-
-      // Execute the transition upon the node. Afterwards, $items is in form as expected by Field API.
-      // Remember, we don't know if the transition is scheduled or not.
-      $widget = new WorkflowTransitionForm($field, $instance, $referenced_entity_type, $referenced_entity);
-      $widget->submitForm($form, $form_state, $items); // $items is a proprietary D7 parameter.
-      // // Since we are saving the comment only, we must save the node separately.
-      // entity_save($referenced_entity_type, $referenced_entity);
-    }
-    else {
-      $widget = new WorkflowTransitionForm($field, $instance, $entity_type, $entity);
-      $widget->submitForm($form, $form_state, $items); // $items is a proprietary D7 parameter.
-    }
   }
 
 //  /**
@@ -470,7 +320,8 @@ class WorkflowItem extends ListItemBase {
 
 
   /**
-   * @return array
+   * Implementation of OptionsProviderInterface
+   *
    *   An array of settable options for the object that may be used in an
    *   Options widget, usually when new data should be entered. It may either be
    *   a flat array of option labels keyed by values, or a two-dimensional array
@@ -524,9 +375,9 @@ class WorkflowItem extends ListItemBase {
     //  page /admin/structure/types/manage/MY_CONTENT_TYPE/fields/MY_FIELD_NAME .
     $url_components = explode('/', $_SERVER['REQUEST_URI']);
     if (isset($url_components[6])
-        && ($url_components[1] == 'admin')
-        && ($url_components[2] == 'structure')
-        && ($url_components[6] == 'fields')) {
+      && ($url_components[1] == 'admin')
+      && ($url_components[2] == 'structure')
+      && ($url_components[6] == 'fields')) {
       return $allowed_options = array();
     };
 

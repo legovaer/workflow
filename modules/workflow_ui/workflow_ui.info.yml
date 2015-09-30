@@ -5,6 +5,8 @@ type: module
 core: 8.x
 # version: VERSION
 
+configure: entity.workflow_workflow.collection
+
 dependencies:
   - workflow
 

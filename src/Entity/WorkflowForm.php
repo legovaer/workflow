@@ -67,14 +67,17 @@ class WorkflowForm extends EntityForm {
       is the best way to show them."
       ),
     );
+
     $form['basic']['name_as_title'] = array(
-      '#type' => 'radios',
-      '#options' => $noyes,
+      '#type' => 'checkbox',
       '#attributes' => array('class' => array('container-inline')),
-      '#title' => t('Use the workflow name as the title of the workflow form?'),
+      '#title' => t('Use the workflow name as the title of the workflow form'),
       '#default_value' => isset($workflow->options['name_as_title']) ? $workflow->options['name_as_title'] : 0,
-      '#description' => t('The workflow section of the editing form is in its own
-      fieldset. Checking the box will add the workflow name as the title of workflow section of the editing form.'),
+      '#description' => t(
+        'The workflow section of the editing form is in its own fieldset.
+             Checking the box will add the workflow name as the title of workflow
+             section of the editing form.'
+      ),
     );
 
     $form['schedule'] = array(
@@ -84,20 +87,21 @@ class WorkflowForm extends EntityForm {
         Soon after the desired moment, the transition is executed by Cron.'),
       '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
     );
-
     $form['schedule']['schedule'] = array(
-      '#type' => 'radios',
-      '#options' => $noyes,
-      '#attributes' => array('class' => array('container-inline')),
-      '#title' => t('Allow scheduling of workflow transitions?'),
+      '#type' => 'checkbox',
+      '#title' => t('Allow scheduling of workflow transitions.'),
+      '#required' => FALSE,
       '#default_value' => isset($workflow->options['schedule']) ? $workflow->options['schedule'] : 1,
+      '#description' => t(
+        'Workflow transitions may be scheduled to a moment in the future.
+             Soon after the desired moment, the transition is executed by Cron.
+             This may be hidden by settings in widgets, formatters or permissions.'
+      ),
     );
-
     $form['schedule']['schedule_timezone'] = array(
-      '#type' => 'radios',
-      '#options' => $noyes,
-      '#attributes' => array('class' => array('container-inline')),
-      '#title' => t('Show a timezone when scheduling a transition?'),
+      '#type' => 'checkbox',
+      '#title' => t('Show a timezone when scheduling a transition.'),
+      '#required' => FALSE,
       '#default_value' => isset($workflow->options['schedule_timezone']) ? $workflow->options['schedule_timezone'] : 1,
     );
 
@@ -111,6 +115,26 @@ class WorkflowForm extends EntityForm {
       ),
       '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
     );
+
+    /*
+    $form['comment']['comment'] = array(
+      '#type' => 'select',
+      '#title' => t('Allow adding a comment to workflow transitions'),
+      '#required' => FALSE,
+      '#options' => array(
+        // Use 0/1/2 to stay compatible with previous checkbox.
+        0 => t('hidden'),
+        1 => t('optional'),
+        2 => t('required'),
+      ),
+      '#default_value' => $settings['widget']['comment'],
+      '#description' => t('On the Workflow form, a Comment form can be included
+            so that the person making the state change can record reasons for doing
+            so. The comment is then included in the node\'s workflow history. This
+            may be altered by settings in widgets, formatters or permissions.'
+      ),
+    );
+    */
 
     $form['comment']['comment_log_node'] = array(
       '#type' => 'select',
@@ -149,35 +173,39 @@ class WorkflowForm extends EntityForm {
     $form['watchdog'] = array(
       '#type' => 'details',
       '#title' => t('Watchdog'),
-      // '#description' => t('Lorem ipsum.'),
       '#description' => t('Informational watchdog messages can be logged when a transition is executed (state of a node is changed).'),
       '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
     );
 
     $form['watchdog']['watchdog_log'] = array(
-      '#type' => 'radios',
-      '#options' => $noyes,
-      '#attributes' => array('class' => array('container-inline')),
-      '#title' => t('Log watchdog messages'),
+      '#type' => 'checkbox',
+      '#title' => t('Log watchdog messages upon state change'),
       '#default_value' => isset($workflow->options['watchdog_log']) ? $workflow->options['watchdog_log'] : 0,
+      '#description' => t(''),
     );
 
-    $form['tab'] = array(
+    $form['history'] = array(
       '#type' => 'details',
-      '#title' => t('Workflow tab permissions'),
+      '#title' => t('Workflow history permissions'),
+      '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
       '#description' => t("Every state change is recorded in database table
         {workflow_transition_history}. The history of the workflow can be shown on a
         tab 'Workflow', which is shown on the entity view page."),
-      '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
     );
-    $form['tab']['history_tab_show'] = array(
+    $form['history']['history_tab_show'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use the workflow history, and show it on a separate tab. (If user has proper permissions.)'),
       '#required' => FALSE,
       '#default_value' => isset($workflow->options['history_tab_show']) ? $workflow->options['history_tab_show'] : 1,
+      '#description' => t("Every state change is recorded in table
+            {workflow_transition_history}. If checked and user has proper permission, a
+            tab 'Workflow' is shown on the entity view page, which gives access to
+            the History of the workflow. If you have multiple workflows per bundle,
+            better disable this feature, and use, clone & adapt the Views display
+            'Workflow history per Entity'."),
     );
 
-    $form['tab']['tab_roles'] = array(
+    $form['history']['tab_roles'] = array(
       '#type' => 'checkboxes',
       '#title' => $this->t('Roles'),
       '#options' => workflow_get_roles(),
@@ -225,9 +253,9 @@ class WorkflowForm extends EntityForm {
 
     // Tell the user we've updated the data.
     $args = [
-      '%label' => $this->entity->label(),
+      '%label' => $entity->label(),
       '%action' => $action,
-      'link' =>  $this->entity->link($this->t('Edit'))
+      'link' => $entity->link(t('Edit'))
     ];
     drupal_set_message($this->t('Workflow %label has been %action. Please maintain the states and transitions.', $args));
     $this->logger('workflow')->notice('Workflow %label has been %action.', $args);

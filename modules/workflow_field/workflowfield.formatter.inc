@@ -10,7 +10,56 @@
  * All hooks are wrapper functions for a D8-style WorkflowDefaultWidget object.
  */
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Language\Language;
+use Drupal\workflow\Entity\WorkflowState;
+
+/**
+ * Creates a form element to show the current value of a Workflow state.
+ *
+ * @param EntityInterface $entity
+ *   The entity this field is on.
+ * @param string $field_name
+ *   The field_name
+ * @param string $current_sid
+ *   The current State Id.
+ *
+ * @return array
+ *   Form element, resembling the formatter of List module.
+ *   If state 0 is given, return an empty form element.
+ */
+function workflow_state_formatter($entity, $field_name, $current_sid = '') {
+  $element = array();
+
+  if (!$current_sid) {
+    dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ .'/'.__LINE__);
+    $current_sid = workflow_node_current_state($entity, $field_name);
+ }
+
+    // Add the 'current value' formatter for this field.
+    // $list_display = $instance['display']['default'];
+    $list_display['type'] = 'list_default';
+    // Generate a renderable array for the field. Use default language determination ($langcode = NULL).
+   $element = $entity->$field_name->view($list_display);
+
+  // Below: the old-school formatter, just for reference.
+/*
+    $current_state = WorkflowState::load($current_sid);
+    $element = array(
+      '#type' => 'item',
+      '#title' => t('Current state'),
+      '#markup' => $current_state ? $current_state->label() : 'unknown state',
+      '#value' => $current_sid,
+      '#default_value' => $current_sid,
+    );
+*/
+
+  // TODO D8: make weight better
+    // Make sure the current value is before the form. (which has weight = 0.005)
+//    $element['#weight'] = 0;
+
+  return $element;
+}
 
 /**
  * Implements hook_field_formatter_view().
@@ -30,14 +79,8 @@ function workflowfield_field_formatter_view($entity_type, $entity, $field, $inst
   $current_sid = workflow_node_current_state($entity, $field_name);
   $current_state = workflow_state_load_single($current_sid);
 
-  $list_element = array();
-  if ($field_name) {
-    // First compose the current value with the normal formatter from list.module.
-    $list_element = workflow_state_formatter($entity_type, $entity, $field, $instance, $current_sid);
-  }
-  elseif (!empty($field['settings']['widget']['current_status'])) {
-    $list_element = workflow_state_formatter($entity_type, $entity, $field, $instance, $current_sid);
-  }
+  // First compose the current value with the normal formatter from list.module.
+  $list_element = workflow_state_formatter($entity, $field_name, $current_sid);
 
   // Check permission, so that even with state change rights,
   // the form can be suppressed from the node view (#1893724).

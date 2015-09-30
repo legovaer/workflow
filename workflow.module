@@ -419,66 +419,6 @@ function workflow_forms($form_id, $args) {
 }
 
 /**
- * Creates a form element to show the current value of a Workflow state.
- *
- * @params
- *   Like a normal Field API function.
- * @param int $default_value
- *   Extra param for performance and edge cases.
- *
- * @return array
- *   Form element, resembling the formatter of List module.
- *   If state 0 is given, return an empty form element.
- */
-function workflow_state_formatter($entity_type, $entity, $field = array(), $instance = array(), $default_value = NULL) {
-  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
-  $list_element = array();
-
-  $field_name = isset($field['field_name']) ? $field['field_name'] : '';
-  $current_sid = ($default_value == NULL) ? workflow_node_current_state($entity, $field_name) : $default_value;
-  if (!$current_sid) {
-    $list_element = array();
-  }
-  elseif ($field_name) {
-    // This is a Workflow Field workflow. Use the Field API field view.
-    $field_name = $field['field_name'];
-
-    // Add the 'current value' formatter for this field.
-    $list_display = $instance['display']['default'];
-    $list_display['type'] = 'list_default';
-    // Generate a renderable array for the field. Use default language determination ($langcode = NULL).
-    $list_element = $entity->$field_name->view($list_display);
-    // Make sure the current value is before the form. (which has weight = 0.005)
-    $list_element['#weight'] = 0;
-  }
-  else {
-    // This is a Workflow Node workflow.
-    $current_state = WorkflowState::load($current_sid);
-    $args = array(
-      'state' => $current_state ? workflow_get_sid_label($current_sid) : 'unknown state',
-      'state_system_name' => $current_state ? $current_state->getName() : 'unknown state',
-      'sid' => $current_sid,
-    );
-    // @FIXME
-// theme() has been renamed to _theme() and should NEVER be called directly.
-// Calling _theme() directly can alter the expected output and potentially
-// introduce security issues (see https://www.drupal.org/node/2195739). You
-// should use renderable arrays instead.
-// 
-// 
-// @see https://www.drupal.org/node/2195739
-// $list_element = array(
-//       '#type' => 'item',
-//       // '#title' => t('Current state'),
-//       '#markup' => theme('workflow_current_state', $args),
-//     );
-
-  }
-  return $list_element;
-}
-
-/**
  * Getter/Setter to tell if the action buttons are used.
  *
  * @param bool $new_value
