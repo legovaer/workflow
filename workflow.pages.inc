@@ -9,7 +9,7 @@
 define('MARK_STATE_IS_DELETED', '*');
 
 /**
- * Menu callback. Display workflow summary of a node.
+ * Menu callback. Display workflow summary of an entity.
  *
  * N.B. When having multiple workflows per bundle, use Views display
  *      'Workflow history per entity' instead!
@@ -38,7 +38,7 @@ function workflow_tab_page($entity_type, $entity = NULL) {
   $workflow = $current_state->getWorkflow();
 
   // Show the current state and the Workflow form to allow state changing.
-  // N.B. This part is replicated in hook_node_view, workflow_tab_page, workflow_vbo, transition_edit.
+  // N.B. This part is replicated in hook_entity_view, workflow_tab_page, workflow_vbo, transition_edit.
   // @todo: support multiple workflows per entity.
   // For workflow_tab_page with multiple workflows, use a separate view. See [#2217291].
   $field = _workflow_info_field($field_name, $workflow);
@@ -91,7 +91,7 @@ function workflow_tab_page($entity_type, $entity = NULL) {
 //       ));
 
       // Make a note that we have themed the current state; other times in the history
-      // of this node where the node was in this state do not need to be specially themed.
+      // of this entity where the entity was in this state do not need to be specially themed.
       $current_themed = TRUE;
     }
     elseif (!$new_state->isActive()) {

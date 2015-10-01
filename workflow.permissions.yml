@@ -10,8 +10,8 @@ schedule workflow transitions:
   description: 'Schedule workflow transitions.'
 
 show workflow transition form:
-  title: 'Show workflow state change on node view'
-  description': 'Show workflow state change form on node viewing.'
+  title: 'Show workflow state change form on entity view page'
+  description': 'Show workflow state change form on entity viewing.'
 
 participate in workflow:
   title: 'Participate in workflows'

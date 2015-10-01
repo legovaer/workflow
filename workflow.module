@@ -141,7 +141,7 @@ function workflow_menu_alter(&$items) {
 /**
  * Implements hook_admin_paths_alter().
  *
- * If node edits are done in admin mode, then workflow history tab will be too.
+ * If entity edits are done in admin mode, then workflow history tab will be too.
  *
  * @todo: add support for every $entity_type.
  */
@@ -159,7 +159,7 @@ function workflow_admin_paths_alter(&$paths) {
 /**
  * Menu access control callback. Determine access to Workflow tab.
  *
- * The History tab should not be used with multiple workflows per node.
+ * The History tab should not be used with multiple workflows per entity.
  * Use the dedicated view for this use case.
  *
  * @param string $entity_type
@@ -251,9 +251,10 @@ function workflow_hook_info() {
 function TODOworkflow_entity_type_build(array &$entity_types) {
   dpm('TODO D8-port: test (port hook-entity_info) function workflow.module::' . __FUNCTION__ );
 
-  /** @var $entity_types \Drupal\Core\Entity\EntityTypeInterface[] */
-  // Add a form controller for a custom node form without overriding the default
-  // node form. To override the default node form, use hook_entity_type_alter().
+  /* @var $entity_types \Drupal\Core\Entity\EntityTypeInterface[] */
+  // Add a form controller for a custom entity form without overriding the
+  // default entity form. To override the default entity form,
+  // use hook_entity_type_alter().
   //$entity_types['node']->setFormClass('mymodule_foo', 'Drupal\mymodule\NodeFooFormController');
 }
 
@@ -431,32 +432,18 @@ function workflow_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   // Find the first workflow.
   // (So this won't work with multiple workflows per entity.)
   $workflow_form = array();
-  if (isset($form['workflow'])) {
-    // Workflow Node.
-    $workflow_form = &$form['workflow'];
-    $field_info = $workflow_form['workflow_field']['#value'];
-    $field_name = $field_info['field_name'];
-    $langcode = Language::LANGCODE_NOT_SPECIFIED;
 
-    // Move non-standard 'Submit workflow' button in hook_node_view, workflow_tab_page, workflow_vbo.
-    if (isset($form['workflow']['actions'])) {
-      $form['actions'] = $form['workflow']['actions'];
-      unset($form['workflow']['actions']);
-    }
-  }
-  else {
-    $field_name = '';
-    foreach (\Drupal\Core\Render\Element::children($form) as $key) {
-      if (isset($form[$key]['#language'])) {
-        $langcode = $form[$key]['#language'];
-        if (isset($form[$key][$langcode][0]['workflow'])) {
-          // Reference the Workflow Form, we'll remove the buttons later.
-          $field_name = $key;
-          $langcode = $form[$field_name]['#language'];
-          $workflow_form = &$form[$key][$langcode][0]['workflow'];
-          // Stop looping if found.
-          break;
-        }
+  $field_name = '';
+  foreach (\Drupal\Core\Render\Element::children($form) as $key) {
+    if (isset($form[$key]['#language'])) {
+      $langcode = $form[$key]['#language'];
+      if (isset($form[$key][$langcode][0]['workflow'])) {
+        // Reference the Workflow Form, we'll remove the buttons later.
+        $field_name = $key;
+        $langcode = $form[$field_name]['#language'];
+        $workflow_form = &$form[$key][$langcode][0]['workflow'];
+        // Stop looping if found.
+        break;
       }
     }
   }
@@ -573,7 +560,7 @@ function workflow_transition_form_submit($form, &$form_state) {
   }
   else {
     \Drupal::logger('workflow')->notice('workflow_transition_form_submit() is called with error.', []);
-    // We are on an Entity/Node/Comment Form page.
+    // We are on an Entity/Comment Form page.
     // We should not be here.
   }
 
@@ -619,7 +606,7 @@ function _workflow_transition_form_validate_buttons($form, &$form_state) {
     if (isset($form_state['triggering_element']['#submit'])) {
       // We are on a View page or History tab. Try to fix the form_state.
     else {
-      // We are on a Node/Entity/Comment form. Try to fix the form_state.
+      // We are on a Entity/Comment form. Try to fix the form_state.
     }
    */
 
@@ -634,7 +621,7 @@ function _workflow_transition_form_validate_buttons($form, &$form_state) {
 }
 
 /**
- * Executes a transition (change state of a node), from OUTSIDE the entity,
+ * Executes a transition (change state of an entity), from OUTSIDE the entity,
  *
  * Use workflow_execute_transition($transition) to start a State Change from
  * outside an entity, e.g., workflow_cron().
@@ -659,7 +646,7 @@ function workflow_execute_transition(WorkflowTransitionInterface $transition, $f
   // Step 1: Update entity to update the field.
   // D7: This will call hook_field_update() and WorkflowFieldDefaultWidget::submit().
   $entity->{$field_name}->setValue($transition->getToSid());
-  // @todo D7: perhaps use field_attach_update, for better performance, and not change node properties.
+  // @todo D7: perhaps use field_attach_update, for better performance, and not change entity properties.
   // @todo D7: if transition is scheduled or new_sid == old_sid and no comment, proceed as if no $field_name.
   $entity->save();
   // field_attach_update($entity_type, $entity);
@@ -947,10 +934,10 @@ function workflow_node_previous_state($entity, $field_name) {
  */
 
 /**
- * Get a specific workflow, given a Node type. Only one workflow is possible per node type.
+ * Get a specific workflow, given an entity type. Only one workflow is possible per node type.
  *
  * @param string $entity_bundle
- *   A node type (a.k.a. entity bundle).
+ *   An entity bundle.
  * @param string $entity_type
  *   An entity type. This is passed when also the Field API must be checked.
  *
@@ -961,7 +948,7 @@ function workflow_node_previous_state($entity, $field_name) {
  *
  * @todo: support multiple workflows per entity.
  */
-function workflow_get_workflows_by_type($entity_bundle, $entity_type = 'node') {
+function workflow_get_workflows_by_type($entity_bundle, $entity_type) {
 //  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
 
   static $map = array();

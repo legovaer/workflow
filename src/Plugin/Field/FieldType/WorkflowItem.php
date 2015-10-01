@@ -46,7 +46,7 @@ class WorkflowItem extends ListItemBase {
     $schema = array(
       'columns' => array(
         'value' => array(
-          'description' => 'The {workflow_states}.sid that this node is currently in.',
+          'description' => 'The {workflow_states}.sid that this entity is currently in.',
           'type' => 'varchar',
           'length' => 128,
         ),

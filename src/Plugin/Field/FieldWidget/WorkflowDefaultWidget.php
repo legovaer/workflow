@@ -306,7 +306,7 @@ class WorkflowDefaultWidget extends WidgetBase {
     $settings_comment = $workflow_settings['comment'];
 
     $transition_is_scheduled = ($transition && $transition->isScheduled());
-    // Save the current value of the node in the form, for later Workflow-module specific references.
+    // Save the current value of the entity in the form, for later Workflow-module specific references.
     // We add prefix, since #tree == FALSE.
     $element['workflow']['workflow_field_name'] = array(
       '#type' => 'value',
@@ -498,7 +498,7 @@ class WorkflowDefaultWidget extends WidgetBase {
     }
     else {
       // In some cases, no submit callback function is specified. This is
-      // explicitly done on e.g., the node edit form, because the workflow form
+      // explicitly done on e.g., the entity edit form, because the workflow form
       // is 'just a field'.
       // So, no Submit button is to be shown.
     }
@@ -525,7 +525,7 @@ class WorkflowDefaultWidget extends WidgetBase {
    *   If update succeeded, the new State Id. Else, the old Id is returned.
    *
    * This is called from function _workflowfield_form_submit($form, &$form_state)
-   * It is a replacement of function workflow_transition($node, $to_sid, $force, $field)
+   * It is a replacement of function workflow_transition($entity, $to_sid, $force, $field)
    * It performs the following actions;
    * - save a scheduled action
    * - update history
@@ -619,7 +619,7 @@ class WorkflowDefaultWidget extends WidgetBase {
                 return; // <---- exit!
               }
               else {
-                // We are saving a node from a comment.
+                // We are saving an entity from a comment.
                 $entity->{$field_name}[$langcode] = $items;
                 $entity->save();
 
@@ -647,7 +647,7 @@ class WorkflowDefaultWidget extends WidgetBase {
                       // At this moment, $from_sid should have a value. If the content does not
                       // have a state yet, from_sid contains '(creation)' state. But if the
                       // content is not associated to a workflow, from_sid is now 0. This may
-                      // happen in workflow_vbo, if you assign a state to non-relevant nodes.
+                      // happen in workflow_vbo, if you assign a state to non-relevant entities.
                       $entity_id = entity_id($entity_type, $entity);
                       drupal_set_message(t('Error: content !id has no workflow attached. The data is not saved.', array('!id' => $entity_id)), 'error');
                       // The new state is still the previous state.

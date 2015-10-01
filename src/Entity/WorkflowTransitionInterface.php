@@ -29,7 +29,7 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface 
    * Load WorkflowTransitions, most recent first.
    *
    * @return WorkflowTransitionInterface
-   *   object representing one row from the {workflow_node_history} table.
+   *   object representing one row from the {workflow_transition_history} table.
    */
   public static function loadByProperties($entity_type, $entity_id, array $revision_ids, $field_name, $langcode = '', $transition_type = '');
 
@@ -56,7 +56,7 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface 
   public static function loadMultipleByProperties($entity_type, array $entity_ids, array $revision_ids, $field_name, $limit = NULL, $langcode = '', $transition_type = '');
 
     /**
-   * Execute a transition (change state of a node).
+   * Execute a transition (change state of an entity).
    *
    * @param bool $force
    *   If set to TRUE, workflow permissions will be ignored.

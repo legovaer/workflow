@@ -24,8 +24,8 @@ use Drupal\workflow\Entity\WorkflowState;
 /**
  * Implements an actual, executed, Transition.
  *
- * If a transition is executed, the new state is saved in the Field or {workflow_node}.
- * If a transition is saved, it is saved in table {workflow_history_node}
+ * If a transition is executed, the new state is saved in the Field.
+ * If a transition is saved, it is saved in table {workflow_transition_history}.
  *
  * @ContentEntityType(
  *   id = "workflow_transition",
@@ -34,7 +34,6 @@ use Drupal\workflow\Entity\WorkflowState;
  *   module = "workflow",
  *   base_table = "workflow_transition_history",
  *   translatable = FALSE,
- *   list_cache_contexts_TODO = { "user.node_grants:view" },
  *   entity_keys = {
  *     "id" = "hid",
  *   },
@@ -475,7 +474,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
         dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__.': ' . $from_sid .'> ' .$to_sid);
         // Now that workflow data is saved, reset stuff to avoid problems
         // when Rules etc want to resave the data.
-        // Remember, this is only for nodes, and node_save() is not necessarily performed.
+        // Remember, this is only for Workflow Node API, and node_save() is not necessarily performed.
         unset($entity->workflow_comment);
         \Drupal::moduleHandler()->invokeAll('workflow', ['transition post', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this]);
         entity_get_controller('node')->resetCache(array($entity->id())); // from entity_load(), node_save();

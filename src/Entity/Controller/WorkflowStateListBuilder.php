@@ -269,10 +269,10 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
           continue;
         }
 
-        // Does user want to deactivate the state (reassign current nodes)?
+        // Does user want to deactivate the state (reassign current content)?
         if ($sid && $value['status'] == 0 && $state->isActive()) {
           $args = array('%state' => $state->label()); // check_plain() is run by t().
-          // Does that state have nodes in it?
+          // Does that state have content in it?
           if ($value['count'] > 0 && empty($value['reassign'])) {
             if ($form['#last_mohican']) {
               $message = 'Since you are deleting the last available workflow state
@@ -338,7 +338,7 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
           continue;
         }
 
-        // Does user want to deactivate the state (reassign current nodes)?
+        // Does user want to deactivate the state (reassign current content)?
         if ($sid && $value['status'] == 0 && $state->isActive()) {
           $new_sid = $value['reassign'];
           $new_state = WorkflowState::load($new_sid);
@@ -360,7 +360,7 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
               drupal_set_message(t($message, $args));
             }
           }
-          // Delete the old state without orphaning nodes, move them to the new state.
+          // Delete the old state without orphaning content, move them to the new state.
           $state->deactivate($new_sid);
 
           $message = 'Deactivated workflow state %old_state in %workflow.';

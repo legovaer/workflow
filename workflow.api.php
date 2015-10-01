@@ -31,7 +31,7 @@ use Drupal\workflow\Entity\WorkflowConfigTransition;
  * @param string $entity_type
  *   The entity_type of the entity whose workflow state is changing.
  * @param string $field_name
- *   The name of the Workflow Field. Empty in case of Workflow Node.
+ *   The name of the Workflow Field.
  *   This is used when saving a state change of a Workflow Field.
  * @param object $transition
  *   The transition, that contains all of the above.
@@ -40,7 +40,7 @@ use Drupal\workflow\Entity\WorkflowConfigTransition;
  * @return mixed
  *   Only 'transition permitted' expects a boolean result.
  */
-function hook_workflow($op, $id, $new_sid, $entity, $force, $entity_type = '', $field_name = '', $transition = NULL, AccountInterface $user = NULL) {
+function hook_workflow($op, $id, $new_sid, $entity, $force, $entity_type = '', $field_name, $transition = NULL, AccountInterface $user = NULL) {
   switch ($op) {
     case 'transition permitted':
       // This is called in the following situations:
@@ -179,18 +179,16 @@ function hook_workflow_permitted_state_transitions_alter(array &$transitions, ar
  *
  * Use this hook to alter the form.
  * It is only suited if you only use View Page or Workflow Tab.
- * If you change the state on the Node Form (Edit modus), you need the hook
+ * If you change the state on the Entity Edit page (form), you need the hook
  * hook_form_alter(). See below for more info.
  */
 function hook_form_workflow_transition_form_alter(&$form, FormStateInterface $form_state, $form_id) {
 
   // Get the Entity.
+  /* @var $entity \Drupal\Core\Entity\EntityInterface */
   $entity = $form['workflow']['workflow_entity']['#value'];
   $entity_type = $form['workflow']['workflow_entity_type']['#value'];
-
-  // Use the complicated form, which is suited for all Entity types.
-  // For nodes only: $entity_type = 'node'; $entity_bundle = $entity->type;
-  list(, , $entity_bundle) = entity_extract_ids($entity_type, $entity);
+  $entity_bundle = $entity->bundle();
 
   // Get the current State ID.
   $sid = workflow_node_current_state($entity, $field_name = NULL);
@@ -216,15 +214,15 @@ function hook_form_workflow_transition_form_alter(&$form, FormStateInterface $fo
 /**
  * Implements hook_form_alter().
  *
- * Use this hook to alter the form on a Node Form, Comment Form (Edit page).
+ * Use this hook to alter the form on an Entity Form, Comment Form (Edit page).
  */
 function hook_form_alter(&$form, FormStateInterface $form_state, $form_id) {
 
   // Get the Entity.
-  $entity = $form['#entity'];
-  $entity_type = $form['#entity_type'];
-  // Use the complicated form, which is suited for all Entity Types.
-  list(, , $entity_bundle) = entity_extract_ids($entity_type, $entity);
+  /* @var $entity \Drupal\Core\Entity\EntityInterface */
+  $entity = $form['workflow']['workflow_entity']['#value'];
+  $entity_type = $form['workflow']['workflow_entity_type']['#value'];
+  $entity_bundle = $entity->bundle();
 
   // Discover if this is the correct form.
   // ...
@@ -238,4 +236,3 @@ function hook_form_alter(&$form, FormStateInterface $form_state, $form_id) {
 function hook_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode){
   // @see http://drupal.stackexchange.com/questions/101857/difference-between-hook-form-alter-and-hook-field-attach-form
 }
-
