@@ -111,7 +111,7 @@ class WorkflowForm extends EntityForm {
       '#description' => t(
         'A Comment form can be shown on the Workflow Transition form so that the person
          making a state change can record reasons for doing so. The comment is
-         then included in the node\'s workflow history.'
+         then included in the content\'s workflow history.'
       ),
       '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
     );
@@ -130,7 +130,7 @@ class WorkflowForm extends EntityForm {
       '#default_value' => $settings['widget']['comment'],
       '#description' => t('On the Workflow form, a Comment form can be included
             so that the person making the state change can record reasons for doing
-            so. The comment is then included in the node\'s workflow history. This
+            so. The comment is then included in the content\'s workflow history. This
             may be altered by settings in widgets, formatters or permissions.'
       ),
     );
@@ -210,7 +210,7 @@ class WorkflowForm extends EntityForm {
       '#title' => $this->t('Roles'),
       '#options' => workflow_get_user_role_names(),
       '#default_value' => array_keys($workflow->tab_roles),
-      '#description' => t('Select any roles that should have access to the workflow tab on nodes that have a workflow.'),
+      '#description' => t('Select any roles that should have access to the workflow tab on content that has a workflow.'),
     );
 
     return parent::form($form, $form_state);

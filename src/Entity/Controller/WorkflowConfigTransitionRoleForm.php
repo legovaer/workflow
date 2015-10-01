@@ -75,7 +75,7 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
    *       )
    *     )
    *   means the transition from state 18 to state 20 can be executed by
-   *   the node author or a user in role 2. The $transitions array should
+   *   the content author or a user in role 2. The $transitions array should
    *   contain ALL transitions for the workflow.
    */
   public function buildRow(EntityInterface $entity) {

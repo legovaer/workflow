@@ -233,8 +233,8 @@ class WorkflowState extends ConfigEntityBase {
     return ($a_wid < $b_wid) ? -1 : 1;
   }
 
-    /**
-   * Deactivate a Workflow State, moving existing nodes to a given State.
+  /**
+   * Deactivate a Workflow State, moving existing content to a given State.
    *
    * @param int $new_sid
    *   The state ID, to which all affected entities must be moved.
@@ -249,13 +249,13 @@ class WorkflowState extends ConfigEntityBase {
 
     // Notify interested modules. We notify first to allow access to data before we zap it.
     // E.g., Node API (@todo Field API):
-    // - re-parents any nodes that we don't want to orphan, whilst deactivating a State.
-    // - delete any lingering node to state values.
+    // - re-parents any entity that we don't want to orphan, whilst deactivating a State.
+    // - delete any lingering entity to state values.
     \Drupal::moduleHandler()->invokeAll('workflow', ['state delete', $current_sid, $new_sid, NULL, $force]);
 
     // TODO D8-port: re-implement below code.
 //    dpm('TODO D8-port: re-implement re-assign states when deactivating state in function WorkflowState::' . deactivate );
-    // Re-parent any nodes that we don't want to orphan, whilst deactivating a State.
+    // Re-parent any entity that we don't want to orphan, whilst deactivating a State.
     // This is called in WorkflowState::deactivate().
     // @todo: reparent Workflow Field, whilst deactivating a state.
     // TODO D8- State should not know about Transition: move this to Workflow->DeactivateState.
@@ -277,7 +277,7 @@ class WorkflowState extends ConfigEntityBase {
 //      }
 //    }
 //
-//    // Delete any lingering node to state values.
+//    // Delete any lingering entity to state values.
 //    workflow_delete_workflow_node_by_sid($current_sid);
 
     // Delete the transitions this state is involved in.

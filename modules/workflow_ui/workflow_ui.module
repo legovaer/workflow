@@ -36,9 +36,9 @@ function workflow_ui_help($route_name, RouteMatchInterface $route_match) {
         workflow states. The state is shown in the left column; the state to be
         moved to is to the right. For each transition, check the box next to
         the role(s) that may initiate the transition. For example, if only the
-        "production editor" role may move a node from Review state to the
+        "production editor" role may move content from Review state to the
         Published state, check the box next to "production editor". The author
-        role is built in and refers to the user who authored the node.')
+        role is built in and refers to the user who authored the content.')
       . '<br /><i>'
       . t("If not all roles are in the list, please review which roles may
         'participate in workflows' <a href='!url'> on the Permissions page</a>.",

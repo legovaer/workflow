@@ -15,12 +15,12 @@ The current version supports:
 - Workflow Access, since this works via Workflow API.
 
 The current version provides: 
-- adding a Workflow Field on an Entity type (Node type), or a Node Comment;
+- adding a Workflow Field on an Content type, or a Comment type;
 - usage of the core formatter from the List module (just showing the description of the current value);
 - usage of the core widgets from the Options module (select list, radio buttons);
 - usage of the usual Workflow Form, which contains also a Comment text area and Scheduling options.
-- changing the 'Workflow state' value on a Node Edit page.
-- changing the 'Workflow state' value via a Node's Comment.
+- changing the 'Workflow state' value on an Entity Edit page.
+- changing the 'Workflow state' value via an Entity's Comment.
 
 The current version DOES NOT provide: 
 - support for other submodules from the Workflow module. (At least, this is not tested.)

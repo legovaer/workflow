@@ -64,7 +64,7 @@ function workflow_state_formatter($entity, $field_name, $current_sid = '') {
 /**
  * Implements hook_field_formatter_view().
  *
- * Shows current State + Widget on a Node View page or a Workflow History tab.
+ * Shows current State and Widget on an Entity View page or a Workflow History tab.
  */
 function workflowfield_field_formatter_view($entity_type, $entity, $field, $instance, $langcode = Language::LANGCODE_NOT_SPECIFIED, $items = array(), $display = array()) {
   dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
@@ -83,7 +83,7 @@ function workflowfield_field_formatter_view($entity_type, $entity, $field, $inst
   $list_element = workflow_state_formatter($entity, $field_name, $current_sid);
 
   // Check permission, so that even with state change rights,
-  // the form can be suppressed from the node view (#1893724).
+  // the form can be suppressed from the entity view (#1893724).
   if (!\Drupal::currentUser()->hasPermission('show workflow transition form')) {
     return $list_element;
   }

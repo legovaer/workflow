@@ -45,8 +45,8 @@ class WorkflowManager { // extendds EntityManager {
       }
 
 
-      // Make sure transition is still valid: the node must still be in the state
-      // it was in, when the transition was scheduled.
+      // Make sure transition is still valid: the entity must still be in
+      // the state it was in, when the transition was scheduled.
       $current_sid = workflow_node_current_state($entity, $field_name);
       if ($current_sid == $scheduled_transition->getFromSid()) {
 
@@ -60,15 +60,15 @@ class WorkflowManager { // extendds EntityManager {
         }
       }
       else {
-        // Node is not in the same state it was when the transition
-        // was scheduled. Defer to the node's current state and
+        // Entity is not in the same state it was when the transition
+        // was scheduled. Defer to the entity's current state and
         // abandon the scheduled transition.
         $scheduled_transition->delete();
       }
     }
 
     if ($clear_cache) {
-      // Clear the cache so that if the transition resulted in a node
+      // Clear the cache so that if the transition resulted in a entity
       // being published, the anonymous user can see it.
       Cache::invalidateTags(array('rendered'));
     }

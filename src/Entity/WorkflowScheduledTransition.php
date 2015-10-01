@@ -54,7 +54,7 @@ class WorkflowScheduledTransition extends WorkflowTransition {
   }
 
   /**
-   * Given a node, get all scheduled transitions for it.
+   * Given an entity, get all scheduled transitions for it.
    *
    * @param string $entity_type
    * @param int $entity_id
@@ -179,7 +179,7 @@ class WorkflowScheduledTransition extends WorkflowTransition {
   }
 
   /**
-   * Given a node, delete transitions for it.
+   * Given an entity, delete transitions for it.
    */
   public function delete() {
     return parent::delete();
