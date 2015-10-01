@@ -14,6 +14,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\workflow\Entity\WorkflowTransition;
+use Drupal\Core\Entity\EntityManager;
 
 /**
  * Implements a scheduled transition, as shown on Workflow form.
@@ -71,7 +72,7 @@ class WorkflowScheduledTransition extends WorkflowTransition {
    * {@inheritdoc}
    */
   public static function loadByProperties($entity_type, $entity_id, array $revision_ids, $field_name = '', $langcode = '', $transition_type = 'workflow_scheduled_transition') {
-    return parent::loadByProperties($entity_type, $entity_id, $revision_ids, $field_name, $langcode, $transition_type);
+    // N.B. $transition_type is set as parameter default.
     return parent::loadByProperties($entity_type, $entity_id, $revision_ids, $field_name, $langcode, $transition_type);
   }
 
@@ -79,10 +80,11 @@ class WorkflowScheduledTransition extends WorkflowTransition {
    * {@inheritdoc}
    */
   public static function loadMultipleByProperties($entity_type, array $entity_ids, array $revision_ids, $field_name = '', $limit = NULL, $langcode = '', $transition_type = 'workflow_scheduled_transition') {
+    // N.B. $transition_type is set as parameter default.
     return parent::loadMultipleByProperties($entity_type, $entity_ids, $revision_ids, $field_name, $limit, $langcode, $transition_type);
   }
 
-    /**
+  /**
    * Given a timeframe, get all scheduled transitions.
    *
    * @param int $start
@@ -92,13 +94,12 @@ class WorkflowScheduledTransition extends WorkflowTransition {
    *   An array of transitions.
    */
   public static function loadBetween($start = 0, $end = 0) {
-    dpm('TODO D8-port: test function WorkflowScheduledTransition::' . __FUNCTION__);
+    $transition_type = 'workflow_scheduled_transition'; // TODO get this from annotation.
 
-    $query = db_select('workflow_scheduled_transition', 'wst');
-    $query->fields('wst');
-    $query->orderBy('timestamp', 'ASC');
-    $query->addTag('workflow_scheduled_transition');
-
+    /* @var $query \Drupal\Core\Entity\Query\QueryInterface */
+    $query = \Drupal::entityQuery($transition_type)
+      ->sort('timestamp', 'ASC')
+      ->addTag($transition_type);
     if ($start) {
       $query->condition('timestamp', $start, '>');
     }
@@ -106,8 +107,9 @@ class WorkflowScheduledTransition extends WorkflowTransition {
       $query->condition('timestamp', $end, '<');
     }
 
-    $result = $query->execute()->fetchAll(PDO::FETCH_CLASS, 'WorkflowScheduledTransition');
-    return $result;
+    $ids = $query->execute();
+    $transitions = self::loadMultiple($ids);
+    return $transitions;
   }
 
   /**
@@ -191,8 +193,6 @@ class WorkflowScheduledTransition extends WorkflowTransition {
    * If a scheduled transition has no comment, a default comment is added before executing it.
    */
   public function addDefaultComment() {
-    dpm('TODO D8-port: test function WorkflowScheduledTransition::' . __FUNCTION__);
-
     $this->setComment(t('Scheduled by user @uid.', array('@uid' => $this->getUser()->id())));
   }
 

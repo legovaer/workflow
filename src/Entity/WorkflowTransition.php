@@ -48,35 +48,36 @@ use Drupal\workflow\Entity\WorkflowState;
 class WorkflowTransition extends ContentEntityBase implements WorkflowTransitionInterface {
 
   /*
-   * Field data.
+   * Entity data: Use WorkflowTransition->getEntity() to fetch this.
    */
-//  private $hid = 0;
-
-//  // Entity data.
 //  public $entity_type;
 //  public $bundle;
 //  private $entity_id; // Use WorkflowTransition->getEntity() to fetch this.
-//  private $revision_id;
+//  private $revision_id; // Use WorkflowTransition->getEntity() to fetch this.
 //  public $field_name = '';
 //  private $langcode = Language::LANGCODE_NOT_SPECIFIED;
 //  public $delta = 0;
 
-
-  // Transition data.
-  // TODO D8-port: rename variables: $nid->$entity_id; $old_sid->from_sid, $sid->to_sid, $stamp->$timestamp
+  /*
+   * Transition data: are provided via baseFieldDefinitions().
+   */
+//  private $hid = 0;
 //  public $from_sid;
 //  public $to_sid;
 //  public $uid; // baseFieldProperty. Use WorkflowTransition->getUser() to fetch this.
 //  public $timestamp;  // baseFieldProperty. use getTimestamp() to fetch this.
 //  public $comment; // baseFieldProperty. use getComment() to fetch this.
 
-  protected $wid;
-
-  // Cached data, from $this->entity_id and $this->uid.
+  /*
+   * Cache data.
+   */
+  protected $wid; // Use WorkflowTransition->getWorkflow() to fetch this.
   protected $entity = NULL; // Use WorkflowTransition->getEntity() to fetch this.
   protected $user = NULL; // Use WorkflowTransition->getUser() to fetch this.
 
-  // Extra data.
+  /*
+   * Extra data: describe the state of the transition.
+   */
   protected $is_scheduled = FAlSE;
   protected $is_executed = FALSE;
   protected $is_forced = FALSE;
@@ -543,8 +544,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    */
   public function getEntity() {
     if (!$this->entity) {
-      $entity_type = $this->get('entity_type')->getValue()[0]['target_id'];
-      $entity_id = $this->get('entity_id')->getValue()[0]['value'];
+      $entity_type = $this->get('entity_type')->target_id;
+      $entity_id = $this->get('entity_id')->value;
       $this->entity = \Drupal::entityManager()->getStorage($entity_type)->load($entity_id);
     }
     return $this->entity;
@@ -607,7 +608,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function getFromSid() {
-    $sid = $this->get('from_sid')->getValue()[0]['value'];
+    $sid = $this->{'from_sid'}->value;
     return $sid;
   }
 
@@ -615,7 +616,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function getToSid() {
-    $sid = $this->get('to_sid')->getValue()[0]['value'];
+    $sid = $this->{'to_sid'}->value;
     return $sid;
   }
 
@@ -639,7 +640,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function getUser() {
-    $uid = $this->get('uid')->getValue()[0]['target_id'];
+    $uid = $this->{'uid'}->target_id;
     $user = \Drupal::entityManager()->getStorage('user')->load($uid);
     return $user;
   }
@@ -789,14 +790,12 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       ->setReadOnly(TRUE)
       ->setSetting('unsigned', TRUE);
 
-//    $fields['from_sid'] = BaseFieldDefinition::create('entity_reference')
     $fields['from_sid'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Type'))
       ->setDescription(t('The {workflow_states}.sid this transition started as.'))
 //      ->setSetting('target_type', 'workflow_transition')
       ->setReadOnly(TRUE);
 
-//    $fields['to_sid'] = BaseFieldDefinition::create('entity_reference')
     $fields['to_sid'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Type'))
       ->setDescription(t('The {workflow_states}.sid this transition transitioned to.'))
@@ -861,17 +860,5 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 
     return $fields;
   }
-
-  /**
-   * Default value callback for 'uid' base field definition.
-   *
-   * @see ::baseFieldDefinitions()
-   *
-   * @return array
-   *   An array of default values.
-   */
-//  public static function getCurrentUserId() {
-//    return array(\Drupal::currentUser()->id());
-//  }
 
 }

@@ -18,6 +18,7 @@ define('WORKFLOW_ROLE_AUTHOR_RID', 'workflow_author');
 // The definition of the Field_info property type. Shared between 'workflow_field' and 'workflow_rules'.
 define('WORKFLOWFIELD_PROPERTY_TYPE', 'text'); // @todo: 'list', 'text' or 'workflow'?
 
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\Language;
@@ -26,6 +27,7 @@ use Drupal\workflow\Entity\Workflow;
 use Drupal\workflow\Entity\WorkflowState;
 use Drupal\workflow\Entity\WorkflowScheduledTransition;
 use Drupal\workflow\Entity\WorkflowTransition;
+use Drupal\workflow\Entity\WorkflowTransitionInterface;
 
 /**
  * Implements hook_help().
@@ -322,35 +324,31 @@ function workflow_theme() {
  * Implements hook_cron().
  */
 function workflow_cron() {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
-  return;
 
   $clear_cache = FALSE;
+
   // If the time now is greater than the time to execute a transition, do it.
   foreach (WorkflowScheduledTransition::loadBetween(0, REQUEST_TIME) as $scheduled_transition) {
+    $field_name = $scheduled_transition->getFieldName();
     $entity = $scheduled_transition->getEntity();
     $entity_type = $entity->getEntityTypeId();
-    $field_name = $scheduled_transition->getFieldName();
 
     // If user didn't give a comment, create one.
     $comment = $scheduled_transition->getComment();
-      if (empty($comment)) {
+    if (empty($comment)) {
       $scheduled_transition->addDefaultComment();
     }
 
-    $current_sid = workflow_node_current_state($entity, $field_name);
 
     // Make sure transition is still valid: the node must still be in the state
     // it was in, when the transition was scheduled.
+    $current_sid = workflow_node_current_state($entity, $field_name);
     if ($current_sid == $scheduled_transition->getFromSid()) {
 
       // Do transition. Force it because user who scheduled was checked.
       // The scheduled transition is not scheduled anymore, and is also deleted from DB.
       // A watchdog message is created with the result.
-      $scheduled_transition->schedule(FALSE);
-      $scheduled_transition->force(TRUE);
-      workflow_execute_transition($entity_type, $entity, $field_name, $scheduled_transition);
+      workflow_execute_transition($scheduled_transition, TRUE);
 
       if (!$field_name) {
         $clear_cache = TRUE;
@@ -363,10 +361,11 @@ function workflow_cron() {
       $scheduled_transition->delete();
     }
   }
+
   if ($clear_cache) {
     // Clear the cache so that if the transition resulted in a node
     // being published, the anonymous user can see it.
-    cache_clear_all();
+    Cache::invalidateTags(array('rendered'));
   }
 }
 
@@ -670,52 +669,46 @@ function _workflow_transition_form_validate_buttons($form, &$form_state) {
 }
 
 /**
- * Executes a transition (change state of a node), from outside the node, e.g., workflow_cron().
+ * Executes a transition (change state of a node), from OUTSIDE the entity,
  *
- * Serves as a wrapper function to hide differences between Node API and Field API.
- * Use workflow_execute_transition($transition) to start a State Change from outside an entity.
+ * Use workflow_execute_transition($transition) to start a State Change from
+ * outside an entity, e.g., workflow_cron().
  * Use $transition->execute() to start a State Change from within an enetity.
  *
- * @param string $entity_type
- *   Entity type of target entity.
- * @param object $entity
- *   Target entity.
- * @param string $field_name
- *   A field name, used when changing a Workflow Field.
- * @param object $transition
+ * N.B. This function updates Entity, but not workflow_transition_* tables.
+ *
+ * @param WorkflowTransitionInterface $transition
  *   A WorkflowTransition or WorkflowScheduledTransition.
  * @param bool $force
  *   If set to TRUE, workflow permissions will be ignored.
  *
- * @return int
- *   The new state ID.
+ * @return string
+ *   The new WorkflowState ID.
  */
-function workflow_execute_transition($entity, $field_name, $transition, $force = FALSE) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-  // $todo D8: Remove first 3 parameters - they can be extracted from $transition.
+function workflow_execute_transition(WorkflowTransitionInterface $transition, $force = FALSE) {
 
-  // Make sure $force is set in the transition, too.
+  $field_name = $transition->getFieldName();
+  $entity = $transition->getEntity();
+  // @todo: use $new_sid = $transition->execute() without generating infinite loops.
+
+  // Step 1: Update entity to update the field.
+  // D7: This will call hook_field_update() and WorkflowFieldDefaultWidget::submit().
+  $entity->{$field_name}->setValue($transition->getToSid());
+  // @todo D7: perhaps use field_attach_update, for better performance, and not change node properties.
+  // @todo D7: if transition is scheduled or new_sid == old_sid and no comment, proceed as if no $field_name.
+  $entity->save();
+  // field_attach_update($entity_type, $entity);
+  $new_sid = workflow_node_current_state($entity, $field_name);
+
+  // Step 2: Update the Transition in the History/Schedule tables.
   if ($force) {
     $transition->force($force);
   }
-
-  if ($field_name) {
-    // @todo: use $new_sid = $transition->execute() without generating infinite loops.
-
-    // Do a separate update to update the field (Workflow Field API)
-    // This will call hook_field_update() and WorkflowFieldDefaultWidget::submit().
-    $entity->{$field_name}[$transition->language][0]['transition'] = $transition;
-    // @todo: perhaps use field_attach_update, for better performance, and not change node properties.
-    // @todo: if transition is scheduled or new_sid == old_sid and no comment, proceed as if no $field_name.
-    $entity->save();
-    // field_attach_update($entity_type, $entity);
-
-    $new_sid = workflow_node_current_state($entity, $field_name);
-  }
-  else {
-    // For Node API, the node is not saved, since all fields are custom.
-    $new_sid = $transition->execute($force = TRUE);
-  }
+  // The transition has been executed.
+  $transition->schedule(FALSE);
+  $transition->execute(TRUE);
+  // Save in history table and delete from schedule table.
+  $transition->save();
 
   return $new_sid;
 }
@@ -888,8 +881,7 @@ function workflow_node_current_state($entity, &$field_name = NULL) {
 
   // At this point, we may have redetermined and altered the field_name.
   if (!$sid) {
-    $field_value = $entity->get($field_name)->getValue();
-    $sid = isset($field_value[0]['value']) ? $field_value[0]['value'] : '';
+    $sid = $entity->$field_name->value;
   }
 
   // No current state. Use creation state.
@@ -1108,8 +1100,7 @@ function _workflow_get_workflow_creation_sid($entity, $field_name) {
  */
 function _workflow_info_fields($entity = NULL) {
   $field_info = array();
-
-  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
+//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
 
   if (TRUE) {
     $field_list = Drupal::entityManager()->getFieldMapByFieldType('workflow');
