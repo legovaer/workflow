@@ -90,7 +90,7 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
 
       $states = $workflow->getStates($all = 'CREATION');
       if ($states) {
-        $roles = workflow_get_roles();
+        $roles = workflow_get_user_role_names();
         foreach ($states as $state) {
           $label = SafeMarkup::checkPlain($from_state->label());
           $row['to'] = [

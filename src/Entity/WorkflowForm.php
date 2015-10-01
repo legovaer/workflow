@@ -208,7 +208,7 @@ class WorkflowForm extends EntityForm {
     $form['history']['tab_roles'] = array(
       '#type' => 'checkboxes',
       '#title' => $this->t('Roles'),
-      '#options' => workflow_get_roles(),
+      '#options' => workflow_get_user_role_names(),
       '#default_value' => array_keys($workflow->tab_roles),
       '#description' => t('Select any roles that should have access to the workflow tab on nodes that have a workflow.'),
     );

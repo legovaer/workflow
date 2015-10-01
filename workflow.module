@@ -690,14 +690,31 @@ function workflow_reset_cache($wid) {
 }
 
 /**
+ * Functions to get an options list (to show in a Widget).
+ * To be used in non-OO modules, like workflow_rules, workflow_views.
+ *
+ * The naming convention is workflow_get_<entity_type>_names.
+ * (A bit different from 'user_role_names'.)
+ * Can be used for hook_allowed_values from list.module.
+ * Todo: move to \Drupal::entityManager::getEntityTypeLabels($group = FALSE).
+ * - user_role
+ * - workflow
+ * - workflow_state
+ * - sid
+ */
+
+/**
  * Get a list of roles.
  *
- * @return array
+ * deprecated D8: workflow_get_roles --> workflow_get_user_role_names
+ *
+ * @param $permission
+ *   The permission to filter with.
+ *
+ * @return array $options
  *   Array of role names keyed by role ID, including the 'author' role.
  */
-function workflow_get_roles($permission = 'participate in workflow') {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
+function workflow_get_user_role_names($permission = 'participate in workflow') {
   static $roles = NULL;
 
   if (!$roles[$permission]) {
@@ -711,13 +728,7 @@ function workflow_get_roles($permission = 'participate in workflow') {
 }
 
 /**
- * Functions to be used in non-OO modules, like workflow_rules, workflow_views.
- */
-
-/**
- * Get an options list for workflow states (to show in a widget).
- *
- * To be used in non-OO modules, like workflow_rules.
+ * Get an options list for workflow states.
  *
  * @param mixed $wid
  *   The Workflow ID.
@@ -729,20 +740,15 @@ function workflow_get_roles($permission = 'participate in workflow') {
  *
  * @return array $options
  *   An array of $sid => state->label(), grouped per Workflow.
- *
- * @todo D8-port: deprecate workflow_get_workflow_state_names() --> workflow_state_allowed_values()
  */
 function workflow_get_workflow_state_names($wid = '', $grouped = FALSE, $all = FALSE) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
   $options = array();
-  // TODO D8-port: replace by  \Drupal\Core\TypedData\OptionsProviderInterface.
 
   // Get the (user-dependent) options.
   // Since this function is only used in UI, it is save to use the global $user.
   $user = \Drupal::currentUser();
 
-  foreach ($workflows = Workflow::loadMultiple($wid ? array($wid) : FALSE) as $workflow) {
+  foreach ($workflows = Workflow::loadMultiple($wid ? array($wid) : NULL) as $workflow) {
     $workflow_options = array();
 
     $state = WorkflowState::create(array('wid' => $workflow->id()));
@@ -760,14 +766,10 @@ function workflow_get_workflow_state_names($wid = '', $grouped = FALSE, $all = F
 }
 
 /**
- * Get an options list for workflows (to show in a widget).
- *
- * To be used in non-OO modules.
+ * Get an options list for workflows.
  *
  * @return array $options
  *   An array of $wid => workflow->label().
- *
- * @todo D8-port: deprecate workflow_get_workflow_names() --> workflow_allowed_values()
  */
 function workflow_get_workflow_names() {
   $options = array();
@@ -780,15 +782,16 @@ function workflow_get_workflow_names() {
 }
 
 /**
- * Helper function, to get the label of a given state.
+ * Helper function, to get the label of a given State Id.
+ *
+ * deprecated: workflow_get_sid_label() --> workflow_get_sid_name()
  */
-function workflow_get_sid_label($sid) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
+function workflow_get_sid_name($sid) {
 
   if (empty($sid)) {
     $label = 'No state';
   }
-  elseif ($state = workflow_state_load_single($sid)) {
+  elseif ($state = WorkflowState::load($sid)) {
     $label = $state->label();
   }
   else {
@@ -796,6 +799,10 @@ function workflow_get_sid_label($sid) {
   }
   return t($label);
 }
+
+/**
+ * Functions to get the state of an entity.
+ */
 
 /**
  * Gets the current state ID of a given entity.
@@ -934,16 +941,6 @@ function workflow_node_previous_state($entity, $field_name) {
 
   return $previous_sid;
 }
-
-/**
- * DB functions.
- *
- * All SQL in workflow.module should be put into its own function and placed
- * here. This encourages good separation of code and reuse of SQL statements.
- * It *also* makes it easy to make schema updates and changes without rummaging
- * through every single inch of code looking for SQL. Sure it's a little
- * type A, granted. But it's useful in the long run.
- */
 
 /**
  * Functions related to table workflows.
