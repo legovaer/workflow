@@ -5,9 +5,11 @@
  * Contains \Drupal\workflow\Entity\Controller\WorkflowConfigTransitionListBuilder.
  */
 
-namespace Drupal\workflow\Entity\Controller;
+namespace Drupal\workflow_ui\Controller;
 
 use Drupal\Core\Config\Entity\ConfigEntityListBuilder;
+use Drupal\workflow_ui\Form\WorkflowConfigTransitionLabelForm;
+use Drupal\workflow_ui\Form\WorkflowConfigTransitionRoleForm;
 
 /**
  * Defines a class to build a draggable listing of Workflow Config Transitions entities.

@@ -5,7 +5,7 @@
  * Contains \Drupal\workflow\Entity\Controller\WorkflowListBuilder.
  */
 
-namespace Drupal\workflow\Entity\Controller;
+namespace Drupal\workflow_ui\Controller;
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Config\Entity\ConfigEntityListBuilder;

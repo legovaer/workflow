@@ -22,10 +22,10 @@ use Drupal\workflow\Entity\WorkflowState;
  *   module = "workflow",
  *   handlers = {
  *     "storage" = "Drupal\workflow\Entity\WorkflowStorage",
- *     "list_builder" = "Drupal\workflow\Entity\Controller\WorkflowListBuilder",
+ *     "list_builder" = "Drupal\workflow_ui\Controller\WorkflowListBuilder",
  *     "form" = {
- *        "add" = "\Drupal\workflow\Entity\WorkflowForm",
- *        "edit" = "\Drupal\workflow\Entity\WorkflowForm",
+ *        "add" = "\Drupal\workflow_ui\Form\WorkflowForm",
+ *        "edit" = "\Drupal\workflow_ui\Form\WorkflowForm",
  *        "delete" = "\Drupal\Core\Entity\EntityDeleteForm",
  *      }
  *   },

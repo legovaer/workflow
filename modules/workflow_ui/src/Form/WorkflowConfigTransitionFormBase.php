@@ -5,7 +5,7 @@
  * Contains \Drupal\workflow\Entity\Controller\WorkflowConfigTransitionFormBase.
  */
 
-namespace Drupal\workflow\Entity\Controller;
+namespace Drupal\workflow_ui\Form;
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormInterface;

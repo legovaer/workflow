@@ -5,7 +5,7 @@
  * Contains \Drupal\workflow\Entity\WorkflowForm.
  */
 
-namespace Drupal\workflow\Entity;
+namespace Drupal\workflow_ui\Form;
 
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;

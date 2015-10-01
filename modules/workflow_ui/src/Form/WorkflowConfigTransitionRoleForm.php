@@ -5,7 +5,7 @@
  * Contains \Drupal\workflow\Entity\Controller\WorkflowConfigTransitionRoleForm.
  */
 
-namespace Drupal\workflow\Entity\Controller;
+namespace Drupal\workflow_ui\Form;
 
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Entity\EntityInterface;
@@ -118,7 +118,7 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
 
             $row[$to_sid]['workflow_config_transition'] = ['#type' => 'value', '#value' => $config_transition,];
             $row[$to_sid]['roles'] = [
-              '#type' => $stay_on_this_state ? 'hidden' : 'checkboxes',
+              '#type' => $stay_on_this_state ? 'checkboxes' : 'checkboxes',
               '#options' => $roles,
               '#disabled' => $stay_on_this_state,
               '#default_value' => $config_transition->roles,
@@ -173,9 +173,11 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
   public function submitForm(array &$form, FormStateInterface $form_state) {
 
     foreach ($form_state->getValue($this->entitiesKey) as $from_sid => $to_data) {
-      foreach ($to_data as $to_sid => $transition_data) {
+      foreach ($to_data as $transition_data) {
         /* @var $config_transition WorkflowConfigTransition */
-        if ($config_transition = $transition_data['workflow_config_transition']) {
+        // TODO D8-port: the next line generates error. Why? 'Warning: Illegal string offset'
+        $config_transition = $transition_data['workflow_config_transition'];
+        if ($config_transition) {
           $config_transition->roles = $transition_data['roles'];
           $config_transition->save();
         }

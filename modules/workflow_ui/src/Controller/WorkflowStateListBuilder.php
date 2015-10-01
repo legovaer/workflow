@@ -5,7 +5,7 @@
  * Contains \Drupal\workflow\Entity\Controller\WorkflowStateListBuilder.
  */
 
-namespace Drupal\workflow\Entity\Controller;
+namespace Drupal\workflow_ui\Controller;
 
 use Drupal\Core\Config\Entity\DraggableListBuilder;
 use Drupal\Core\Entity\EntityInterface;
@@ -414,4 +414,18 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
     }
     return FALSE;
   }
+
+  /**
+   * Returns the form builder.
+   *
+   * @return \Drupal\Core\Form\FormBuilderInterface
+   *   The form builder.
+   */
+  protected function formBuilder() {
+    if (!$this->formBuilder) {
+      $this->formBuilder = \Drupal::formBuilder();
+    }
+    return $this->formBuilder;
+  }
+
 }

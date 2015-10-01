@@ -24,7 +24,7 @@ use Drupal\Core\Session\AccountProxy;
  *   label = @Translation("Workflow state"),
  *   module = "workflow",
  *   handlers = {
- *     "list_builder" = "Drupal\workflow\Entity\Controller\WorkflowStateListBuilder",
+ *     "list_builder" = "Drupal\workflow_ui\Controller\WorkflowStateListBuilder",
  *     "form" = {
  *        "delete" = "\Drupal\Core\Entity\EntityDeleteForm",
  *      }

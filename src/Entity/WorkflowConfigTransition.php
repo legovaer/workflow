@@ -20,7 +20,7 @@ use Drupal\workflow\Entity\ConfigEntityStorage;
  *   label = @Translation("Workflow config transition"),
  *   module = "workflow",
  *   handlers = {
- *     "list_builder" = "Drupal\workflow\Entity\Controller\WorkflowConfigTransitionListBuilder",
+ *     "list_builder" = "Drupal\workflow_ui\Controller\WorkflowConfigTransitionListBuilder",
  *     "form" = {
  *        "delete" = "\Drupal\Core\Entity\EntityDeleteForm",
  *      }
