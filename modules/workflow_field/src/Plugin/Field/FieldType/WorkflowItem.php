@@ -2,10 +2,10 @@
 
 /**
  * @file
- * Contains \Drupal\workflow\Plugin\Field\FieldType\WorkflowItem.
+ * Contains \Drupal\workflowfield\Plugin\Field\FieldType\WorkflowItem.
  */
 
-namespace Drupal\workflow\Plugin\Field\FieldType;
+namespace Drupal\workflowfield\Plugin\Field\FieldType;
 
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Field\FieldDefinitionInterface;

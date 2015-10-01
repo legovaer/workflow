@@ -2,10 +2,10 @@
 
 /**
  * @file
- * Contains \Drupal\workflow\Plugin\Field\FieldWidget\WorkflowDefaultWidget.
+ * Contains \Drupal\workflowfield\Plugin\Field\FieldWidget\WorkflowDefaultWidget.
  */
 
-namespace Drupal\workflow\Plugin\Field\FieldWidget;
+namespace Drupal\workflowfield\Plugin\Field\FieldWidget;
 
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Field\FieldItemListInterface;
