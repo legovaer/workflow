@@ -194,7 +194,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       }
     }
     else {
-      dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__.': ' . $from_sid .'> ' .$to_sid);
       // Update the transition.
       return parent::save();
     }
@@ -315,9 +314,9 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       return $from_sid;  // <--- exit !!!
     }
 
-    static $static_last_tid;
+    static $static_last_tid = -1;
     static $static_last_sid = '';
-    if ($this->id() != $static_last_tid) {
+    if ($this->id() !== $static_last_tid) {
       // OK. Prepare for next round. Do not set last_sid!!
       $static_last_tid = $this->id();
     }

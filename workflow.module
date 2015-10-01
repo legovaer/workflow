@@ -322,62 +322,29 @@ function workflow_theme() {
 
 /**
  * Implements hook_cron().
+ *
+ * Given a timeframe, execute all scheduled transitions.
  */
 function workflow_cron() {
+  Workflow::workflowManager()->executeScheduledTransitionsBetween(0, REQUEST_TIME);
+}
 
-  $clear_cache = FALSE;
-
-  // If the time now is greater than the time to execute a transition, do it.
-  foreach (WorkflowScheduledTransition::loadBetween(0, REQUEST_TIME) as $scheduled_transition) {
-    $field_name = $scheduled_transition->getFieldName();
-    $entity = $scheduled_transition->getEntity();
-    $entity_type = $entity->getEntityTypeId();
-
-    // If user didn't give a comment, create one.
-    $comment = $scheduled_transition->getComment();
-    if (empty($comment)) {
-      $scheduled_transition->addDefaultComment();
-    }
-
-
-    // Make sure transition is still valid: the node must still be in the state
-    // it was in, when the transition was scheduled.
-    $current_sid = workflow_node_current_state($entity, $field_name);
-    if ($current_sid == $scheduled_transition->getFromSid()) {
-
-      // Do transition. Force it because user who scheduled was checked.
-      // The scheduled transition is not scheduled anymore, and is also deleted from DB.
-      // A watchdog message is created with the result.
-      workflow_execute_transition($scheduled_transition, TRUE);
-
-      if (!$field_name) {
-        $clear_cache = TRUE;
-      }
-    }
-    else {
-      // Node is not in the same state it was when the transition
-      // was scheduled. Defer to the node's current state and
-      // abandon the scheduled transition.
-      $scheduled_transition->delete();
-    }
-  }
-
-  if ($clear_cache) {
-    // Clear the cache so that if the transition resulted in a node
-    // being published, the anonymous user can see it.
-    Cache::invalidateTags(array('rendered'));
-  }
+/**
+ * Implements hook_user_cancel().
+ *
+ * Update tables for deleted account, move account to user 0 (anon.)
+ * ALERT: This may cause previously non-Anonymous posts to suddenly
+ * be accessible to Anonymous.
+ */
+function workflow_user_cancel($edit, $account, $method) {
+  Workflow::workflowManager()->cancelUser($edit, $account, $method);
 }
 
 /**
  * Implements hook_user_delete().
  */
 function workflow_user_delete($account) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
-  // Update tables for deleted account, move account to user 0 (anon.)
-  // ALERT: This may cause previously non-anon posts to suddenly be accessible to anon.
-  workflow_update_workflow_transition_history_uid($account->id(), 0);
+  Workflow::workflowManager()->deleteUser($account);
 }
 
 /**
@@ -386,9 +353,7 @@ function workflow_user_delete($account) {
  * Make sure new roles are allowed to participate in workflows by default.
  */
 function workflow_user_role_insert($role) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
-  user_role_change_permissions($role->rid, array('participate in workflow' => 1));
+  Workflow::workflowManager()->insertUserRole($role);
 }
 
 /**
@@ -1024,22 +989,6 @@ function workflow_get_workflows_by_type($entity_bundle, $entity_type = 'node') {
   }
 
   return $map[$entity_type][$entity_bundle];
-}
-
-/**
- * Functions related to table workflow_transition_history.
- */
-
-/**
- * Given a user id, re-assign history to the new user account. Called by user_delete().
- */
-function workflow_update_workflow_transition_history_uid($uid, $new_value) {
-  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
-  return db_update('workflow_transition_history')
-    ->fields(array('uid' => $new_value))
-    ->condition('uid', $uid, '=')
-    ->execute();
 }
 
 /**

@@ -10,6 +10,7 @@ namespace Drupal\workflow\Entity;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\workflow\Entity\WorkflowConfigTransition;
+use Drupal\workflow\Entity\WorkflowManager;
 use Drupal\workflow\Entity\WorkflowState;
 
 /**
@@ -305,6 +306,16 @@ class Workflow extends ConfigEntityBase {
     }
     $is_deletable = TRUE;
     return $is_deletable;
+  }
+
+  /**
+   * Retrieves the entity manager service.
+   *
+   * @return \Drupal\workflow\Entity\WorkflowManagerInterface
+   *   The entity manager service.
+   */
+  public static function workflowManager() {
+    return new WorkflowManager();
   }
 
   /**
