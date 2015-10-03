@@ -118,9 +118,6 @@ class WorkflowConfigTransition extends ConfigEntityBase {
       }
     }
 
-    // Reset the cache for the affected workflow, to force reload upon next page_load.
-    workflow_reset_cache($this->wid);
-
     return $status;
   }
 

@@ -191,8 +191,6 @@ class Workflow extends ConfigEntityBase {
       $state = $this->getCreationState();
     }
 
-    workflow_reset_cache($this->id());
-
     return $status;
   }
 

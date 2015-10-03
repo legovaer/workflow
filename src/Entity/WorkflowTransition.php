@@ -470,28 +470,18 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 
       // Notify modules that transition has occurred.
       // Action triggers should take place in response to this callback, not the 'transaction pre'.
-      if (!$field_name) {
-        dpm('TODO D8-port: test function WorkflowTransition::' . __FUNCTION__.'/'.__LINE__.': ' . $from_sid .'> ' .$to_sid);
-        // Now that workflow data is saved, reset stuff to avoid problems
-        // when Rules etc want to resave the data.
-        // Remember, this is only for Workflow Node API, and node_save() is not necessarily performed.
-        unset($entity->workflow_comment);
-        \Drupal::moduleHandler()->invokeAll('workflow', ['transition post', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this]);
-        entity_get_controller('node')->resetCache(array($entity->id())); // from entity_load(), node_save();
-      }
-      else {
-        // module_invoke_all('workflow', 'transition post', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this);
-        // We have a problem here with Rules, Trigger, etc. when invoking
-        // 'transition post': the entity has not been saved, yet. we are still
-        // IN the transition, not AFTER. Alternatives:
-        // 1. Save the field here explicitely, using field_attach_save;
-        // 2. Move the invoke to another place: hook_entity_insert(), hook_entity_update();
-        // 3. Rely on the entity hooks. This works for Rules, not for Trigger.
-        // --> We choose option 2:
-        // TODO D8-port: figure out usage of $entity->workflow_transitions[$field_name]
-        // - First, $entity->workflow_transitions[] is set for easy re-fetching.
-        // - Then, post_execute() is invoked via workflowfield_entity_insert(), _update().
-      }
+
+      // module_invoke_all('workflow', 'transition post', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this);
+      // We have a problem here with Rules, Trigger, etc. when invoking
+      // 'transition post': the entity has not been saved, yet. we are still
+      // IN the transition, not AFTER. Alternatives:
+      // 1. Save the field here explicitely, using field_attach_save;
+      // 2. Move the invoke to another place: hook_entity_insert(), hook_entity_update();
+      // 3. Rely on the entity hooks. This works for Rules, not for Trigger.
+      // --> We choose option 2:
+      // TODO D8-port: figure out usage of $entity->workflow_transitions[$field_name]
+      // - First, $entity->workflow_transitions[] is set for easy re-fetching.
+      // - Then, post_execute() is invoked via workflowfield_entity_insert(), _update().
     }
 
     // Save value in static from top of this function.

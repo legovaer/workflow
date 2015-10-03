@@ -431,17 +431,6 @@ function workflow_execute_transition(WorkflowTransitionInterface $transition, $f
 }
 
 /**
- * Reset the Workflow when States, Transitions have been changed.
- */
-function workflow_reset_cache($wid) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
-  $ids = array($wid);
-// TODO D8-port: add below.
-//  entity_get_controller('Workflow')->resetCache($ids);
-}
-
-/**
  * Functions to get an options list (to show in a Widget).
  * To be used in non-OO modules, like workflow_rules, workflow_views.
  *
