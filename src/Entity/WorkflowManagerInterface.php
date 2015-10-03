@@ -52,4 +52,4 @@ interface WorkflowManagerInterface {
    */
   public function cancelUser($edit, AccountInterface $account, $method);
 
-  }
+}
