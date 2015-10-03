@@ -132,6 +132,7 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface 
    * @return \Drupal\Core\Session\AccountInterface $user
    *   The entity, that is added to the Transition.
    */
+  public function getUser();
 
   /**
    * Get the comment of the Transition.

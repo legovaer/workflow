@@ -577,17 +577,15 @@ class WorkflowState extends ConfigEntityBase {
 
     $fields = _workflow_info_fields();
     foreach ($fields as $field_name => $field_map) {
-      if ($field_map['type'] == 'workflow') {
-        $query = new EntityFieldQuery();
-        $query
-          ->fieldCondition($field_name, 'value', $sid, '=')
-          // ->entityCondition('bundle', 'article')
-          // ->addMetaData('account', user_load(1)) // Run the query as user 1.
-          ->count(); // We only need the count.
+      $query = new EntityFieldQuery();
+      $query
+        ->fieldCondition($field_name, 'value', $sid, '=')
+        // ->entityCondition('bundle', 'article')
+        // ->addMetaData('account', user_load(1)) // Run the query as user 1.
+        ->count(); // We only need the count.
 
-        $result = $query->execute();
-        $count += $result;
-      }
+      $result = $query->execute();
+      $count += $result;
     }
 
     return $count;
