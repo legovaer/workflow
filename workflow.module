@@ -575,3 +575,24 @@ function _workflow_info_fields($entity = NULL, $entity_type = '', $entity_bundle
 
   return $field_info;
 }
+
+/**
+ * Helper function for D8-port> Get some info on screen
+ */
+function workflow_debug($class_name, $function_name, $line = 0, $value1 = '', $value2 = '') {
+  $debug_switch = FALSE;
+//  $debug_switch = TRUE;
+
+  if (!$debug_switch || !function_exists('dpm')) {
+    return;
+  }
+
+  $output = 'TODO D8-port: test function ' . end(explode( "\\" , $class_name)) . '::' . $function_name . '/' . $line;
+  if ($value1) {
+    $output .= ' = ' . $value1;
+  }
+  if ($value2) {
+    $output .= ' > ' . $value2;
+  }
+  dpm($output);
+}
