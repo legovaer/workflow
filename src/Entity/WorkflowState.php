@@ -392,14 +392,13 @@ class WorkflowState extends ConfigEntityBase {
   public function getTransitions($entity = NULL, $field_name = '', AccountInterface $user = NULL, $force = FALSE) {
     $transitions = array();
 
-    $current_sid = $this->id();
-    $current_state = $this;
-
     if (!$workflow = $this->getWorkflow()) {
       // No workflow, no options ;-)
       return $transitions;
     }
 
+    $current_sid = $this->id();
+    $current_state = $this;
     // Get the role IDs of the user, to get the proper permissions.
     $roles = $user ? $user->getRoles() : array();
 
@@ -410,7 +409,6 @@ class WorkflowState extends ConfigEntityBase {
 
     // Fetch entity_id from entity for _newness_ check
     $entity_id = ($entity) ? $entity->id() : '';
-
 
     if ($force) {
       // $force allows Rules to cause transition.

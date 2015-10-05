@@ -91,6 +91,9 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
       $states = $workflow->getStates($all = 'CREATION');
       if ($states) {
         $roles = workflow_get_user_role_names();
+        // Prepare default value for 'stay_on_this_state'.
+        $allow_all_roles = array_combine (array_keys($roles) , array_keys($roles));
+
         foreach ($states as $state) {
           $label = SafeMarkup::checkPlain($from_state->label());
           $row['to'] = [
@@ -121,7 +124,8 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
               '#type' => $stay_on_this_state ? 'checkboxes' : 'checkboxes',
               '#options' => $roles,
               '#disabled' => $stay_on_this_state,
-              '#default_value' => $config_transition->roles,
+              // When $stay_on_this_state, allow all roles.
+              '#default_value' => $stay_on_this_state ? $allow_all_roles : $config_transition->roles,
             ];
           }
         }
@@ -175,14 +179,14 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
     foreach ($form_state->getValue($this->entitiesKey) as $from_sid => $to_data) {
       foreach ($to_data as $transition_data) {
         /* @var $config_transition WorkflowConfigTransition */
-        // TODO D8-port: the next line generates error. Why? 'Warning: Illegal string offset'
-        $config_transition = $transition_data['workflow_config_transition'];
-        if ($config_transition) {
+        if (isset($transition_data['workflow_config_transition'])) {
+          $config_transition = $transition_data['workflow_config_transition'];
           $config_transition->roles = $transition_data['roles'];
           $config_transition->save();
         }
-        else{
+        else {
           // Should not be possible.
+          $config_transition = [];
         }
 
 //        dpm('TODO D8-port: test function WorkflowConfigTransitionPermissionForm::' . __FUNCTION__ );
