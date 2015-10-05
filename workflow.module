@@ -279,51 +279,6 @@ function workflow_features_api() {
 }
 
 /**
- * Implements hook_theme().
- */
-function workflow_theme() {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
-  return array(
-    'workflow_history_table_row' => array(
-      'variables' => array(
-        'history' => NULL,
-        'old_state_name' => NULL,
-        'state_name' => NULL,
-      ),
-    ),
-    'workflow_history_table' => array(
-      'variables' => array(
-        'header' => array(),
-        'rows' => array(),
-        'footer' => NULL,
-      ),
-    ),
-    'workflow_history_current_state' => array(
-      'variables' => array(
-        'state_name' => NULL,
-        'state_system_name' => NULL,
-        'sid' => NULL,
-      ),
-    ),
-    'workflow_current_state' => array(
-      'variables' => array(
-        'state' => NULL,
-        'state_system_name' => NULL,
-        'sid' => NULL,
-      ),
-    ),
-    'workflow_deleted_state' => array(
-      'variables' => array(
-        'state_name' => NULL,
-        'state_system_name' => NULL,
-        'sid' => NULL,
-      ),
-    ),
-  );
-}
-
-/**
  * Implements hook_cron().
  *
  * Given a timeframe, execute all scheduled transitions.
