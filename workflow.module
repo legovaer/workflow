@@ -159,80 +159,6 @@ function workflow_admin_paths_alter(&$paths) {
 }
 
 /**
- * Menu access control callback. Determine access to Workflow tab.
- *
- * The History tab should not be used with multiple workflows per entity.
- * Use the dedicated view for this use case.
- *
- * @param string $entity_type
- *   The entity type of the attached $entity.
- * @param \Drupal\Core\Entity\EntityInterface $entity
- *   The entity type of this Entity subclass.
- *
- * @todo D8: remove this in favour of View 'Workflow history per entity'.
- */
-function workflow_tab_access($entity_type, $entity) {
-  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
-  $user = \Drupal::currentUser();
-  $uid = $user->id();
-  static $access = array();
-
-  // Figure out the $entity's bundle and id.
-  $entity_bundle = $entity->bundle();
-  $entity_id = $entity->id();
-
-  if (isset($access[$uid][$entity_type][$entity_id])) {
-    return $access[$uid][$entity_type][$entity_id];
-  }
-
-  // When having multiple workflows per bundle, use Views display
-  // 'Workflow history per entity' instead!
-  if (workflow_get_workflows_by_type($entity_bundle, $entity_type)) {
-    // Get the role IDs of the user. Workflow only stores Ids, not role names.
-    // TODO D8: add usage of api user_has_role().
-    $roles = array_keys($user->roles);
-
-    // Some entities (e.g., taxonomy_term) do not have a uid.
-    $entity_uid = isset($entity->uid) ? $entity->uid : 0;
-
-    // If this is a new page, give the authorship role.
-    if (!$entity_id) {
-      $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
-    }
-    // Add 'author' role to user if user is author of this entity.
-    // N.B.1: Some entities (e.g, taxonomy_term) do not have a uid.
-    // N.B.2: If 'anonymous' is the author, don't allow access to History Tab,
-    // since anyone can access it, and it will be published in Search engines.
-    elseif (($entity_uid > 0) && ($uid > 0) && ($entity_uid == $uid)) {
-      $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
-    }
-
-    // Get the permissions from the workflow settings.
-    // @todo: workflow_tab_access(): what to do with multiple workflow_fields per bundle? Use Views instead!
-    $tab_roles = array();
-    $history_tab_show = FALSE;
-    $fields = _workflow_info_fields($entity, $entity_type, $entity_bundle);
-    foreach ($fields as $field) {
-      $tab_roles += $field['settings']['history']['roles'];
-      $history_tab_show |= $field['settings']['history']['history_tab_show'];
-    }
-
-    if ($history_tab_show == FALSE) {
-      $access[$uid][$entity_type][$entity_id] = FALSE;
-    }
-    elseif ($user->hasPermission('administer nodes') || array_intersect($roles, $tab_roles)) {
-      $access[$uid][$entity_type][$entity_id] = TRUE;
-    }
-    else {
-      $access[$uid][$entity_type][$entity_id] = FALSE;
-    }
-    return $access[$uid][$entity_type][$entity_id];
-  }
-  return FALSE;
-}
-
-/**
  * Implements hook_hook_info().
  *
  * Allow adopters to place their hook implementations in either
@@ -243,21 +169,6 @@ function workflow_hook_info() {
 
   $hooks['workflow'] = array('group' => 'workflow');
   return $hooks;
-}
-
-/**
- * Implements hook_entity_type_build().
- *
- * @see https://www.drupal.org/node/2196275 "hook_entity_info() renamed to hook_entity_type_build()"
- */
-function TODOworkflow_entity_type_build(array &$entity_types) {
-  dpm('TODO D8-port: test (port hook-entity_info) function workflow.module::' . __FUNCTION__ );
-
-  /* @var $entity_types \Drupal\Core\Entity\EntityTypeInterface[] */
-  // Add a form controller for a custom entity form without overriding the
-  // default entity form. To override the default entity form,
-  // use hook_entity_type_alter().
-  //$entity_types['node']->setFormClass('mymodule_foo', 'Drupal\mymodule\NodeFooFormController');
 }
 
 /**
@@ -276,6 +187,21 @@ function workflow_features_api() {
       'feature_source' => TRUE,
     ),
   );
+}
+
+/**
+ * Implements hook_entity_type_build().
+ *
+ * @see https://www.drupal.org/node/2196275 "hook_entity_info() renamed to hook_entity_type_build()"
+ */
+function TODOworkflow_entity_type_build(array &$entity_types) {
+  dpm('TODO D8-port: test (port hook-entity_info) function workflow.module::' . __FUNCTION__ );
+
+  /* @var $entity_types \Drupal\Core\Entity\EntityTypeInterface[] */
+  // Add a form controller for a custom entity form without overriding the
+  // default entity form. To override the default entity form,
+  // use hook_entity_type_alter().
+  //$entity_types['node']->setFormClass('mymodule_foo', 'Drupal\mymodule\NodeFooFormController');
 }
 
 /**
