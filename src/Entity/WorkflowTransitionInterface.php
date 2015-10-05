@@ -31,7 +31,7 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface 
    * @return WorkflowTransitionInterface
    *   object representing one row from the {workflow_transition_history} table.
    */
-  public static function loadByProperties($entity_type, $entity_id, array $revision_ids, $field_name, $langcode = '', $transition_type = '');
+  public static function loadByProperties($entity_type, $entity_id, array $revision_ids = [], $field_name = '', $langcode = '', $sort = 'ASC', $transition_type = '');
 
   /**
    * Given an entity, get all transitions for it.
@@ -43,17 +43,19 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface 
    * @param int[] $revision_ids
    * @param string $field_name
    *   Optional. Can be NULL, if you want to load any field.
-   * @param int $limit
-   *   Optional. Can be NULL, if you want to load all transitions.
    * @param string $langcode
    *   Optional. Can be empty, if you want to load any language.
+   * @param int $limit
+   *   Optional. Can be NULL, if you want to load all transitions.
+   * @param string $sort
+   *   Optional sort order. {'ASC'|'DESC'}
    * @param string $transition_type
    *   The type trnastion to be fetched.
    *
    * @return WorkflowTransitionInterface[] $transitions
    *   An array of transitions.
    */
-  public static function loadMultipleByProperties($entity_type, array $entity_ids, array $revision_ids, $field_name, $limit = NULL, $langcode = '', $transition_type = '');
+  public static function loadMultipleByProperties($entity_type, array $entity_ids, array $revision_ids = [], $field_name = '', $langcode = '',$limit = NULL, $sort = 'ASC', $transition_type = '');
 
     /**
    * Execute a transition (change state of an entity).

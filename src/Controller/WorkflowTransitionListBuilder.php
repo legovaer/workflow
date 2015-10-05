@@ -44,28 +44,26 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
   public function load() {
     $entities = array();
 
-    // TODO :D8-port: get proper entity_id from core methods.
+    // TODO: D8-port: get entity from proper core methods.
     /* @var $entity EntityInterface */
-    $entity = $this->workflow_entity;
-    $entity_type = $entity->getEntityTypeId();
-    $entity_bundle = $entity->bundle();
-    $entity_id = $entity->id();
-
+    $entity = $this->workflow_entity; // This is a custom variable.
     // Get the field name. It is yet unknown. N.B. This does not work with multiple workflows per entity!
-    $fields = _workflow_info_fields($entity);
-    $field_names = array_keys($fields);
-    $field_name = reset($field_names);
+    $field_name = workflow_get_field_name($entity);
     if (!$field_name) {
       // @todo D8-port: if no workflow_field found, then no history_tab -> error log?
-      return $entities;
     }
+    else {
+      $entity_type = $entity->getEntityTypeId();
+      $entity_id = $entity->id();
 
-    // @todo D8-port: document $limit.
-    // @todo d8-port: $limit should be used in pager, not in load().
-    $this->limit = \Drupal::config('workflow.settings')->get('workflow_states_per_page');
-    $limit = $this->limit;
-    // Get Transitions with higest timestamp first.
-    $entities = array_reverse(WorkflowTransition::loadMultipleByProperties($entity_type, array($entity_id), [], $field_name, $limit), TRUE);
+      // @todo D8-port: document $limit.
+      // @todo d8-port: $limit should be used in pager, not in load().
+      $this->limit = \Drupal::config('workflow.settings')
+        ->get('workflow_states_per_page');
+      $limit = $this->limit;
+      // Get Transitions with higest timestamp first.
+      $entities = WorkflowTransition::loadMultipleByProperties($entity_type, array($entity_id), [], $field_name, '', $limit, 'DESC');
+    }
 
     return $entities;
   }

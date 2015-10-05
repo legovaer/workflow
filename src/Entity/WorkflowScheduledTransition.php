@@ -71,17 +71,17 @@ class WorkflowScheduledTransition extends WorkflowTransition {
   /**
    * {@inheritdoc}
    */
-  public static function loadByProperties($entity_type, $entity_id, array $revision_ids, $field_name = '', $langcode = '', $transition_type = 'workflow_scheduled_transition') {
+  public static function loadByProperties($entity_type, $entity_id, array $revision_ids = [], $field_name = '', $langcode = '', $sort = 'ASC', $transition_type = 'workflow_scheduled_transition') {
     // N.B. $transition_type is set as parameter default.
-    return parent::loadByProperties($entity_type, $entity_id, $revision_ids, $field_name, $langcode, $transition_type);
+    return parent::loadByProperties($entity_type, $entity_id, $revision_ids, $field_name, $langcode, $sort, $transition_type);
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function loadMultipleByProperties($entity_type, array $entity_ids, array $revision_ids, $field_name = '', $limit = NULL, $langcode = '', $transition_type = 'workflow_scheduled_transition') {
+  public static function loadMultipleByProperties($entity_type, array $entity_ids, array $revision_ids = [], $field_name = '', $langcode = '', $limit = NULL, $sort = 'ASC', $transition_type = 'workflow_scheduled_transition') {
     // N.B. $transition_type is set as parameter default.
-    return parent::loadMultipleByProperties($entity_type, $entity_ids, $revision_ids, $field_name, $limit, $langcode, $transition_type);
+    return parent::loadMultipleByProperties($entity_type, $entity_ids, $revision_ids, $field_name, $langcode, $limit, $sort, $transition_type);
   }
 
   /**
@@ -119,13 +119,15 @@ class WorkflowScheduledTransition extends WorkflowTransition {
    */
   public function save() {
 
+    $entity = $this->getEntity();
+
     // If executed, save in history.
     if ($this->is_executed) {
       // Be careful, we are not a WorkflowScheduleTransition anymore!
       // No fuzzling around, just copy the ScheduledTranstion to a normal one.
       $executed_transition = WorkflowTransition::create();
       $executed_transition->setValues(
-        $this->getEntity(),
+        $entity,
         $this->getFieldName(),
         $this->getFromSid(),
         $this->getToSid(),
@@ -139,13 +141,8 @@ class WorkflowScheduledTransition extends WorkflowTransition {
     $hid = $this->id();
     if (!$hid) {
       // Insert the transition. Make sure it hasn't already been inserted.
-      $found_transition = self::loadByProperties(
-        $this->getEntity()->getEntityTypeId(),
-        $this->getEntity()->id(),
-        array(),
-        $this->getFieldName(),
-        $this->getLangcode());
-      // TODO: Allow a scheduled transition per revision.
+      // @todo: Allow a scheduled transition per revision.
+      $found_transition = self::loadByProperties($entity->getEntityTypeId(), $entity->id(), [], $this->getFieldName(), $this->getLangcode());
       if ($found_transition) {
         // Avoid duplicate entries.
         $found_transition->delete();

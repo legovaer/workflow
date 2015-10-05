@@ -290,7 +290,7 @@ class Workflow extends ConfigEntityBase {
     return TRUE; // TODO D8-port.
 
     // May not be deleted if assigned to a Field.
-    foreach (_workflow_info_fields() as $field) {
+    foreach ($fields = _workflow_info_fields() as $field) {
       if ($field['settings']['wid'] == $this->id()) {
         return $is_deletable;
       }

@@ -93,10 +93,7 @@ class WorkflowTransitionListController extends EntityListController implements C
 //    $node = $route_match->getParameter('node');
 
     // Get the field name.
-    $field_name = '';
-    $fields = _workflow_info_fields($entity);
-    $field_names = array_keys($fields);
-    $field_name = reset($field_names);
+    $field_name = workflow_get_field_name($entity);
     if (!$field_name) {
       // TODO D8-port: if no workflow_field found, then no history_tab
       return $form;
@@ -251,8 +248,7 @@ class WorkflowTransitionListController extends EntityListController implements C
       // @TODO D8-port: workflow_tab_access: use proper 'WORKFLOW_TYPE' permissions
       $tab_roles = array();
       $history_tab_show = FALSE;
-      $fields = _workflow_info_fields($entity, $entity_type, $entity_bundle);
-      foreach ($fields as $field) {
+      foreach ($fields = _workflow_info_fields($entity, $entity_type, $entity_bundle) as $field) {
         /* @var $workflow = Workflow */
         $workflow = Workflow::load($field->getSetting('workflow_type'));
         $workflow_settings = $workflow->options;

@@ -8,6 +8,8 @@
 namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Language\Language;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\user\Entity\Role;
 use Drupal\user\Plugin\Condition\UserRole;
@@ -18,7 +20,7 @@ use Drupal\workflow\Entity\WorkflowState;
  * Manages entity type plugin definitions.
  *
  */
-class WorkflowManager { // extendds EntityManager {
+class WorkflowManager implements WorkflowManagerInterface { // extends EntityManager {
 
   /**
    * Constructs a new Entity plugin manager.
@@ -123,6 +125,88 @@ class WorkflowManager { // extendds EntityManager {
    */
   function insertUserRole(Role $role) {
     user_role_change_permissions($role->id(), array('participate in workflow' => 1));
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  function getCurrentStateId(EntityInterface $entity, $field_name = '') {
+    // @TODO D8: return State object, not $sid integer.
+    $sid = FALSE;
+
+    if (!$entity) {
+      return $sid;
+    }
+
+    // If $field_name is not known, yet, determine it.
+    $field_name = workflow_get_field_name($entity);
+    // If $field_name is found, get more details.
+    if (!$field_name) {
+      // Return the initial value.
+    }
+    else {
+      // Normal situation: get the value.
+      if (!$sid) {
+        $sid = $entity->$field_name->value;
+      }
+      // No current state. Use creation state.
+      // (E.g., content was created before adding workflow.)
+      if (!$sid) {
+        $sid = _workflow_get_workflow_creation_sid($entity, $field_name);
+      }
+    }
+    return $sid;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  function getPreviousStateId(EntityInterface $entity, $field_name = '') {
+    // @todo D8: return State object, not $sid integer.
+    $sid = FALSE;
+
+    if (!$entity) {
+      return $sid;
+    }
+
+    // If $field_name is not known, yet, determine it.
+    $field_name = workflow_get_field_name($entity, $field_name);
+    // If $field_name is found, get more details.
+    if (!$field_name) {
+      // Return the initial value.
+    }
+    else {
+      $entity_type = $entity->getEntityTypeId();
+      $langcode = $entity->language()->getId();
+
+      if (isset($entity->original)) {
+//        dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
+        // A changed node.
+        // TODO
+      }
+
+      // A node may not have a Workflow attached.
+      if (!$sid) {
+        if ($entity->isNew()) {
+          // A new Node. D7: $is_new is not set when saving terms, etc.
+          $sid = _workflow_get_workflow_creation_sid($entity, $field_name);
+        }
+        elseif (!$sid) {
+          // Read the history with an explicit langcode.
+          if ($last_transition = WorkflowTransition::loadByProperties($entity_type, $entity->id(), [], $field_name, $langcode, 'DESC')) {
+            $sid = $last_transition->getFromSid();
+          }
+        }
+      }
+
+      if (!$sid) {
+//        dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
+        // No history found on an existing entity.
+        $sid = _workflow_get_workflow_creation_sid($entity, $field_name);
+      }
+    }
+
+    return $sid;
   }
 
 }

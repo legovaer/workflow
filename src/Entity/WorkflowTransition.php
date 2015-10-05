@@ -182,12 +182,9 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $hid = $this->id();
     if (!$hid) {
       // Insert the transition. Make sure it hasn't already been inserted.
-      $found_transition = self::loadByProperties(
-        $this->getEntity()->getEntityTypeId(),
-        $this->getEntity()->id(),
-        array(),
-        $this->getFieldName(),
-        $this->getLangcode());
+      $entity = $this->getEntity();
+      // @todo: Allow a scheduled transition per revision.
+      $found_transition = self::loadByProperties($entity->getEntityTypeId(), $entity->id(), [], $this->getFieldName(), $this->getLangcode());
       if ($found_transition &&
         $found_transition->getTimestamp() == REQUEST_TIME &&
         $found_transition->getToSid() == $this->getToSid()) {
@@ -216,9 +213,9 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /**
    * {@inheritdoc}
    */
-  public static function loadByProperties($entity_type, $entity_id, array $revision_ids, $field_name = '', $langcode = '', $transition_type = 'workflow_transition') {
+  public static function loadByProperties($entity_type, $entity_id, array $revision_ids = [], $field_name = '', $langcode = '', $sort = 'ASC', $transition_type = 'workflow_transition') {
     $limit = 1;
-    if ($transitions = self::loadMultipleByProperties($entity_type, [$entity_id], $revision_ids, $field_name, $limit, $langcode, $transition_type)) {
+    if ($transitions = self::loadMultipleByProperties($entity_type, [$entity_id], $revision_ids, $field_name, $langcode, $limit, $sort, $transition_type)) {
       $transition = reset($transitions);
       return $transition;
     }
@@ -228,13 +225,14 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /**
    * {@inheritdoc}
    */
-  public static function loadMultipleByProperties($entity_type, array $entity_ids, array $revision_ids, $field_name, $limit = NULL, $langcode = '', $transition_type = 'workflow_transition') {
+  public static function loadMultipleByProperties($entity_type, array $entity_ids, array $revision_ids = [], $field_name = '', $langcode = '', $limit = NULL, $sort = 'ASC', $transition_type = 'workflow_transition') {
 
     /* @var $query \Drupal\Core\Entity\Query\QueryInterface */
     $query = \Drupal::entityQuery($transition_type)
       ->condition('entity_type', $entity_type)
       ->condition('entity_id', $entity_ids, 'IN')
-      ->sort('timestamp', 'ASC')
+// @todo     ->condition('revision_id', $revision_ids, 'IN')
+      ->sort('timestamp', $sort) // 'DESC' || 'ASC'
       ->addTag($transition_type);
     if ($field_name != '') {
       $query->condition('field_name', $field_name, '=');

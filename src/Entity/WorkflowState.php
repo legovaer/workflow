@@ -575,8 +575,7 @@ class WorkflowState extends ConfigEntityBase {
 //    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ );
     return $count;
 
-    $fields = _workflow_info_fields();
-    foreach ($fields as $field_name => $field_map) {
+    foreach ($fields = _workflow_info_fields() as $field_name => $field_info) {
       $query = new EntityFieldQuery();
       $query
         ->fieldCondition($field_name, 'value', $sid, '=')

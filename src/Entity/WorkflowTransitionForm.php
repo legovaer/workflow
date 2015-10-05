@@ -241,13 +241,14 @@ class WorkflowTransitionForm extends ContentEntityForm {
     if ($entity) {
       // E.g., on VBO-page, no entity may be given.
       $entity_type = $transition->getEntity()->getEntityTypeId();
-      $entity_id = $transition->getEntity()->id() ;
+      $entity_id = $transition->getEntity()->id();
+      $langcode = $entity->language()->getId();
 
       // TODO D8-port: load Scheduled transitions, only for existing entities.
       // Get the scheduling info. This may change the $default_value on the Form.
       // Read scheduled information, only if an entity exists.
       // Technically you could have more than one scheduled, but this will only add the soonest one.
-      if ($entity_id && $scheduled_transition = WorkflowScheduledTransition::loadByProperties($entity_type, $entity_id, [], $field_name)) {
+      if ($entity_id && $scheduled_transition = WorkflowScheduledTransition::loadByProperties($entity_type, $entity_id, [], $field_name, $langcode)) {
         $transition = $scheduled_transition;
       }
 

@@ -423,67 +423,39 @@ function workflow_get_sid_name($sid) {
 }
 
 /**
+ * Determines the Workflow field_name of an entity.
+ * If an entity has more workflows, only rturns the first one.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ *   The entity at hand.
+ * @param string $field_name
+ *   The field name. If given, will be passed as return value.
+ *
+ * @return string
+ */
+function workflow_get_field_name(EntityInterface $entity, $field_name = '') {
+  if (!$field_name) {
+    $entity_type = $entity->getEntityTypeId();
+    $fields = _workflow_info_fields($entity, $entity_type);
+    $field_names = array_keys($fields);
+    $field_name = reset($field_names);
+  }
+
+  return $field_name;
+}
+
+
+/**
  * Functions to get the state of an entity.
  */
 
 /**
  * Gets the current state ID of a given entity.
  *
- * There is no need to use a page cache.
- * The performance is OK, and the cache gives problems when using Rules.
- *
- * @param EntityInterface $entity
- *   The entity to check. May be an EntityDrupalWrapper.
- * @param string $entity_type
- *   The entity_type of the entity to check.
- *   May be empty in case of an EntityDrupalWrapper.
- * @param string $field_name
- *   The name of the field of the entity to check.
- *   If NULL, the field_name is determined on the spot. This must be avoided,
- *     making multiple workflow per entity unpredictable.
- *     The found field_name will be returned in the param.
- *   If '', we have a workflow_node mode.
- *
- * @return mixed $sid
- *   The ID of the current state.
+ * @deprecated
  */
-function workflow_node_current_state($entity, &$field_name = NULL) {
-  // @TODO D8: return State object, not $sid integer.
-  $sid = FALSE;
-  $langcode = Language::LANGCODE_NOT_SPECIFIED;
-
-  if (!$entity) {
-    return $sid;
-  }
-
-  // If $field_name is not known, yet, determine it.
-  if ($field_name === NULL) {
-    dpm('TODO D8-port: test part of function workflow.module::' . __FUNCTION__.'/'.__LINE__);
-
-    $entity_type = $entity->getEntityTypeId();
-    $fields = _workflow_info_fields($entity, $entity_type);
-    if (count($fields)) {
-      // Workflow Field API: if $field_name is not known, yet, determine it.
-      $field = reset($fields);
-      $field_name = $field['field_name'];
-    }
-    else {
-      // Workflow Node API.
-      $field_name = '';
-    }
-  }
-
-  // At this point, we may have redetermined and altered the field_name.
-  if (!$sid) {
-    $sid = $entity->$field_name->value;
-  }
-
-  // No current state. Use creation state.
-  if (!$sid) {
-    $sid = _workflow_get_workflow_creation_sid($entity, $field_name);
-  }
-
-  return $sid;
+function workflow_node_current_state($entity, $field_name = '') {
+  return Workflow::workflowManager()->getCurrentStateID($entity, $field_name);
 }
 
 /**
@@ -493,75 +465,11 @@ function workflow_node_current_state($entity, &$field_name = NULL) {
  * @param string $field_name
  *
  * @return string $previous_sid
+ *
+ * @deprecated
  */
-function workflow_node_previous_state($entity, $field_name) {
-  // @todo D8: return State object, not $sid integer.
-  $previous_sid = FALSE;
-  $langcode = Language::LANGCODE_NOT_SPECIFIED;
-
-  if (!$entity) {
-    return $previous_sid;
-  }
-
-  $entity_type = $entity->getEntityTypeId();
-
-  // Determine the $field_name if unknown. Just get the 1st one.)
-  if ($field_name === NULL) {
-    dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
-    $fields = _workflow_info_fields($entity, $entity_type);
-    if (count($fields)) {
-      $field = reset($fields);
-      $field_name = $field['field_name'];
-    }
-  }
-
-  // At this point, we may have redetermined and altered the field_name.
-  if ($field_name !== NULL && isset($entity->original)) {
-    dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
-    // A changed node.
-
-    $wrapper = entity_metadata_wrapper($entity_type, $entity->original);
-    $previous_sid = $wrapper->{$field_name}->value();
-
-    // Get language. Multi-language is not supported for Workflow Node.
-    $langcode = _workflow_metadata_workflow_get_properties($entity->original, array(), 'langcode', $entity_type, $field_name);
-  }
-
-  // A node may not have a Workflow attached.
-  if (!$previous_sid && $field_name) {
-    // Get Id. Is empty when creating a node.
-    $entity_id = $entity->id();
-    if (!$entity_id && $entity->isNew()) {
-      // Test this situation.
-      dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
-    }
-
-    if ($entity->isNew()) {
-      dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
-      // A new Node. $is_new is not set when saving terms, etc.
-      $previous_sid = _workflow_get_workflow_creation_sid($entity, $field_name);
-    }
-    elseif (!$previous_sid && $entity_id) {
-      dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
-      // D8: This should be done via ->original.
-      //
-      // Read the history with an explicit langcode.
-//      if ($last_transition = workflow_transition_load_single($entity_type, $entity_id, $field_name, $langcode)) {
-      if ($last_transition = WorkflowTransition::loadByProperties($entity_type, $entity_id, $field_name, $langcode)) {
-        dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
-        $previous_sid = $last_transition->new_sid;
-      }
-    }
-  }
-
-  if (!$previous_sid && $field_name !== NULL) {
-    // No history found on an existing entity.
-    $previous_sid = _workflow_get_workflow_creation_sid($entity, $field_name);
-  }
-
-  dpm('TODO D8-port: result of function workflow.module::' . __FUNCTION__.'/'.__LINE__.' = '.$previous_sid);
-
-  return $previous_sid;
+function workflow_node_previous_state($entity, $field_name = '') {
+  return Workflow::workflowManager()->getPreviousStateId($entity, $field_name);
 }
 
 /**
@@ -645,59 +553,6 @@ function _workflow_get_sid_by_items(array $items) {
   $sid = isset($items[0]['value']) ? $items[0]['value'] : 0;
   // On a workflow form widget:
   $sid = isset($items[0]['workflow']['workflow_sid']) ? $items[0]['workflow']['workflow_sid'] : $sid;
-  return $sid;
-}
-
-
-/**
- * Determine the fields for an entity.
- * If $field_name is not known, yet, determine it.
- *
- * @return array $field_names
- *   An array of field_names.
- */
-function workflow_entity_fields($entity, $field_name = '') {
-  $fields = _workflow_info_fields($entity);
-  dpm('TODO D8-port: test part of function workflow.module::' . __FUNCTION__.'/'.__LINE__);
-  dpm($fields, __FUNCTION__);
-  dpm(array_keys($fields));
-  if ($field_name) {
-    dpm('TODO D8-port: test part of function workflow.module::' . __FUNCTION__.'/'.__LINE__);
-  }
-  else {
-    dpm('TODO D8-port: test part of function workflow.module::' . __FUNCTION__.'/'.__LINE__);
-
-    dpm($fields);
-    if (count($fields)) {
-      dpm('TODO D8-port: test part of function workflow.module::' . __FUNCTION__.'/'.__LINE__);
-      // Workflow Field API: if $field_name is not known, yet, determine it.
-      $field = reset($fields);
-      $field_name = $field['field_name'];
-    }
-    else {
-      dpm('TODO D8-port: test part of function workflow.module::' . __FUNCTION__.'/'.__LINE__);
-      // Workflow Node API.
-      $field_name = '';
-    }
-  }
-  /*
-    // If $field_name is not known, yet, determine it.
-    if ($field_name === NULL) {
-      dpm('TODO D8-port: test part of function workflow.module::' . __FUNCTION__.'/'.__LINE__);
-
-      $fields = _workflow_info_fields($entity);
-      dpm($fields);
-      if (count($fields)) {
-        // Workflow Field API: if $field_name is not known, yet, determine it.
-        $field = reset($fields);
-        $field_name = $field['field_name'];
-      }
-      else {
-        // Workflow Node API.
-        $field_name = '';
-      }
-
-  */
   return $sid;
 }
 
