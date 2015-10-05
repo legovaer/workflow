@@ -152,7 +152,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       // No current state. Use creation state.
       // (E.g., content was created before adding workflow.)
       if (!$sid) {
-        $sid = _workflow_get_workflow_creation_sid($entity, $field_name);
+        $sid = $this->getCreationStateId($entity, $field_name);
       }
     }
     return $sid;
@@ -189,7 +189,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       if (!$sid) {
         if ($entity->isNew()) {
           // A new Node. D7: $is_new is not set when saving terms, etc.
-          $sid = _workflow_get_workflow_creation_sid($entity, $field_name);
+          $sid = $this->getCreationStateId($entity, $field_name);
         }
         elseif (!$sid) {
           // Read the history with an explicit langcode.
@@ -202,10 +202,40 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       if (!$sid) {
 //        dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
         // No history found on an existing entity.
-        $sid = _workflow_get_workflow_creation_sid($entity, $field_name);
+        $sid = $this->getCreationStateId($entity, $field_name);
       }
     }
 
+    return $sid;
+  }
+
+  /**
+   * Gets the creation sid for a given $entity and $field_name.
+   *
+   * Is a helper function for:
+   * - workflow_node_current_state()
+   * - workflow_node_previous_state()
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   * @param string $field_name
+   *
+   * @return string $sid
+   *   The ID of the creation State for the Workflow of the field.
+   */
+  private function getCreationStateId($entity, string $field_name) {
+    $sid = '';
+
+    $field_config = $entity->get($field_name)->getFieldDefinition();
+    $field_storage = $field_config->getFieldStorageDefinition();
+    $wid = $field_storage->getSetting('workflow_type');
+    $workflow = Workflow::load($wid);
+
+    if ($workflow) {
+      $sid = $workflow->getCreationSid();
+    }
+    else {
+      drupal_set_message(t('Workflow !wid cannot be loaded. Contact your system administrator.', array('!wid' => $wid)), 'error');
+    }
     return $sid;
   }
 

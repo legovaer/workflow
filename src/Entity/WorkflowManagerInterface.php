@@ -37,7 +37,7 @@ interface WorkflowManagerInterface {
    *
    * Make sure new roles are allowed to participate in workflows by default.
    */
-  function insertUserRole(Role $role);
+  public function insertUserRole(Role $role);
 
   /**
    * Implements hook_user_delete().
@@ -78,7 +78,7 @@ interface WorkflowManagerInterface {
    * @return string $sid
    *   The ID of the current state.
    */
-  function getCurrentStateId(EntityInterface $entity, $field_name = '');
+  public function getCurrentStateId(EntityInterface $entity, $field_name = '');
 
   /**
    * Gets the previous state ID of a given entity.
@@ -86,9 +86,9 @@ interface WorkflowManagerInterface {
    * @param EntityInterface $entity
    * @param string $field_name
    *
-   * @return string $previous_sid
+   * @return string $sid
+   *   The ID of the previous state.
    */
-  function getPreviousStateId(EntityInterface $entity, $field_name = '');
-
+  public function getPreviousStateId(EntityInterface $entity, $field_name = '');
 
 }
