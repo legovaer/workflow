@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\workflow\Entity\Controller\WorkflowConfigTransitionLabelForm.
+ * Contains \Drupal\workflow_ui\Form\WorkflowConfigTransitionLabelForm.
  */
 
 namespace Drupal\workflow_ui\Form;

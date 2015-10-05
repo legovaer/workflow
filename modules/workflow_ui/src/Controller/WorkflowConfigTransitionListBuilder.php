@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\workflow\Entity\Controller\WorkflowConfigTransitionListBuilder.
+ * Contains \Drupal\workflow_ui\Controller\WorkflowConfigTransitionListBuilder.
  */
 
 namespace Drupal\workflow_ui\Controller;

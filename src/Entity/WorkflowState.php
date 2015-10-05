@@ -26,7 +26,7 @@ use Drupal\Core\Session\AccountProxy;
  *   handlers = {
  *     "list_builder" = "Drupal\workflow_ui\Controller\WorkflowStateListBuilder",
  *     "form" = {
- *        "delete" = "\Drupal\Core\Entity\EntityDeleteForm",
+ *        "delete" = "Drupal\Core\Entity\EntityDeleteForm",
  *      }
  *   },
  *   admin_permission = "administer workflow",

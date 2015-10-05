@@ -32,6 +32,13 @@ use Drupal\workflow\Entity\WorkflowState;
  *   label = @Translation("Workflow executed transition"),
  *   bundle_label = @Translation("Workflow type"),
  *   module = "workflow",
+ *   handlers = {
+ *     "list_builder" = "Drupal\workflow\Controller\WorkflowTransitionListBuilder",
+ *     "form" = {
+ *        "add" = "Drupal\workflow\Entity\WorkflowTransitionForm",
+ *        "delete" = "Drupal\Core\Entity\EntityDeleteForm",
+ *      }
+ *   },
  *   base_table = "workflow_transition_history",
  *   translatable = FALSE,
  *   entity_keys = {

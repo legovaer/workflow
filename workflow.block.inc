@@ -47,7 +47,7 @@ function workflow_block_view($delta) {
     // N.B. This part is replicated in hook_node_view, workflow_tab_page, workflow_vbo, transition_edit.
     // @todo: support multiple workflows per entity.
     // For workflow_tab_page with multiple workflows, use a separate view. See [#2217291].
-    $field = _workflow_info_field($field_name, $workflow);
+    $field = _workflow_info_field($field_name, $workflow);// TODO D8-port: replace by _workflow_info_fields();
     $field_id = $field['id'];
     $instance = field_info_instance($entity_type, $field_name, $entity_bundle);
     if (!$field_id) {

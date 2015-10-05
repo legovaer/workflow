@@ -4,8 +4,6 @@
  * Hooks provided by the workflow module.
  */
 
-namespace Drupal\workflow\Entity;
-
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\workflow\Entity\WorkflowState;
 use Drupal\workflow\Entity\WorkflowConfigTransition;

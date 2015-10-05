@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\workflow\Entity\Controller\WorkflowListBuilder.
+ * Contains \Drupal\workflow_ui\Controller\WorkflowListBuilder.
  */
 
 namespace Drupal\workflow_ui\Controller;

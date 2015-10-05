@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\workflow\Entity\WorkflowForm.
+ * Contains \Drupal\workflow_ui\Form\WorkflowForm.
  */
 
 namespace Drupal\workflow_ui\Form;
@@ -229,7 +229,7 @@ class WorkflowForm extends EntityForm {
    * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state) {
-    /** @var \Drupal\workflow\Entity\Workflow $entity */
+    /* @var $entity \Drupal\workflow\Entity\Workflow */
     $entity = $this->entity;
 
     // Prevent leading and trailing spaces.

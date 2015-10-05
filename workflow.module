@@ -717,7 +717,7 @@ function _workflow_get_workflow_creation_sid($entity, $field_name) {
  * @param string $entity_type
  *   An entity type. This is passed when also the Field API must be checked.
  *
- * @return
+ * @return Workflow
  *   A Workflow object, or FALSE if no workflow is retrieved.
  *
  * Caveat: gives undefined results with multiple workflows per entity.
@@ -725,18 +725,15 @@ function _workflow_get_workflow_creation_sid($entity, $field_name) {
  * @todo: support multiple workflows per entity.
  */
 function workflow_get_workflows_by_type($entity_bundle, $entity_type) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
 
   static $map = array();
 
   if (!isset($map[$entity_type][$entity_bundle])) {
     $wid = FALSE;
     $map[$entity_type][$entity_bundle] = FALSE;
-
     if (!$wid && isset($entity_type)) {
-      dpm('TODO D8-port: test part of function workflow.module::' . __FUNCTION__.'/'.__LINE__);
       foreach (_workflow_info_fields(NULL, $entity_type, $entity_bundle) as $field_name => $field_info) {
-        $wid = $field_info['settings']['wid'];
+        $wid = $field_info->getSetting('workflow_type');
       }
     }
 
@@ -747,7 +744,6 @@ function workflow_get_workflows_by_type($entity_bundle, $entity_type) {
       $map[$entity_type][$entity_bundle] = $workflow;
     }
   }
-
   return $map[$entity_type][$entity_bundle];
 }
 
@@ -836,85 +832,36 @@ function workflow_entity_fields($entity, $field_name = '') {
  *   Entity type of object. Optional, but required if $entity provided.
  * @param string $entity_bundle
  *   Bundle of entity. Optional.
+ * @param string $field_name
+ *   Field name. Optional.
  *
- * @return array $field_info
- *   An array of field_info structures.
+ * @return Drupal\field\Entity\FieldStorageConfig[] $field_info
+ *   An array of FieldStorageConfig objects.
  */
-function _workflow_info_fields($entity = NULL, $entity_type = '', $entity_bundle = '') {
+function _workflow_info_fields($entity = NULL, $entity_type = '', $entity_bundle = '', $field_name = '') {
   $field_info = array();
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
 
+  // Figure out the $entity's bundle and id.
   if ($entity) {
-    $field_list = Drupal::entityManager()->getFieldMapByFieldType('workflow');
-
-    // Figure out the $entity's bundle and id.
     $entity_type = $entity->getEntityTypeId();
     $entity_bundle = $entity->bundle();
-    $field_list = Drupal::entityManager()->getFieldMapByFieldType('workflow');
-    foreach ($field_list as $e_type => $data) {
-      if (!$entity_type || ($entity_type == $e_type)) {
-        foreach($data as $f_name => $data) {
-          if (!$entity_bundle || isset($data['bundles'][$entity_bundle])) {
-            // TODO D8-port: return FieldDefinition, not data.
-            $field_info[$f_name] = $data;
-            $field_info[$f_name]['entity_type'] = $e_type;
+  }
+  else {
+    // Entity type and bundle should be specified.
+  }
+
+  $field_list = Drupal::entityManager()->getFieldMapByFieldType('workflow');
+  foreach ($field_list as $e_type => $data) {
+    if (!$entity_type || ($entity_type == $e_type)) {
+      foreach($data as $f_name => $data) {
+        if (!$entity_bundle || isset($data['bundles'][$entity_bundle])) {
+          if (!$field_name || ($field_name == $f_name)) {
+            $field_info[$f_name] = \Drupal\field\Entity\FieldStorageConfig::loadByName($entity_type, $f_name);
           }
         }
       }
     }
   }
+
   return $field_info;
-}
-
-
-/**
- * A wrapper around field_info_field.
- *
- * This is to hide implementation details of workflow_node.
- *
- * @param string $field_name
- *   The name of a Workflow Field. Can be empty if fetching Workflow Node.
- * @param Workflow $workflow
- *   Workflow object. Can be NULL.
- *   For a workflow_field, no $workflow is needed, since info is in field itself.
- *   For a workflow_node, $workflow provides additional data in return.
- *
- * @return array
- *   Field info structure. Pseudo data for workflow_node.
- */
-function _workflow_info_field($field_name, $workflow = NULL) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
-  // @todo D8: remove this function when we only use workflow_field.
-  $field = array();
-
-  if ($field_name) {
-    $field = field_info_field($field_name);
-  }
-  else {
-    $field['field_name'] = '';
-    $field['id'] = 0;
-    $field['settings']['wid'] = 0;
-    $field['settings']['widget'] = array();
-    if ($workflow != NULL) {
-      // $field['settings']['wid'] can be both: numeric or named.
-      $field['settings']['wid'] = $workflow->wid; // @todo: to make this exportable: use machine_name??
-      $field['settings']['widget'] = $workflow->options;
-      $field['settings']['history']['roles'] = $workflow->tab_roles;
-      $field['settings']['history']['history_tab_show'] = TRUE;
-    }
-    // Add default values.
-    $field['settings']['widget'] += array(
-      'name_as_title' => TRUE,
-      'options' => 'radios',
-      'schedule' => TRUE,
-      'schedule_timezone' => TRUE,
-      'comment_log_node' => TRUE,
-      'comment_log_tab' => TRUE,
-      'watchdog_log' => TRUE,
-      'history_tab_show' => TRUE,
-    );
-  }
-
-  return $field;
 }

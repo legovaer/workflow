@@ -1,1 +1,16 @@
-# Currently all routes are declared in Workflow UI.
+# All routes for Workflow maintenance are declared in Workflow UI.
+
+# TODO D8-port: make this happen for every entity_type.
+# A route for showing the Workflow history tab.
+entity.node.workflow_history:
+  path: '/node/{node}/workflow/{field_name}'
+  defaults:
+    _title: 'Workflow history'
+    _controller: '\Drupal\workflow\Controller\WorkflowTransitionListController::historyOverview'
+    field_name: ~
+  requirements:
+    _custom_access:  '\Drupal\workflow\Controller\WorkflowTransitionListController::historyAccess'
+  options:
+    parameters:
+      entity:
+        type: entity:{entity_type}

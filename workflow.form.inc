@@ -41,7 +41,7 @@ function _workflow_use_action_buttons($new_value = NULL) {
  *
  * @todo: move this to WorkflowTransitionForm::_addActionButtons();
  */
-function workflow_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+function workflow_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
   // Use a fast, custom way to check if we need to do this.
   // @todo: Adapt to use with multiple workflows per entity.
   if (!_workflow_use_action_buttons()) {

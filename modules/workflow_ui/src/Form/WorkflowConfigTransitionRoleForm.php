@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\workflow\Entity\Controller\WorkflowConfigTransitionRoleForm.
+ * Contains \Drupal\workflow_ui\Form\WorkflowConfigTransitionRoleForm.
  */
 
 namespace Drupal\workflow_ui\Form;

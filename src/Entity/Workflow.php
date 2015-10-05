@@ -24,9 +24,9 @@ use Drupal\workflow\Entity\WorkflowState;
  *     "storage" = "Drupal\workflow\Entity\WorkflowStorage",
  *     "list_builder" = "Drupal\workflow_ui\Controller\WorkflowListBuilder",
  *     "form" = {
- *        "add" = "\Drupal\workflow_ui\Form\WorkflowForm",
- *        "edit" = "\Drupal\workflow_ui\Form\WorkflowForm",
- *        "delete" = "\Drupal\Core\Entity\EntityDeleteForm",
+ *        "add" = "Drupal\workflow_ui\Form\WorkflowForm",
+ *        "edit" = "Drupal\workflow_ui\Form\WorkflowForm",
+ *        "delete" = "Drupal\Core\Entity\EntityDeleteForm",
  *      }
  *   },
  *   admin_permission = "administer workflow",
