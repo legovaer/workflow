@@ -587,7 +587,8 @@ function workflow_debug($class_name, $function_name, $line = 0, $value1 = '', $v
     return;
   }
 
-  $output = 'TODO D8-port: test function ' . end(explode( "\\" , $class_name)) . '::' . $function_name . '/' . $line;
+  $class_name_elements = explode( "\\" , $class_name);
+  $output = 'TODO D8-port: test function ' . end($class_name_elements) . '::' . $function_name . '/' . $line;
   if ($value1) {
     $output .= ' = ' . $value1;
   }

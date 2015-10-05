@@ -85,6 +85,9 @@ class WorkflowTransitionListController extends EntityListController implements C
     // TODO D8-port: make this entity-generic - not only Node.
     $form = array();
 
+    /*
+     * Get data from parameters.
+     */
     $user = $this->currentUser();
 
     /* @var $entity EntityInterface */
@@ -92,6 +95,9 @@ class WorkflowTransitionListController extends EntityListController implements C
 //    $route_match = \Drupal::routeMatch();
 //    $node = $route_match->getParameter('node');
 
+    /*
+     * Get derived data from parameters.
+     */
     // Get the field name.
     $field_name = workflow_get_field_name($entity);
     if (!$field_name) {
@@ -99,29 +105,17 @@ class WorkflowTransitionListController extends EntityListController implements C
       return $form;
     }
 
-    // Step 1: generate the Transtion Form.
-
+    /*
+     * Step 1: generate the Transition Form.
+     */
     // Create a transition, to pass to the form.
-    // Get the current sid. $field_name is updated with relevant value.
     $current_sid = workflow_node_current_state($entity, $field_name);
-    $current_state = WorkflowState::load($current_sid);
-    $current_state->field_name = $field_name;
-    $workflow = $current_state->getWorkflow();
     $transition = WorkflowTransition::create();
     $transition->setValues($entity, $field_name, $current_sid, '', $user->id());
-// TODO D8-port: implement below logic from NodeController: show transtionForm from WorkflowState
-//    $node = $this->entityManager()->getStorage('node')->create(array(
-//      'type' => $node_type->id(),
-//    ));
+    // Add the WorkflowTransitionForm to the page.
+    $form = $this->entityFormBuilder()->getForm($transition, 'add');
 
-//    $form = $this->entityFormBuilder()->getForm($transition, 'add');
-
-    // Add the fields from the WorkflowTransition.
-    //    field_attach_form('WorkflowTransition', $transition, $element['workflow'], $form_state);
-
-//return $form;
-
-    // Finally, add Submit buttons/Action buttons.
+    // Add Submit buttons/Action buttons.
     // Either a default 'Submit' button is added, or a button per permitted state.
     $settings_options_type = '';  // TODO JVO
     if ($settings_options_type == 'buttons') {
@@ -140,8 +134,9 @@ class WorkflowTransitionListController extends EntityListController implements C
       _workflow_use_action_buttons(TRUE);
     }
 
-
-    // Step 2: generate the Transtion History List.
+    /*
+     * Step 2: generate the Transition History List.
+     */
     $entity_type = 'workflow_transition';
     // $form = $this->listing('workflow_transition');
     $list_builder = $this->entityManager()->getListBuilder($entity_type);
@@ -150,14 +145,14 @@ class WorkflowTransitionListController extends EntityListController implements C
 
     $form += $list_builder->render();
 
-//    HtmlEntityFormController->getFormObject(Object, 'node.add')
-//    Drupal\Core\Controller\FormController->getContentResult(Object, Object)
-
-    // Sort the elements
+    /*
+     * Finally: sort the elements (overriding their weight).
+     */
     $form['workflow']['#weight'] = 10;
     $form['actions']['#weight'] = 100;
     $form['workflow_list_title']['#weight'] = 200;
     $form['table']['#weight'] = 201;
+
     return $form;
 
 
