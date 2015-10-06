@@ -11,10 +11,7 @@ namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\workflow\Entity\WorkflowTransition;
-use Drupal\Core\Entity\EntityManager;
 
 /**
  * Implements a scheduled transition, as shown on Workflow form.
@@ -49,19 +46,18 @@ class WorkflowScheduledTransition extends WorkflowTransition {
     $this->is_executed = FALSE;
   }
 
-  public function setValues($entity, $field_name, $from_sid, $to_sid, $uid = NULL, $scheduled = REQUEST_TIME, $comment = '') {
+  /**
+   * {@inheritdoc}
+   */
+  public function setValues(EntityInterface $entity, $field_name, $from_sid, $to_sid, $uid = NULL, $scheduled = REQUEST_TIME, $comment = '') {
     parent::setValues($entity, $field_name, $from_sid, $to_sid, $uid, $scheduled, $comment);
   }
 
+
   /**
-   * Given an entity, get all scheduled transitions for it.
-   *
-   * @param string $entity_type
-   * @param int $entity_id
-   * @param string $field_name
-   *   Optional.
-   *
-   * @return array
+   * @param int $id
+   *   A Transition Id.
+   * @return array An array of WorkflowScheduledTransitions.
    *   An array of WorkflowScheduledTransitions.
    */
   public static function load($id) {
@@ -119,19 +115,18 @@ class WorkflowScheduledTransition extends WorkflowTransition {
    */
   public function save() {
 
-    $entity = $this->getEntity();
-
     // If executed, save in history.
     if ($this->is_executed) {
+      workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__ );  // @todo D8-port: still test this snippet.
       // Be careful, we are not a WorkflowScheduleTransition anymore!
       // No fuzzling around, just copy the ScheduledTranstion to a normal one.
       $executed_transition = WorkflowTransition::create();
       $executed_transition->setValues(
-        $entity,
+        $this->getEntity(),
         $this->getFieldName(),
         $this->getFromSid(),
         $this->getToSid(),
-        $this->getUser()->id(),
+        $this->getOwnerId(),
         REQUEST_TIME,
         $this->getComment()
       );
@@ -142,19 +137,21 @@ class WorkflowScheduledTransition extends WorkflowTransition {
     if (!$hid) {
       // Insert the transition. Make sure it hasn't already been inserted.
       // @todo: Allow a scheduled transition per revision.
+      $entity = $this->getEntity();
       $found_transition = self::loadByProperties($entity->getEntityTypeId(), $entity->id(), [], $this->getFieldName(), $this->getLangcode());
       if ($found_transition) {
         // Avoid duplicate entries.
         $found_transition->delete();
-        return parent::save();
+        $result = parent::save();
       }
       else {
-        return parent::save();
+        $result = parent::save();
       }
     }
     else {
+      workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__ );  // @todo D8-port: still test this snippet.
       // Update the transition.
-      return parent::save();
+      $result = parent::save();
     }
 
     // Create user message.
@@ -162,11 +159,10 @@ class WorkflowScheduledTransition extends WorkflowTransition {
       $entity = $this->getEntity();
       $message = '%entity_title scheduled for state change to %state_name on %scheduled_date';
       $args = array(
-        '@entity_type' => $this->entity_type,
         '%entity_title' => $entity->label(),
         '%state_name' => $state->label(),
-        '%scheduled_date' => format_date($this->getTimestamp()),
-        'link' =>  $entity->link(t('View')),  // TODO
+        '%scheduled_date' => $this->getTimestampFormatted(),
+// @todo        'link' =>  $entity->link(t('View')),
       );
       \Drupal::logger('workflow')->error($message, $args);
       drupal_set_message(t($message, $args));
@@ -190,7 +186,7 @@ class WorkflowScheduledTransition extends WorkflowTransition {
    * If a scheduled transition has no comment, a default comment is added before executing it.
    */
   public function addDefaultComment() {
-    $this->setComment(t('Scheduled by user @uid.', array('@uid' => $this->getUser()->id())));
+    $this->setComment(t('Scheduled by user @uid.', array('@uid' => $this->getOwnerId())));
   }
 
   /**

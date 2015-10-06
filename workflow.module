@@ -18,15 +18,10 @@ define('WORKFLOW_ROLE_AUTHOR_RID', 'workflow_author');
 // The definition of the Field_info property type. Shared between 'workflow_field' and 'workflow_rules'.
 define('WORKFLOWFIELD_PROPERTY_TYPE', 'text'); // @todo: 'list', 'text' or 'workflow'?
 
-use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Language\Language;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\workflow\Entity\Workflow;
 use Drupal\workflow\Entity\WorkflowState;
-use Drupal\workflow\Entity\WorkflowScheduledTransition;
-use Drupal\workflow\Entity\WorkflowTransition;
 use Drupal\workflow\Entity\WorkflowTransitionInterface;
 
 module_load_include('inc', 'workflow', 'workflow.form');
@@ -51,7 +46,7 @@ function workflow_help($route_name, RouteMatchInterface $route_match) {
  * Implements hook_menu_alter().
  */
 function workflow_menu_alter(&$items) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
+  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   return; // TODO D8-port: test this function.
 
@@ -148,7 +143,7 @@ function workflow_menu_alter(&$items) {
  * @todo: add support for every $entity_type.
  */
 function workflow_admin_paths_alter(&$paths) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
+  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   if (isset($paths['node/*/edit'])) {
     $paths['node/*/workflow'] = $paths['node/*/edit'];
@@ -165,7 +160,7 @@ function workflow_admin_paths_alter(&$paths) {
  * their main module or in a module.workflow.inc file.
  */
 function workflow_hook_info() {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
+//  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   $hooks['workflow'] = array('group' => 'workflow');
   return $hooks;
@@ -175,17 +170,15 @@ function workflow_hook_info() {
  * Implements hook_features_api().
  */
 function workflow_features_api() {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
-
-  return array();
+  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   return array(
-    'workflow' => array(
-      'name' => t('Workflow'),
-      'file' => drupal_get_path('module', 'workflow') . '/workflow.features.inc',
-      'default_hook' => 'workflow_default_workflows',
-      'feature_source' => TRUE,
-    ),
+//    'workflow' => array(
+//      'name' => t('Workflow'),
+//      'file' => drupal_get_path('module', 'workflow') . '/workflow.features.inc',
+//      'default_hook' => 'workflow_default_workflows',
+//      'feature_source' => TRUE,
+//    ),
   );
 }
 
@@ -195,7 +188,7 @@ function workflow_features_api() {
  * @see https://www.drupal.org/node/2196275 "hook_entity_info() renamed to hook_entity_type_build()"
  */
 function TODOworkflow_entity_type_build(array &$entity_types) {
-  dpm('TODO D8-port: test (port hook-entity_info) function workflow.module::' . __FUNCTION__ );
+  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   /* @var $entity_types \Drupal\Core\Entity\EntityTypeInterface[] */
   // Add a form controller for a custom entity form without overriding the
@@ -252,7 +245,7 @@ function workflow_user_role_insert($role) {
  * @see https://www.drupal.org/node/2188851
  */
 function workflow_forms($form_id, $args) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
+  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   $forms = array();
   if (strpos($form_id, 'workflow_transition_form_') !== FALSE) {
@@ -271,7 +264,7 @@ function workflow_forms($form_id, $args) {
  *
  * Use workflow_execute_transition($transition) to start a State Change from
  * outside an entity, e.g., workflow_cron().
- * Use $transition->execute() to start a State Change from within an enetity.
+ * Use $transition->execute() to start a State Change from within an entity.
  *
  * N.B. This function updates Entity, but not workflow_transition_* tables.
  *
@@ -284,31 +277,33 @@ function workflow_forms($form_id, $args) {
  *   The new WorkflowState ID.
  */
 function workflow_execute_transition(WorkflowTransitionInterface $transition, $force = FALSE) {
+  $to_sid = '';
 
+  /*
+   * Input
+   */
   $field_name = $transition->getFieldName();
   $entity = $transition->getEntity();
-  // @todo: use $new_sid = $transition->execute() without generating infinite loops.
 
-  // Step 1: Update entity to update the field.
-  // D7: This will call hook_field_update() and WorkflowFieldDefaultWidget::submit().
-  $entity->{$field_name}->setValue($transition->getToSid());
-  // @todo D7: perhaps use field_attach_update, for better performance, and not change entity properties.
-  // @todo D7: if transition is scheduled or new_sid == old_sid and no comment, proceed as if no $field_name.
-  $entity->save();
-  // field_attach_update($entity_type, $entity);
-  $new_sid = workflow_node_current_state($entity, $field_name);
-
-  // Step 2: Update the Transition in the History/Schedule tables.
+  /*
+   * Step 1: Update the Transition in the History/Schedule tables.
+   */
   if ($force) {
     $transition->force($force);
   }
   // The transition has been executed.
   $transition->schedule(FALSE);
-  $transition->execute(TRUE);
-  // Save in history table and delete from schedule table.
-  $transition->save();
+  // Validate transition, save in history table and delete from schedule table.
+  $to_sid = $transition->execute(TRUE);
 
-  return $new_sid;
+  /*
+   * Step 2: Update entity to update the field.
+   */
+  if (!$transition->isScheduled()) {
+    $result = $transition->updateEntity();
+  }
+
+  return $to_sid;
 }
 
 /**
@@ -406,6 +401,10 @@ function workflow_get_workflow_names() {
 /**
  * Helper function, to get the label of a given State Id.
  *
+ * @param $sid
+ *
+ * @return string
+ *
  * deprecated: workflow_get_sid_label() --> workflow_get_sid_name()
  */
 function workflow_get_sid_name($sid) {
@@ -452,16 +451,21 @@ function workflow_get_field_name(EntityInterface $entity, $field_name = '') {
 /**
  * Gets the current state ID of a given entity.
  *
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ * @param string $field_name
+ *
+ * @return string $current_sid
+ *
  * @deprecated
  */
-function workflow_node_current_state($entity, $field_name = '') {
+function workflow_node_current_state(EntityInterface $entity, $field_name = '') {
   return Workflow::workflowManager()->getCurrentStateID($entity, $field_name);
 }
 
 /**
  * Gets the previous state ID of a given entity.
  *
- * @param EntityInterface $entity
+ * @param \Drupal\Core\Entity\EntityInterface $entity
  * @param string $field_name
  *
  * @return string $previous_sid
@@ -522,7 +526,7 @@ function workflow_get_workflows_by_type($entity_bundle, $entity_type) {
  *   A State ID.
  */
 function _workflow_get_sid_by_items(array $items) {
-//  dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
+  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
   // On a normal widget:
   $sid = isset($items[0]['value']) ? $items[0]['value'] : 0;
   // On a workflow form widget:
@@ -578,8 +582,20 @@ function _workflow_info_fields($entity = NULL, $entity_type = '', $entity_bundle
 
 /**
  * Helper function for D8-port> Get some info on screen
+ *
+ * Usage:
+ *   workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+ *   workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+ *   workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+ *
+ * @param string $class_name
+ * @param string $function_name
+ * @param string $line
+ * @param string $value1
+ * @param string $value2
+ *
  */
-function workflow_debug($class_name, $function_name, $line = 0, $value1 = '', $value2 = '') {
+function workflow_debug($class_name, $function_name, $line = '', $value1 = '', $value2 = '') {
   $debug_switch = FALSE;
 //  $debug_switch = TRUE;
 
@@ -595,5 +611,5 @@ function workflow_debug($class_name, $function_name, $line = 0, $value1 = '', $v
   if ($value2) {
     $output .= ' > ' . $value2;
   }
-  dpm($output);
+  if (function_exists('dpm')) { dpm($output); }
 }

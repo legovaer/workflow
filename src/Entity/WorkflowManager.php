@@ -7,14 +7,10 @@
 
 namespace Drupal\workflow\Entity;
 
-use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Language\Language;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\user\Entity\Role;
-use Drupal\user\Plugin\Condition\UserRole;
-use Drupal\workflow\Entity\WorkflowConfigTransition;
-use Drupal\workflow\Entity\WorkflowState;
 
 /**
  * Manages entity type plugin definitions.
@@ -38,7 +34,6 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
     foreach (WorkflowScheduledTransition::loadBetween($start, $end) as $scheduled_transition) {
       $field_name = $scheduled_transition->getFieldName();
       $entity = $scheduled_transition->getEntity();
-      $entity_type = $entity->getEntityTypeId();
 
       // If user didn't give a comment, create one.
       $comment = $scheduled_transition->getComment();
@@ -80,7 +75,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
    * {@inheritdoc}
    */
   public function deleteUser(AccountInterface $account) {
-    dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ );
+    workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     self::cancelUser([], $account, 'user_cancel_delete');
   }
 
@@ -131,7 +126,6 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
    * {@inheritdoc}
    */
   function getCurrentStateId(EntityInterface $entity, $field_name = '') {
-    // @TODO D8: return State object, not $sid integer.
     $sid = FALSE;
 
     if (!$entity) {
@@ -162,7 +156,6 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
    * {@inheritdoc}
    */
   function getPreviousStateId(EntityInterface $entity, $field_name = '') {
-    // @todo D8: return State object, not $sid integer.
     $sid = FALSE;
 
     if (!$entity) {
@@ -180,9 +173,8 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       $langcode = $entity->language()->getId();
 
       if (isset($entity->original)) {
-//        dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
         // A changed node.
-        // TODO
+        workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
       }
 
       // A node may not have a Workflow attached.
@@ -200,7 +192,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       }
 
       if (!$sid) {
-//        dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ . '/' . __LINE__ . ' ' . $field_name);
+        workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
         // No history found on an existing entity.
         $sid = $this->getCreationStateId($entity, $field_name);
       }
@@ -222,7 +214,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
    * @return string $sid
    *   The ID of the creation State for the Workflow of the field.
    */
-  private function getCreationStateId($entity, string $field_name) {
+  private function getCreationStateId($entity, $field_name) {
     $sid = '';
 
     $field_config = $entity->get($field_name)->getFieldDefinition();

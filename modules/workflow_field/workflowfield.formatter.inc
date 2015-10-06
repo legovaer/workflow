@@ -12,7 +12,6 @@
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Language\Language;
-use Drupal\workflow\Entity\WorkflowState;
 
 /**
  * Creates a form element to show the current value of a Workflow state.
@@ -32,7 +31,7 @@ function workflow_state_formatter($entity, $field_name, $current_sid = '') {
   $element = array();
 
   if (!$current_sid) {
-    dpm('TODO D8-port: test function workflow.module::' . __FUNCTION__ .'/'.__LINE__);
+    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     $current_sid = workflow_node_current_state($entity, $field_name);
  }
 
@@ -67,7 +66,7 @@ function workflow_state_formatter($entity, $field_name, $current_sid = '') {
  * Shows current State and Widget on an Entity View page or a Workflow History tab.
  */
 function workflowfield_field_formatter_view($entity_type, $entity, $field, $instance, $langcode = Language::LANGCODE_NOT_SPECIFIED, $items = array(), $display = array()) {
-  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__);
+  workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   $user = \Drupal::currentUser(); // @todo #2287057: OK?
   // @todo: Perhaps global user is not always the correct user.

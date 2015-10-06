@@ -491,6 +491,9 @@ class WorkflowState extends ConfigEntityBase {
    *
    * @param object $entity
    *   The entity at hand. May be NULL (E.g., on a Field settings page).
+   * @param string $field_name
+   * @param \Drupal\Core\Session\AccountInterface|NULL $user
+   * @param bool $force
    *
    * @return array
    *   An array of sid=>label pairs.

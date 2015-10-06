@@ -125,7 +125,7 @@ function hook_workflow_history_alter(array &$variables) {
 function hook_workflow_comment_alter(&$comment, array &$context) {
   /* @var $transition WorkflowTransitionInterface */
   $transition = $context->transition;
-  $comment = $transition->getUser()->getUsername() . ' says: ' . $comment;
+  $comment = $transition->getOwner()->getUsername() . ' says: ' . $comment;
 }
 
 /**

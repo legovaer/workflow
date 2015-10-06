@@ -28,23 +28,29 @@ interface WorkflowManagerInterface {
    */
   public function executeScheduledTransitionsBetween($start = 0, $end = 0);
 
-  /**
+  /********************************************************************
+   *
    * Hook-implementing functions.
+   *
    */
 
   /**
    * Implements hook_user_role_insert().
    *
    * Make sure new roles are allowed to participate in workflows by default.
+   *
+   * @param \Drupal\user\Entity\Role $role
    */
   public function insertUserRole(Role $role);
 
   /**
    * Implements hook_user_delete().
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
    */
   public function deleteUser(AccountInterface $account);
 
-    /**
+  /**
    * Implements hook_user_cancel().
    * Implements deprecated workflow_update_workflow_transition_history_uid().
    *
@@ -54,11 +60,17 @@ interface WorkflowManagerInterface {
    * " - Delete the account and make its content belong to the Anonymous user.
    * " - Delete the account and its content.
    * "This action cannot be undone.
+   *
+   * @param $edit
+   * @param \Drupal\Core\Session\AccountInterface $account
+   * @param string $method
    */
   public function cancelUser($edit, AccountInterface $account, $method);
 
-  /**
+  /********************************************************************
+   *
    * Helper functions.
+   *
    */
 
   /**

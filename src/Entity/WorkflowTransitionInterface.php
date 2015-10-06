@@ -9,7 +9,6 @@ namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\TypedData\TranslatableInterface;
 
 /**
  * Defines a common interface for Workflow*Transition* objects.
@@ -18,18 +17,34 @@ use Drupal\Core\TypedData\TranslatableInterface;
  * @see \Drupal\workflow\Entity\WorkflowTransition
  * @see \Drupal\workflow\Entity\WorkflowScheduledTransition
  */
-interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface {
+interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface, EntityInterface {
 
   /**
    * Helper function for __construct. Used for all children of WorkflowTransition (aka WorkflowScheduledTransition)
+   *
+   * @param EntityInterface $entity
+   * @param string $field_name
+   * @param string $from_sid
+   * @param string $to_sid
+   * @param int $uid
+   * @param int $timestamp
+   * @param string $comment
    */
-  public function setValues($entity, $field_name, $from_sid, $to_sid, $uid = NULL, $timestamp = REQUEST_TIME, $comment = '');
+  public function setValues(EntityInterface $entity, $field_name, $from_sid, $to_sid, $uid = NULL, $timestamp = REQUEST_TIME, $comment = '');
 
   /**
-   * Load WorkflowTransitions, most recent first.
+   * Load (Scheduled) WorkflowTransitions, most recent first.
    *
-   * @return WorkflowTransitionInterface
-   *   object representing one row from the {workflow_transition_history} table.
+   * @param string $entity_type
+   * @param int $entity_id
+   * @param array $revision_ids
+   * @param string $field_name
+   * @param string $langcode
+   * @param string $sort
+   * @param string $transition_type
+   *
+   * @return \Drupal\workflow\Entity\WorkflowTransitionInterface object representing one row from the {workflow_transition_history} table.
+   * object representing one row from the {workflow_transition_history} table.
    */
   public static function loadByProperties($entity_type, $entity_id, array $revision_ids = [], $field_name = '', $langcode = '', $sort = 'ASC', $transition_type = '');
 
@@ -57,7 +72,16 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface 
    */
   public static function loadMultipleByProperties($entity_type, array $entity_ids, array $revision_ids = [], $field_name = '', $langcode = '',$limit = NULL, $sort = 'ASC', $transition_type = '');
 
-    /**
+  /**
+   * Update the entity, attached to the Transition.
+   * This is not needed in a Widget, but is needed on the WorkflowForm.
+   *
+   * @return int
+   *   Either SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
+   */
+  public function updateEntity();
+
+  /**
    * Execute a transition (change state of an entity).
    *
    * @param bool $force
@@ -70,8 +94,9 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface 
 
   /**
    * Invokes 'transition post'.
+   * Adds the possibility to invoke the hook from elsewhere.
    *
-   * Add the possibility to invoke the hook from elsewhere.
+   * @param bool $force
    */
   public function post_execute($force = FALSE);
 
@@ -111,30 +136,37 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface 
   public function getLangcode();
 
   /**
-   * Set the User Id.
+   * Set the Owner Id. (Using Node::Owner pattern.)
    *
    * @param int $uid
    *
    * @return WorkflowTransitionInterface
    */
-  public function setUserId($uid);
+  public function setOwnerId($uid);
 
   /**
-   * Set the User.
+   * Get the Owner Id.
+   *
+   * @return int
+   */
+  public function getOwnerId();
+
+  /**
+   * Set the Owner.
    *
    * @param AccountInterface $account
    *
    * @return WorkflowTransitionInterface
    */
-  public function setUser(AccountInterface $account);
+  public function setOwner(AccountInterface $account);
 
   /**
-   * Get the user.
+   * Get the Owner.
    *
    * @return \Drupal\Core\Session\AccountInterface $user
    *   The entity, that is added to the Transition.
    */
-  public function getUser();
+  public function getOwner();
 
   /**
    * Get the comment of the Transition.
@@ -162,6 +194,13 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface 
   public function getTimestamp();
 
   /**
+   * Returns the human-readable time.
+   *
+   * @return string
+   */
+  public function getTimestampFormatted();
+
+  /**
    * Returns the time on which the transitions was or will be executed.
    *
    * @param $value
@@ -186,5 +225,9 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface 
   public function isForced();
   public function force($force = TRUE);
 
+  /**
+   *  Helper/Debugging function: Prints the content of a transition.
+   */
+  public function dpm();
 
 }

@@ -9,6 +9,7 @@ use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\workflow\Entity\Workflow;
 use Drupal\workflow\Entity\WorkflowState;
 
 /**
@@ -109,7 +110,7 @@ function workflow_state_allowed_values(FieldStorageDefinitionInterface $definiti
     $allowed_options = $state->getOptions($entity, $field_name, $user, FALSE);
   }
   else {
-  //  dpm('TODO D8-port: test function workflowfield.*.inc::' . __FUNCTION__.'/'.__LINE__);
+    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     // Create an empty State. This triggers to show all possible states for the Workflow.
     $wid = $definition->getSetting('workflow_type');

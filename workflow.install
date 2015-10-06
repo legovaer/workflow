@@ -9,6 +9,7 @@
  * Implements hook_install().
  */
 function workflow_install() {
+//  workflow_debug(get_class($this), __FUNCTION__, __LINE__, $form_id);  // @todo D8-port: still test this snippet.
   // TODO D8-port: the display of the link is not OK.
   // TODO: Add the suffix: /admin/modules#edit-modules-workflow .
   $message = t('Thanks for using Workflow. To maintain workflows, enable the
@@ -46,12 +47,12 @@ function workflow_requirements($phase) {
       break;
 
     case 'runtime':
+//      workflow_debug(get_class($this), __FUNCTION__, __LINE__, $form_id);  // @todo D8-port: still test this snippet.
+
+/*
+      // Show info on admin/reports/status.
       $type_list = 'Not yet determined.';
 
-//  dpm('TODO D8-port: test function workflow.install::' . __FUNCTION__ );
-
-      // Show info on admin/reports/status.
-/*
       // $types = db_query('SELECT wid, type FROM {workflow_type_map} WHERE wid <> 0 ORDER BY type')->fetchAllKeyed();
       // If there are no types, then just bail.
       if (count($types) == 0) {

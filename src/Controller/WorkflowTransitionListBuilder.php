@@ -12,8 +12,8 @@ use Drupal\Core\Entity\EntityListBuilder;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\node\Entity\Node;
 use Drupal\workflow\Entity\WorkflowTransition;
+use Drupal\workflow\Entity\WorkflowTransitionInterface;
 
 define('WORKFLOW_MARK_STATE_IS_DELETED', '*');
 
@@ -98,36 +98,40 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
 
   /**
    * {@inheritdoc}
+   *
+   * @todo D8-port: add D7-theming to TransitionListBuilder.
    */
   public function buildRow(EntityInterface $transition) {
-    /* @var $transition WorkflowTransitionInterface */
 
     // Show the history table.
     $current_themed = FALSE;
+    /* @var $transition WorkflowTransitionInterface */
     $entity = $transition->getEntity();
     $field_name = $transition->getFieldName();
     $current_sid = workflow_node_current_state($entity, $field_name);
 
-    $from_label = $to_label = '';
     $to_state = $transition->getToState();
     if (!$to_state) {
       // This is an invalid/deleted state.
       $to_label = WORKFLOW_MARK_STATE_IS_DELETED;
+      // Add a footer to explain the addition.
+      $this->footer_needed = TRUE;
     }
     else {
       $label = Html::escape($this->t($to_state->label()));
       if ($transition->getToSid() == $current_sid && $to_state->isActive() && !$current_themed) {
         $to_label = $label;
 
-        // Make a note that we have themed the current state; other times in the history
-        // of this entity where the entity was in this state do not need to be specially themed.
-        $current_themed = TRUE;
+        if (!$current_themed) {
+          // Make a note that we have themed the current state; other times in the history
+          // of this entity where the entity was in this state do not need to be specially themed.
+          $current_themed = TRUE;
+        }
       }
       elseif (!$to_state->isActive()) {
         $to_label = $label . WORKFLOW_MARK_STATE_IS_DELETED;
-
         // Add a footer to explain the addition.
-        $footer_needed = TRUE;
+        $this->footer_needed = TRUE;
       }
       else {
         // Regular state.
@@ -140,14 +144,15 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     if (!$from_state) {
       // This is an invalid/deleted state.
       $from_label = WORKFLOW_MARK_STATE_IS_DELETED;
+      // Add a footer to explain the addition.
+      $this->footer_needed = TRUE;
     }
     else {
       $label = Html::escape($this->t($from_state->label()));
       if (!$from_state->isActive()) {
         $from_label = $label . WORKFLOW_MARK_STATE_IS_DELETED;
-
         // Add a footer to explain the addition.
-        $footer_needed = TRUE;
+        $this->footer_needed = TRUE;
       }
       else {
         // Regular state.
@@ -164,10 +169,10 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     \Drupal::moduleHandler()->alter('workflow_history', $variables);
 
 //     'class' => array('workflow_history_row'), // TODO D8-port
-    $row['timestamp']['data'] = format_date($transition->getTimestamp()); // 'class' => array('timestamp')
+    $row['timestamp']['data'] = $transition->getTimestampFormatted(); // 'class' => array('timestamp')
     $row['from_state']['data'] = $from_label; // 'class' => array('previous-state-name'))
     $row['to_state']['data'] = $to_label; // 'class' => array('state-name'))
-    $row['user_name']['data'] = $transition->getUser()->getUsername(); // 'class' => array('user-name')
+    $row['user_name']['data'] = $transition->getOwner()->getUsername(); // 'class' => array('user-name')
     $row['comment']['data'] = Html::escape($transition->getComment()); // 'class' => array('log-comment')
 //    $row['comment'] = array(
 //      '#type' => 'textarea',
@@ -177,15 +182,14 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     // column 'Operations' is now added by core.
 //    $row['operations']['data'] = $this->buildOperations($entity);
     // @TODO D8-port: add operations column.
-    return $row;
-    return $row + parent::buildRow($entity);
+    return $row; // + parent::buildRow($entity);
   }
 
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    dpm('TODO D8-port: test function WorkflowTransitionListBuilder::' . __FUNCTION__.'/'.__LINE__);
+    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     $form = parent::buildForm($form, $form_state);
 
     return $form;
@@ -230,6 +234,7 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     */
       $build['workflow_footer'] = array(
         '#markup' => WORKFLOW_MARK_STATE_IS_DELETED . ' ' . t('State is no longer available.'),
+        '#weight' => 500, // @todo Make this better.
       );
     }
 
@@ -240,15 +245,17 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
    * {@inheritdoc}
    */
   public function getDefaultOperations(EntityInterface $entity) {
-    $operations = array();
-//    dpm('TODO D8-port: test function WorkflowTransitionListBuilder::' . __FUNCTION__.'/'.__LINE__);
     $operations = parent::getDefaultOperations($entity);
+
+    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     // TODO D8-port: convert workflow-operations to core-style.
     return $operations;
-    /* @var $transition WorkflowTransitionInterface */
+
+    /* @var WorkflowTransitionInterface $transition */
     $transition = $entity;
-    // dpm('TODO D8-port: test function WorkflowStateListBuilder::' . __FUNCTION__ );
+
+    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     // TODO D8-port: test invokeAll('workflow_operations',).
     // Allow modules to insert operations per state.
     $workflow = $transition->getWorkflow();

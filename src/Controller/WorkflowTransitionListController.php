@@ -7,26 +7,17 @@
 
 namespace Drupal\workflow\Controller;
 
-use Drupal\comment\Controller\CommentController;
-use Drupal\Component\Utility\Xss;
 use Drupal\Core\Access\AccessResult;
-use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DateFormatter;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\Controller\EntityListController;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Url;
-use Drupal\node\NodeTypeInterface;
 use Drupal\node\NodeInterface;
 use Drupal\workflow\Entity\Workflow;
-use Drupal\workflow\Entity\WorkflowState;
 use Drupal\workflow\Entity\WorkflowTransition;
-use Drupal\workflow\Entity\WorkflowTransitionInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Entity\HtmlEntityFormController;
-use Drupal\Core\Routing\CurrentRouteMatch;
 
 /**
  * Returns responses for Workflow routes.
@@ -117,9 +108,10 @@ class WorkflowTransitionListController extends EntityListController implements C
 
     // Add Submit buttons/Action buttons.
     // Either a default 'Submit' button is added, or a button per permitted state.
-    $settings_options_type = '';  // TODO JVO
+//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    $settings_options_type = '';
     if ($settings_options_type == 'buttons') {
-      dpm('TODO D8-port: test function WorkflowController::' . __FUNCTION__ );
+      workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
       // How do action buttons work? See also d.o. issue #2187151.
       // Create 'action buttons' per state option. Set $sid property on each button.
       // 1. Admin sets ['widget']['options']['#type'] = 'buttons'.
@@ -140,7 +132,7 @@ class WorkflowTransitionListController extends EntityListController implements C
     $entity_type = 'workflow_transition';
     // $form = $this->listing('workflow_transition');
     $list_builder = $this->entityManager()->getListBuilder($entity_type);
-    // Add the node explicitely, since $list_builder expects transition
+    // Add the Node explicitly, since $list_builder expects a Transition.
     $list_builder->workflow_entity = $node;
 
     $form += $list_builder->render();
@@ -215,9 +207,8 @@ class WorkflowTransitionListController extends EntityListController implements C
     // When having multiple workflows per bundle, use Views display
     // 'Workflow history per entity' instead!
     if (workflow_get_workflows_by_type($entity_bundle, $entity_type)) {
-
-//      dpm('TODO D8-port: test function WorkflowController::' . __FUNCTION__ . '/' . __LINE__);
-      // @TODO D8-port: workflow_tab_access: get author of node.
+      // workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      // @TODO D8-port: workflow_tab_access: get author of node; test with non-node.
 
       // Get the user roles.
       $roles = array_keys($user->getRoles());
@@ -225,7 +216,7 @@ class WorkflowTransitionListController extends EntityListController implements C
       // Some entities (e.g., taxonomy_term) do not have a uid.
 //      $entity_uid = isset($entity->uid) ? $entity->uid : 0;
 //      $entity_uid = $entity->get('uid');
-      $entity_uid = $entity->uid->value;
+      $entity_uid = $entity->getOwnerId();
       // If this is a new page, give the authorship role.
       if (!$entity_id) {
         $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
@@ -275,7 +266,7 @@ class WorkflowTransitionListController extends EntityListController implements C
    *   The page title.
    */
 //  public function addPageTitle(NodeTypeInterface $node_type) {
-//    dpm('TODO D8-port: test function WorkflowController::' . __FUNCTION__ );
+//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 //    return $this->t('Create @name', array('@name' => $node_type->label()));
 //  }
 

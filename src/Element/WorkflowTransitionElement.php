@@ -8,6 +8,7 @@
 namespace Drupal\workflow\Element;
 
 use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Render\Element\FormElement;
@@ -31,7 +32,6 @@ class WorkflowTransitionElement extends FormElement {
    * {@inheritdoc}
    */
   public function getInfo() {
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     $class = get_class($this);
     return array(
       '#input' => TRUE,
@@ -59,7 +59,7 @@ class WorkflowTransitionElement extends FormElement {
    * {@inheritdoc}
    */
   public static function valueCallback(&$element, $input, FormStateInterface $form_state) {
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     return 0;
   }
@@ -76,7 +76,16 @@ class WorkflowTransitionElement extends FormElement {
    *   The $element with prepared variables ready for input.html.twig.
    */
   public static function preRenderTransition($element) {
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+
+    $element['#attributes']['type'] = 'workflow_transition';
+    Element::setAttributes($element, array('id', 'name', '#return_value' => 'value'));
+
+    // Unchecked checkbox has #value of integer 0.
+    if (!empty($element['#checked'])) {
+      $element['#attributes']['checked'] = 'checked';
+    }
+    static::setAttributes($element, array('form-workflow-transition'));
 
     return $element;
   }
@@ -92,20 +101,41 @@ class WorkflowTransitionElement extends FormElement {
    * - Is unique; i.e., does not already exist.
    * - Does not exceed the maximum length (via #maxlength).
    * - Cannot be changed after creation (via #disabled).
+   *
+   * @param $element
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   * @param $complete_form
    */
   public static function validateTransition(&$element, FormStateInterface $form_state, &$complete_form) {
-//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet
+    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
   }
 
   /**
    * Generate an element.
-   * Todo D8-port: Sets the ... property of an element.
+   *
+   * This function is referenced in the Annoteation for this class.
    */
   public static function processTransition(&$element, FormStateInterface $form_state, &$complete_form) {
+    return self::transitionElement($element, $form_state, $complete_form);
+  }
+
+  /**
+   * Generate an element.
+   *
+   * This function is an internal function, to be reused in:
+   * - TransitionElement
+   * - TranstitionDefaultWidget
+   *
+   * Usage:
+   *  @example $element['#default_value'] = $transition;
+   *  @example $element += WorkflowTransitionElement::transitionElement($element, $form_state, $form);
+   */
+  public static function transitionElement(&$element, FormStateInterface $form_state, &$complete_form) {
 
     /*
      * Get data from parameters.
      */
+    /* @var $transition WorkflowTransitionInterface */
     $transition = $element['#default_value'];
     /* @var $user \Drupal\Core\Session\AccountProxyInterface */
     $user = \Drupal::currentUser();
@@ -130,9 +160,8 @@ class WorkflowTransitionElement extends FormElement {
         $transition = $scheduled_transition;
       }
 
-      $to_sid = $transition->getToSid();
       $current_sid = $from_sid = $transition->getFromSid();
-      $current_state = $from_state = $transition->getFromState();
+      $from_state = $transition->getFromState();
       // The states may not be changed anymore.
       $options = ($transition->isExecuted()) ? array() : $from_state->getOptions($entity, $field_name, $user, $force);
       $show_widget = $from_state->showWidget($entity, $field_name, $user, $force);
@@ -140,11 +169,8 @@ class WorkflowTransitionElement extends FormElement {
       $default_value = $from_state->isCreationState() ? key($options) : $current_sid;
     }
     elseif (!$entity) {
-//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
-      $to_sid = $transition->getToSid();
-      $current_sid = $from_sid = $transition->getFromSid();
-      $current_state = $from_state = $transition->getFromState();
       // Sometimes, no entity is given. We encountered the following cases:
       // - the Field settings page,
       // - the VBO action form;
@@ -156,7 +182,8 @@ class WorkflowTransitionElement extends FormElement {
       $default_value = $current_sid = isset($items[$delta]->value) ? $items[$delta]->value : '0';
     }
     else {
-//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+
       // We are in trouble! A message is already set in workflow_node_current_state().
       $options = array();
       $show_widget = FALSE;
@@ -170,7 +197,7 @@ class WorkflowTransitionElement extends FormElement {
 // then change the form id, too.
     $form_id = 'workflow_transition_form'; // TODO D8-port: add $form_id for widget and History tab.
 //    $form_id = $this->getFormId();
-//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+//    workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__ );  // @todo D8-port: still test this snippet.
     /*
         if (!isset($form_state->getValue('build_info')['base_form_id'])) {
           // Strange: on node form, the base_form_id is node_form,
@@ -178,7 +205,7 @@ class WorkflowTransitionElement extends FormElement {
           // In both cases, it is OK.
         }
         else {
-//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+          workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__ );  // @todo D8-port: still test this snippet.
           if ($form_state['build_info']['base_form_id'] == 'workflow_transition_wrapper_form') {
             $form_state['build_info']['base_form_id'] = 'workflow_transition_form';
           }
@@ -200,7 +227,7 @@ class WorkflowTransitionElement extends FormElement {
     $settings_options_type = $workflow_settings['options'];
     $grouped = ($settings_options_type == 'select');
 
-//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     $workflow_settings['comment'] = $workflow_settings['comment_log_node']; // vs. ['comment_log_tab'];
 // TODO D8-port: remove following code.
     /*
@@ -218,10 +245,10 @@ class WorkflowTransitionElement extends FormElement {
         }
     */
 
-// Capture settings to format the form/widget.
+    // Capture settings to format the form/widget.
     $settings_title_as_name = !empty($workflow_settings['name_as_title']);
     $settings_options_type = $workflow_settings['options'];
-// The schedule can be hidden via field settings, ...
+    // The schedule can be hidden via field settings, ...
     $settings_schedule = !empty($workflow_settings['schedule']);
     if ($settings_schedule) {
       // TODO D8-port: check below code: form on VBO.
@@ -273,6 +300,8 @@ class WorkflowTransitionElement extends FormElement {
       $element['workflow_current_state']['#weight'] = -0.005;
     }
 
+    $element['workflow']['#tree'] = TRUE;
+    $element['workflow']['#attributes'] = array('class' => array('workflow-form-container'));
     if (!$show_widget) {
       // Show no widget.
       $element['workflow']['workflow_to_sid']['#type'] = 'value';
@@ -289,7 +318,6 @@ class WorkflowTransitionElement extends FormElement {
 //      $element['workflow']['#type'] = 'details';
 //      $element['workflow']['#description'] = $settings_title_as_name ? t('Change !name state', array('!name' => $workflow_label)) : t('Target state');
 //      $element['workflow']['#open'] = TRUE; // Controls the HTML5 'open' attribute. Defaults to FALSE.
-      $element['workflow']['#attributes'] = array('class' => array('workflow-form-container'));
 
       // The 'options' widget. May be removed later if 'Action buttons' are chosen.
       $element['workflow']['workflow_to_sid'] = array(
@@ -358,7 +386,7 @@ class WorkflowTransitionElement extends FormElement {
         '#maxlength' => 7,
         '#size' => 6,
         '#default_value' => $hours,
-        '#element_validate' => array('_workflow_transition_form_element_validate_time'),
+        '#element_validate' => array('_workflow_transition_form_element_validate_time'), // @todo D8-port: this is not called.
       );
       $element['workflow']['workflow_scheduled_date_time']['workflow_scheduled_timezone'] = array(
         '#type' => $settings_schedule_timezone ? 'select' : 'hidden',
@@ -409,7 +437,7 @@ class WorkflowTransitionElement extends FormElement {
 
     $submit_functions = empty($instance['widget']['settings']['submit_function']) ? array() : array($instance['widget']['settings']['submit_function']);
     if ($settings_options_type == 'buttons' || $submit_functions) {
-//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
       $element['workflow']['actions']['#type'] = 'actions';
       $element['workflow']['actions']['submit'] = array(
         '#type' => 'submit',
@@ -441,7 +469,129 @@ class WorkflowTransitionElement extends FormElement {
     }
 
     return $element;
+  }
 
+  /**
+   * Implements ContentEntityForm::copyFormValuesToEntity(), and is called from:
+   * - WorkflowTransitionForm::buildEntity()
+   * - WorkflowDefaultWidget
+   *
+   * N.B. in contrary to ContentEntityForm::copyFormValuesToEntity(),
+   * - parameter 1 is returned as result, to be able to create a new Transition object.
+   * - parameter 3 is not $form_state (from Form), but an $item array (from Widget).
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   * @param array $form
+   * @param array $item
+   *
+   * @return \Drupal\workflow\Entity\WorkflowTransitionInterface
+   */
+  static public function copyFormItemValuesToEntity(EntityInterface $entity, array $form, array $item) {
+
+    /**
+     * Input
+     */
+    $user = \Drupal::currentUser(); // @todo #2287057: verify if submit() really is only used for UI. If not, $user must be passed.
+    /* @var $transition WorkflowTransitionInterface */
+    $transition = $entity;
+
+    /**
+     * Derived input
+     */
+    // Make sure we have a subset ['workflow'] with subset ['workflow']['workflow_scheduled_date_time']
+    if (isset($item['workflow']['workflow_to_sid'])) {
+      // In WorkflowTransitionForm, we receive the complete $form_state.
+      $transition_values = $item['workflow'];
+      $schedule_values = $item['workflow']['workflow_scheduled_date_time'];
+    }
+    else {
+      $entity_id = $transition->getEntity()->id();
+      drupal_set_message(t('Error: content !id has no workflow attached. The data is not saved.', array('!id' => $entity_id)), 'error');
+      // The new state is still the previous state.
+      return $transition;
+    }
+
+    // Get user input from element.
+    $to_sid = $transition_values['workflow_to_sid'];
+    $comment = $transition_values['workflow_comment'];
+    $timestamp = REQUEST_TIME;
+    // Remember, the workflow_scheduled element is not set on 'add' page.
+    $scheduled = !empty($transition_values['workflow_scheduled']);
+    $force = FALSE;
+
+// @todo D8: add the VBO use case.
+//    // Determine if the transition is forced.
+//    // This can be set by a 'workflow_vbo action' in an additional form element.
+//     $force = isset($form_state['input']['workflow_force']) ? $form_state['input']['workflow_force'] : FALSE;
+//    if (!$entity) {
+//      // E.g., on VBO form.
+//    }
+
+    // @todo D8-port: add below exception.
+/*
+    // Extract the data from $items, depending on the type of widget.
+    // @todo D8: use MassageFormValues($transition_values, $form, $form_state).
+    $old_sid = workflow_node_previous_state($entity, $entity_type, $field_name);
+    if (!$old_sid) {
+      // At this moment, $old_sid should have a value. If the content does not
+      // have a state yet, old_sid contains '(creation)' state. But if the
+      // content is not associated to a workflow, old_sid is now 0. This may
+      // happen in workflow_vbo, if you assign a state to non-relevant nodes.
+      $entity_id = entity_id($entity_type, $entity);
+      drupal_set_message(t('Error: content !id has no workflow attached. The data is not saved.', array('!id' => $entity_id)), 'error');
+      // The new state is still the previous state.
+      $new_sid = $old_sid;
+      return $new_sid;
+    }
+*/
+
+    if ($scheduled) {
+      // Fetch the (scheduled) timestamp to change the state.
+      // Override $timestamp.
+      $scheduled_date_time = implode(' ', array(
+          $schedule_values['workflow_scheduled_date'],
+          $schedule_values['workflow_scheduled_hour'],
+          // $schedule_values['workflow_scheduled_timezone'],
+        ));
+      $timezone = $schedule_values['workflow_scheduled_timezone'];
+      $old_timezone = date_default_timezone_get();
+      date_default_timezone_set($timezone);
+      $timestamp = strtotime($scheduled_date_time);
+      date_default_timezone_set($old_timezone);
+      if (!$timestamp) {
+        // Time should have been validated in form/widget.
+        $timestamp = REQUEST_TIME;
+      }
+    }
+
+    /**
+     * Process
+     */
+
+    /*
+     * Create a new ScheduledTransition.
+     */
+    if ($scheduled) {
+      $transition_entity = $transition->getEntity();
+      $field_name = $transition->getFieldName();
+      $from_sid = $transition->getFromSid();
+      /* @var $transition WorkflowTransitionInterface */
+      $transition = WorkflowScheduledTransition::create(['entity' => $transition_entity, 'field_name' => $field_name, 'from_sid' => $from_sid]);
+      $transition->setValues($transition_entity, $field_name, $from_sid, $to_sid, $user->id(), $timestamp, $comment);
+    }
+
+    // Set new values.
+    $transition->set('to_sid', $to_sid);
+    $transition->setOwner($user);
+    $transition->setTimestamp($timestamp);
+    $transition->setComment($comment);
+    $transition->schedule($scheduled);
+    $transition->force($force);
+
+    // Explicitely set $entity in case of ScheduleTransition. It is now returned as parameter, not result.
+    $entity = $transition;
+
+    return $transition;
   }
 
 }
