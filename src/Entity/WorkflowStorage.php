@@ -106,12 +106,6 @@ class WorkflowStorage extends ConfigEntityStorage {
    */
   public function delete(array $entities) {
     $return = parent::delete($entities);
-
-//    // Update the state of registered events.
-//    // @todo Should we trigger a container rebuild here as well? Might be a bit
-//    // expensive on every delete?
-//    $this->stateService->set('rules.registered_events', $this->getRegisteredEvents());
-
     return $return;
   }
 

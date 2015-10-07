@@ -9,9 +9,6 @@ namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\workflow\Entity\WorkflowConfigTransition;
-use Drupal\workflow\Entity\WorkflowManager;
-use Drupal\workflow\Entity\WorkflowState;
 
 /**
  * Workflow configuration entity to persistently store configuration.
@@ -88,7 +85,7 @@ class Workflow extends ConfigEntityBase {
    */
 
   public function __clone() {
-  //  dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     // Clone the arrays of States and Transitions.
     foreach ($this->states as &$state) {
@@ -116,8 +113,7 @@ class Workflow extends ConfigEntityBase {
    * - save Workflow programmatically;
    */
   public function save($create_creation_state = TRUE) {
-
-//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     /*
         // Are we rebuilding, reverting a new Workflow? @see workflow.features.inc
@@ -197,7 +193,7 @@ class Workflow extends ConfigEntityBase {
   /**
    * {@inheritdoc}
    *
-   * @return static|null
+   * @return Workflow|null
    *   The entity object or NULL if there is no entity with the given ID.
    */
   public static function load($id) {
@@ -216,7 +212,7 @@ class Workflow extends ConfigEntityBase {
    * Given a wid, delete the workflow and its data.
    */
   public function delete() {
-//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     $wid = $this->id();
 
@@ -248,6 +244,7 @@ class Workflow extends ConfigEntityBase {
    *   $is_valid
    */
   public function isValid() {
+    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     $is_valid = TRUE;
 
     // Don't allow workflows with no states. There should always be a creation state.
@@ -286,7 +283,7 @@ class Workflow extends ConfigEntityBase {
   public function isDeletable() {
     $is_deletable = FALSE;
 
-//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     return TRUE; // TODO D8-port.
 
     // May not be deleted if assigned to a Field.
@@ -336,9 +333,7 @@ class Workflow extends ConfigEntityBase {
    */
   public function createState($sid, $save = TRUE) {
     $wid = $this->id();
-
     $state = WorkflowState::load($sid, $wid);
-
     if (!$state) {
       $state = WorkflowState::create($values = array('id' => $sid, 'wid' => $wid));
       if ($save) {
@@ -346,7 +341,6 @@ class Workflow extends ConfigEntityBase {
       }
     }
 
-//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
     // Maintain the new object in the workflow.
     $this->states[$state->id()] = $state;
 
@@ -357,7 +351,6 @@ class Workflow extends ConfigEntityBase {
    * Gets the initial state for a newly created entity.
    */
   public function getCreationState() {
-
     // First, find it.
     if (!$this->creation_state) {
       foreach ($this->getStates($all = TRUE) as $state) {
@@ -396,7 +389,8 @@ class Workflow extends ConfigEntityBase {
    * The first State ID is user-dependent!
    */
   public function getFirstSid($entity, $field_name, AccountInterface $user, $force) {
-//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+    // TODO D8-port: getFirstSid must be called from WorkflowElement.
+    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     $creation_state = $this->getCreationState();
     $options = $creation_state->getOptions($entity, $field_name, $user, $force);
@@ -421,7 +415,7 @@ class Workflow extends ConfigEntityBase {
    *   - FALSE = only Active states, not Creation;
    *   - 'CREATION' = only Active states, including Creation.
    *
-   * @return array
+   * @return WorkflowState[]
    *   An array of WorkflowState objects.
    */
   public function getStates($all = FALSE, $reset = FALSE) {
@@ -468,8 +462,7 @@ class Workflow extends ConfigEntityBase {
    *   A WorkflowState object.
    */
   public function getState($key) {
-    // TODO D8-port Workflow: test below function.
-//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     $wid = $this->id();
     WorkflowState::load($key, $wid);
@@ -514,12 +507,14 @@ class Workflow extends ConfigEntityBase {
   /**
    * Loads all allowed ConfigTransitions for this workflow.
    *
-   * @param mixed $ids
+   * @param array|NULL $ids
    *   Array of Transitions IDs. If NULL, show all transitions.
    * @param array $conditions
    *   $conditions['from_sid'] : if provided, a 'from' State ID.
    *   $conditions['to_sid'] : if provided, a 'to' state ID.
    *   $conditions['roles'] : if provided, an array of roles, or 'ALL'.
+   * @param bool $reset
+   * @return \Drupal\workflow\Entity\WorkflowConfigTransition[]
    */
   public function getTransitions(array $ids = NULL, array $conditions = array(), $reset = FALSE) {
     $config_transitions = array();
@@ -608,7 +603,7 @@ class Workflow extends ConfigEntityBase {
    * Gets a setting from the state object.
    */
   public function getSetting($key, array $field = array()) {
-//    dpm('TODO D8-port: test function Workflow::' . __FUNCTION__ );
+    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     switch ($key) {
       case 'watchdog_log':

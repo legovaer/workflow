@@ -71,10 +71,12 @@ class WorkflowTransitionListController extends EntityListController implements C
    * @return array
    *   An array as expected by drupal_render().
    */
-  public function historyOverview(NodeInterface $node) {
-
-    // TODO D8-port: make this entity-generic - not only Node.
+  public function historyOverview(EntityInterface $node) {
     $form = array();
+
+    // TODO D8-port: make Workflow History tab happen for every entity_type.
+    // @see workflow.routing.yml, workflow.links.task.yml, WorkflowTransitionListController.
+    // workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     /*
      * Get data from parameters.
@@ -167,13 +169,26 @@ class WorkflowTransitionListController extends EntityListController implements C
    *
    * @param \Drupal\Core\Session\AccountInterface $account
    *   Run access checks for this account.
+   *
+   * @return \Drupal\Core\Access\AccessResult
    */
-    public function historyAccess(AccountInterface $account) {
+  public function historyAccess(AccountInterface $account) {
+
+    // TODO D8-port: make Workflow History tab happen for every entity_type.
+    // @see workflow.routing.yml, workflow.links.task.yml, WorkflowTransitionListController.
+    // workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     $route_match = \Drupal::routeMatch();
-    $node = $route_match->getParameter('node');
+    $entity = $route_match->getParameter('node');
+    if (!$entity) {
+      $entity = $route_match->getParameter('taxonomy_term');
+      // TODO D8-port: repair errors for TaxonomyTerms.
+      // On view tab, $entity is object,
+      // On workflow tab, $entity is id().
+      return AccessResult::forbidden();
+    }
 
-    return $this->workflow_tab_access($account, $node);
+    return $this->workflow_tab_access($account, $entity);
   }
 
   /**
@@ -182,6 +197,7 @@ class WorkflowTransitionListController extends EntityListController implements C
    * The History tab should not be used with multiple workflows per entity.
    * Use the dedicated view for this use case.
    * @todo D8: remove this in favour of View 'Workflow history per entity'.
+   * @todo D8-port: make this workf for non-Node entity types.
    *
    * @param \Drupal\workflow\Controller\AccountInterface $user
    * @param \Drupal\Core\Entity\EntityInterface $entity
@@ -189,11 +205,16 @@ class WorkflowTransitionListController extends EntityListController implements C
    *
    * @return \Drupal\Core\Access\AccessResult
    */
-    function workflow_tab_access(AccountInterface $user, EntityInterface $entity) {
-
+  function workflow_tab_access(AccountInterface $user, EntityInterface $entity) {
     $user = \Drupal::currentUser();
     $uid = $user->id();
     static $access = array();
+
+    // TODO D8-port: make Workflow History tab happen for every entity_type.
+    // @see workflow.routing.yml, workflow.links.task.yml, WorkflowTransitionListController.
+    // workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+//    return AccessResult::allowed();
 
     // Figure out the $entity's bundle and id.
     $entity_type = $entity->getEntityTypeId();
