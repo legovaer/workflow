@@ -574,24 +574,15 @@ class WorkflowState extends ConfigEntityBase {
    * @todo: add $options to select on entity type, etc.
    */
   public function count() {
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
     $count = 0;
     $sid = $this->id();
 
-//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-    return $count;
-
     foreach ($fields = _workflow_info_fields() as $field_name => $field_info) {
-      $query = new EntityFieldQuery();
-      $query
-        ->fieldCondition($field_name, 'value', $sid, '=')
-        // ->entityCondition('bundle', 'article')
-        // ->addMetaData('account', user_load(1)) // Run the query as user 1.
-        ->count(); // We only need the count.
-
-      $result = $query->execute();
-      $count += $result;
+      $query = \Drupal::entityQuery($field_info->getTargetEntityTypeId());
+      $count += $query
+        ->condition($field_name, $sid, '=')
+        ->count() // We only need the count.
+        ->execute();
     }
 
     return $count;

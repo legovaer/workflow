@@ -570,13 +570,12 @@ function _workflow_info_fields($entity = NULL, $entity_type = '', $entity_bundle
       foreach($data as $f_name => $data) {
         if (!$entity_bundle || isset($data['bundles'][$entity_bundle])) {
           if (!$field_name || ($field_name == $f_name)) {
-            $field_info[$f_name] = \Drupal\field\Entity\FieldStorageConfig::loadByName($entity_type, $f_name);
+            $field_info[$f_name] = \Drupal\field\Entity\FieldStorageConfig::loadByName($e_type, $f_name);
           }
         }
       }
     }
   }
-
   return $field_info;
 }
 
@@ -584,9 +583,7 @@ function _workflow_info_fields($entity = NULL, $entity_type = '', $entity_bundle
  * Helper function for D8-port> Get some info on screen
  *
  * Usage:
- *   workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
  *   workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
- *   workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
  *
  * @param string $class_name
  * @param string $function_name
