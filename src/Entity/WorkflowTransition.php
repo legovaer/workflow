@@ -316,7 +316,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       $t_args = array(
         '%from_sid' => $this->getFromSid(),
         '%to_sid' => $this->getToSid(),
-        'link' =>  $this->getEntity()->link(t('View')),
+        'link' =>  ($entity->id()) ? $this->getEntity()->link(t('View')) : '',
       );
       \Drupal::logger('workflow')->error($message, $t_args);
     }
@@ -407,7 +407,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       '%old' => $from_sid,
       '%new' => $to_sid,
       '%label' => $entity->label(),
-// @todo      'link' =>  $this->getEntity()->link(t('View')),
+      'link' =>  ($entity->id()) ? $this->getEntity()->link(t('View')) : '',
     );
 
     if (!$this->getFromState()) {
@@ -506,7 +506,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
             '@type' => $entity_type_info->getLabel(),
             '%label' => $entity->label(),
             '%state_name' => t($new_state->label()), // @todo check_plain()?
-            'link' =>  $this->getEntity()->link(t('View')),
+            'link' =>  ($entity->id()) ? $this->getEntity()->link(t('View')) : '',
           );
           \Drupal::logger('workflow')->notice($message, $args);
         }
