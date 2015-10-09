@@ -120,17 +120,6 @@ class WorkflowConfigTransition extends ConfigEntityBase {
   }
 
   /**
-   * Permanently deletes the entity.
-   */
-  public function delete() {
-    // Notify any interested modules before we delete, in case there's data needed.
-    // @todo D8: this can be replaced by a hook_entity_delete(?)
-    \Drupal::moduleHandler()->invokeAll('workflow', ['transition delete', $this->id(), NULL, NULL, FALSE]);
-
-    return parent::delete();
-  }
-
-  /**
    * {@inheritdoc}
    */
   public static function sort(ConfigEntityInterface $a, ConfigEntityInterface $b) {

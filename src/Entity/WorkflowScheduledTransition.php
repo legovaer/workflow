@@ -172,13 +172,6 @@ class WorkflowScheduledTransition extends WorkflowTransition {
   }
 
   /**
-   * Given an entity, delete transitions for it.
-   */
-  public function delete() {
-    return parent::delete();
-  }
-
-  /**
    * Property functions.
    */
 

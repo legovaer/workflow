@@ -215,26 +215,21 @@ class Workflow extends ConfigEntityBase {
    * Given a wid, delete the workflow and its data.
    */
   public function delete() {
-//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
     $wid = $this->id();
 
-    // @todo: throw error if not workflow->isDeletable().
     if (!$this->isDeletable()) {
+      // @todo: throw error if not workflow->isDeletable().
     }
+    else {
+      // Delete associated state (also deletes any associated transitions).
+      foreach ($this->getStates($all = TRUE) as $state) {
+        $state->deactivate('');
+        $state->delete();
+      }
 
-    // Notify any interested modules before we delete the workflow.
-    // E.g., D7-Workflow Node deleted the {workflow_type_map} record.
-    \Drupal::moduleHandler()->invokeAll('workflow', ['workflow delete', $wid, NULL, NULL, FALSE]);
-
-    // Delete associated state (also deletes any associated transitions).
-    foreach ($this->getStates($all = TRUE) as $state) {
-      $state->deactivate(0);
-      $state->delete();
+      // Delete the workflow.
+      parent::delete();
     }
-
-    // Delete the workflow.
-    parent::delete();
   }
 
   /**
@@ -286,22 +281,20 @@ class Workflow extends ConfigEntityBase {
   public function isDeletable() {
     $is_deletable = FALSE;
 
-//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-    return TRUE; // TODO D8-port.
-
     // May not be deleted if assigned to a Field.
-    foreach ($fields = _workflow_info_fields() as $field) {
-      if ($field['settings']['wid'] == $this->id()) {
-        return $is_deletable;
+    foreach ($fields = _workflow_info_fields() as $field_info) {
+      if ($field_info->getSetting('workflow_type') == $this->id()) {
+        return FALSE;
       }
     }
 
-    // May not be deleted if a State is assigned to a state.
-    foreach ($this->getStates(TRUE) as $state) {
-      if ($state->count()) {
-        return $is_deletable;
-      }
-    }
+    // D8-port: This is deleted, since it is only for D7's workflow_node.
+    // // May not be deleted if a State is assigned to a state.
+    // foreach ($this->getStates(TRUE) as $state) {
+    //   if ($state->count()) {
+    //     return $is_deletable;
+    //   }
+    // }
     $is_deletable = TRUE;
 
     return $is_deletable;

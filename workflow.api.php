@@ -4,6 +4,7 @@
  * Hooks provided by the workflow module.
  */
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\workflow\Entity\WorkflowState;
 use Drupal\workflow\Entity\WorkflowConfigTransition;
@@ -67,18 +68,12 @@ function hook_workflow($op, $id, $new_sid, $entity, $force, $entity_type = '', $
       break;
 
     case 'transition delete':
-      // A transition is deleted. Only the first parameter is used.
-      // $transition_id = $id;
-      break;
-
     case 'state delete':
-      // A state is deleted. Only the first parameter is used.
-      // $state_id = $id;
-      break;
-
     case 'workflow delete':
-      // A workflow is deleted. Only the first parameter is used.
-      // $workflow_id = $id;
+      // These hooks are removed in D8, in favour of the core hooks:
+      // - workflow_entity_predelete(EntityInterface $entity)
+      // - workflow_entity_delete(EntityInterface $entity)
+      // See examples at the bottom of this file.
       break;
   }
 }
@@ -233,4 +228,27 @@ function hook_form_alter(&$form, FormStateInterface $form_state, $form_id) {
  */
 function hook_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode){
   // @see http://drupal.stackexchange.com/questions/101857/difference-between-hook-form-alter-and-hook-field-attach-form
+}
+
+/**
+ * Implements CRUD hooks
+ */
+
+/**********************************************************************
+ *
+ * Implements hook_entity_CRUD.
+ *
+ */
+function hook_entity_predelete(EntityInterface $entity) {
+  switch ($entity->getEntityTypeId()) {
+    case 'workflow_config_transition':
+    case 'workflow_state':
+    case 'workflow_workflow':
+      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $entity->getEntityTypeId(), 'is pre-deleted');
+      break;
+  }
+}
+
+function hook_entity_delete(EntityInterface $entity) {
+  workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $entity->getEntityTypeId(), 'is deleted');
 }

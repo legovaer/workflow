@@ -57,10 +57,15 @@ class WorkflowListBuilder extends ConfigEntityListBuilder {
    * {@inheritdoc}
    */
   public function getDefaultOperations(EntityInterface $entity) {
-    /* @var $entity \Drupal\workflow\Entity\Workflow */
     $operations = parent::getDefaultOperations($entity);
 
+    /* @var $workflow \Drupal\workflow\Entity\Workflow */
     $workflow = $entity;
+
+    // Do not delete a Workflow if it contains content.
+    if (isset($operations['delete']) && !$workflow->isDeletable()) {
+      unset ($operations['delete']);
+    }
 
 //    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ .': ' . 'top actions (via own routing??)');
     // Allow modules to insert their own action links to the 'table', like cleanup module.
