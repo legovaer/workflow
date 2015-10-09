@@ -502,7 +502,10 @@ class WorkflowTransitionElement extends FormElement {
     if (isset($item['workflow']['workflow_to_sid'])) {
       // In WorkflowTransitionForm, we receive the complete $form_state.
       $transition_values = $item['workflow'];
-      $schedule_values = $item['workflow']['workflow_scheduled_date_time'];
+      // Remember, the workflow_scheduled element is not set on 'add' page.
+      if ($scheduled = !empty($transition_values['workflow_scheduled'])) {
+        $schedule_values = $item['workflow']['workflow_scheduled_date_time'];
+      }
     }
     else {
       $entity_id = $transition->getEntity()->id();
@@ -515,8 +518,6 @@ class WorkflowTransitionElement extends FormElement {
     $to_sid = $transition_values['workflow_to_sid'];
     $comment = $transition_values['workflow_comment'];
     $timestamp = REQUEST_TIME;
-    // Remember, the workflow_scheduled element is not set on 'add' page.
-    $scheduled = !empty($transition_values['workflow_scheduled']);
     $force = FALSE;
 
 // @todo D8: add the VBO use case.
