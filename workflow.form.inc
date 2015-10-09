@@ -4,7 +4,6 @@
  * Contains helper functons for WorkflowTransitionForm.
  */
 
-use Drupal\Core\Form\FormStateInterface;
 /**
  * Getter/Setter to tell if the action buttons are used.
  *
@@ -44,7 +43,7 @@ function _workflow_use_action_buttons($new_value = NULL) {
  *
  * @todo: move this to WorkflowTransitionForm::_addActionButtons();
  */
-function workflow_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+function workflow_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
   // Use a fast, custom way to check if we need to do this.
   // @todo: Adapt to use with multiple workflows per entity.
   if (!_workflow_use_action_buttons()) {
@@ -196,6 +195,7 @@ function workflow_transition_form_submit($form, &$form_state) {
  * Validate form data for 'time' element.
  */
 function _workflow_transition_form_element_validate_time($element, &$form_state, $form) {
+//  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
   if (!strtotime($element['#value'])) {
     form_error($element, t('Please enter a valid value for time.'));
   }

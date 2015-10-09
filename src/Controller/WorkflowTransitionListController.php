@@ -81,13 +81,17 @@ class WorkflowTransitionListController extends EntityListController implements C
     /*
      * Get data from parameters.
      */
-    $user = $this->currentUser();
+    $user = workflow_current_user();
 
-    /* @var $entity EntityInterface */
-    $entity = $node;
-    if (!$entity) {
-      $entity = $this->getTaxonomyTerm();
-    }
+    // TODO D8-port: make Workflow History tab happen for every entity_type.
+    // @see workflow.routing.yml, workflow.links.task.yml, WorkflowTransitionListController.
+//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    // ATM it only works for Nodes and Terms.
+    // This is a hack. The Route should always pass an object.
+    // On view tab, $entity is object,
+    // On workflow tab, $entity is id().
+    // Get the entity for this form.
+    $entity = workflow_url_get_entity($node);
 
     /*
      * Get derived data from parameters.
@@ -166,57 +170,36 @@ class WorkflowTransitionListController extends EntityListController implements C
   }
 
   /**
-   * Checks access for a specific request.
+   * Menu access control callback. Checks access to Workflow tab.
    *
-   * @param \Drupal\Core\Session\AccountInterface $account
-   *   Run access checks for this account.
-   *
-   * @return \Drupal\Core\Access\AccessResult
-   */
-  public function historyAccess(AccountInterface $account) {
-
-    // TODO D8-port: make Workflow History tab happen for every entity_type.
-    // @see workflow.routing.yml, workflow.links.task.yml, WorkflowTransitionListController.
-//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-    // ATM it only works for Nodes and Terms.
-    $route_match = \Drupal::routeMatch();
-    $entity = $route_match->getParameter('node');
-
-    if (!$entity) {
-      // This is a hack. The Route should always pass an object.
-      // On view tab, $entity is object,
-      // On workflow tab, $entity is id().
-      $entity = $this->getTaxonomyTerm();
-    }
-
-    return $this->workflow_tab_access($account, $entity);
-  }
-
-  /**
-   * Menu access control callback. Determine access to Workflow tab.
+   * This used to be D7-function workflow_tab_access($user, $entity)
    *
    * The History tab should not be used with multiple workflows per entity.
    * Use the dedicated view for this use case.
    * @todo D8: remove this in favour of View 'Workflow history per entity'.
    * @todo D8-port: make this workf for non-Node entity types.
    *
-   * @param \Drupal\workflow\Controller\AccountInterface $user
-   * @param \Drupal\Core\Entity\EntityInterface $entity
-   *   The entity type of this Entity subclass.
+   * @param \Drupal\workflow\Controller\AccountInterface $account
+   *   Run access checks for this account.
    *
    * @return \Drupal\Core\Access\AccessResult
    */
-  function workflow_tab_access(AccountInterface $user, EntityInterface $entity = NULL) {
-    $user = \Drupal::currentUser();
-    $uid = $user->id();
+
+  public function historyAccess(AccountInterface $account) {
     static $access = array();
 
-    if (!$entity) {
-      // This is a hack. The Route should always pass an object.
-      // On view tab, $entity is object,
-      // On workflow tab, $entity is id().
-      $entity = $this->getTaxonomyTerm();
-    }
+    $user = $account;
+    $uid = ($user) ? $user->id() : -1;
+
+    // TODO D8-port: make Workflow History tab happen for every entity_type.
+    // @see workflow.routing.yml, workflow.links.task.yml, WorkflowTransitionListController.
+//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    // ATM it only works for Nodes and Terms.
+    // This is a hack. The Route should always pass an object.
+    // On view tab, $entity is object,
+    // On workflow tab, $entity is id().
+    // Get the entity for this form.
+    $entity = workflow_url_get_entity();
 
     /* @var $entity EntityInterface */
     // Figure out the $entity's bundle and id.
@@ -299,44 +282,5 @@ class WorkflowTransitionListController extends EntityListController implements C
     }
     return AccessResult::forbidden();
   }
-
-  /**
-   * The _title_callback for the node.add route.
-   *
-   * @param \Drupal\node\NodeTypeInterface $node_type
-   *   The current node.
-   *
-   * @return string
-   *   The page title.
-   */
-//  public function addPageTitle(NodeTypeInterface $node_type) {
-//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-//    return $this->t('Create @name', array('@name' => $node_type->label()));
-//  }
-
-  /**
-   * Helper function to get the taxonomy term fom a route.
-   *
-   * This is a hack. The Route should always pass an object.
-   * On view tab, $entity is object, On workflow tab, $entity is id().
-   *
-   * @return TaxonomyTerm
-   */
-  private function getTaxonomyTerm() {
-    // TODO D8-port: make Workflow History tab happen for every entity_type.
-    // @see workflow.routing.yml, workflow.links.task.yml, WorkflowTransitionListController.
-    // workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-    // ATM it only works for Nodes and Terms.
-    $entity = NULL;
-    if (!$entity) {
-      $route_match = \Drupal::routeMatch();
-      $entity = $route_match->getParameter('taxonomy_term');
-      if (!is_object($entity)) {
-        $entity = Term::load($entity);
-      }
-    }
-    return $entity;
-  }
-
 
 }

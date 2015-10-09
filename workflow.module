@@ -363,7 +363,7 @@ function workflow_get_workflow_state_names($wid = '', $grouped = FALSE, $all = F
 
   // Get the (user-dependent) options.
   // Since this function is only used in UI, it is save to use the global $user.
-  $user = \Drupal::currentUser();
+  $user = workflow_current_user();
 
   foreach ($workflows = Workflow::loadMultiple($wid ? array($wid) : NULL) as $workflow) {
     $workflow_options = array();
@@ -443,10 +443,44 @@ function workflow_get_field_name(EntityInterface $entity, $field_name = '') {
   return $field_name;
 }
 
+/**
+ * Helper function to get the entity from a route.
+ *
+ * This is a hack. It should be solved by using $routematch.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface|NULL $entity
+ *
+ * @return \Drupal\Core\Entity\EntityInterface
+ */
+function workflow_url_get_entity(EntityInterface $entity = NULL) {
+//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+  if (!$entity) {
+    $route_match = \Drupal::routeMatch();
+    $entity = $route_match->getParameter('node');
+    if(!$entity) {
+      $entity = $route_match->getParameter('taxonomy_term');
+      if (!is_object($entity)) {
+        $entity = \Drupal\taxonomy\Entity\Term::load($entity);
+      }
+    }
+  }
+
+  return $entity;
+}
+
 
 /**
  * Functions to get the state of an entity.
  */
+
+/**
+ * Wrapper function
+ *
+ * @return \Drupal\Core\Session\AccountProxyInterface
+ */
+function workflow_current_user() {
+  return \Drupal::currentUser();
+}
 
 /**
  * Gets the current state ID of a given entity.
@@ -456,7 +490,7 @@ function workflow_get_field_name(EntityInterface $entity, $field_name = '') {
  *
  * @return string $current_sid
  *
- * @deprecated
+ * @deprecated : use Workflow::workflowManager()->getCurrentStateID()
  */
 function workflow_node_current_state(EntityInterface $entity, $field_name = '') {
   return Workflow::workflowManager()->getCurrentStateID($entity, $field_name);
@@ -470,7 +504,7 @@ function workflow_node_current_state(EntityInterface $entity, $field_name = '') 
  *
  * @return string $previous_sid
  *
- * @deprecated
+ * @deprecated : use Workflow::workflowManager()->getPreviousStateID()
  */
 function workflow_node_previous_state($entity, $field_name = '') {
   return Workflow::workflowManager()->getPreviousStateId($entity, $field_name);
@@ -610,3 +644,5 @@ function workflow_debug($class_name, $function_name, $line = '', $value1 = '', $
   }
   if (function_exists('dpm')) { dpm($output); }
 }
+
+//module_load_include('inc', 'workflow', 'workflow.api.php');

@@ -180,9 +180,13 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
 //    );
 
     // column 'Operations' is now added by core.
-//    $row['operations']['data'] = $this->buildOperations($entity);
+    // D7: $row['operations']['data'] = $this->buildOperations($entity);
+    $row += parent::buildRow($entity);
+
     // @TODO D8-port: add operations column.
-    return $row; // + parent::buildRow($entity);
+    $row['operations'] = []; // @TODO D8-port filter operations.
+
+    return $row;
   }
 
   /**
@@ -247,7 +251,7 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
   public function getDefaultOperations(EntityInterface $entity) {
     $operations = parent::getDefaultOperations($entity);
 
-    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     // TODO D8-port: convert workflow-operations to core-style.
     return $operations;
