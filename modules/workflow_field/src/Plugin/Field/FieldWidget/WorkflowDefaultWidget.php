@@ -66,7 +66,7 @@ class WorkflowDefaultWidget extends WidgetBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     // Field ID contains entity_type, bundle, field_name.
     $field_id = $this->fieldDefinition->id();
@@ -196,7 +196,7 @@ class WorkflowDefaultWidget extends WidgetBase {
 
         // Try to execute the transition. Return $from_sid when error.
         if (!$transition) {
-          workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+          workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
           // This should only happen when testing/developing.
           drupal_set_message(t('Error: the transition from %from_sid to %to_sid could not be generated.'), 'error');

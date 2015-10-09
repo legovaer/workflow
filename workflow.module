@@ -46,7 +46,7 @@ function workflow_help($route_name, RouteMatchInterface $route_match) {
  * Implements hook_menu_alter().
  */
 function workflow_menu_alter(&$items) {
-  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   return; // TODO D8-port: test this function.
 
@@ -143,7 +143,7 @@ function workflow_menu_alter(&$items) {
  * @todo: add support for every $entity_type.
  */
 function workflow_admin_paths_alter(&$paths) {
-  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   if (isset($paths['node/*/edit'])) {
     $paths['node/*/workflow'] = $paths['node/*/edit'];
@@ -160,7 +160,7 @@ function workflow_admin_paths_alter(&$paths) {
  * their main module or in a module.workflow.inc file.
  */
 function workflow_hook_info() {
-//  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+//  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   $hooks['workflow'] = array('group' => 'workflow');
   return $hooks;
@@ -170,7 +170,7 @@ function workflow_hook_info() {
  * Implements hook_features_api().
  */
 function workflow_features_api() {
-  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   return array(
 //    'workflow' => array(
@@ -188,7 +188,7 @@ function workflow_features_api() {
  * @see https://www.drupal.org/node/2196275 "hook_entity_info() renamed to hook_entity_type_build()"
  */
 function TODOworkflow_entity_type_build(array &$entity_types) {
-  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   /* @var $entity_types \Drupal\Core\Entity\EntityTypeInterface[] */
   // Add a form controller for a custom entity form without overriding the
@@ -245,7 +245,7 @@ function workflow_user_role_insert($role) {
  * @see https://www.drupal.org/node/2188851
  */
 function workflow_forms($form_id, $args) {
-  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   $forms = array();
   if (strpos($form_id, 'workflow_transition_form_') !== FALSE) {
@@ -526,7 +526,7 @@ function workflow_get_workflows_by_type($entity_bundle, $entity_type) {
  *   A State ID.
  */
 function _workflow_get_sid_by_items(array $items) {
-  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
   // On a normal widget:
   $sid = isset($items[0]['value']) ? $items[0]['value'] : 0;
   // On a workflow form widget:

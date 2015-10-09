@@ -75,7 +75,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
    * {@inheritdoc}
    */
   public function deleteUser(AccountInterface $account) {
-    workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     self::cancelUser([], $account, 'user_cancel_delete');
   }
 
@@ -174,7 +174,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
 
       if (isset($entity->original)) {
         // A changed node.
-        workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+        workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
       }
 
       // A node may not have a Workflow attached.
@@ -192,7 +192,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       }
 
       if (!$sid) {
-        workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+        workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
         // No history found on an existing entity.
         $sid = $this->getCreationStateId($entity, $field_name);
       }

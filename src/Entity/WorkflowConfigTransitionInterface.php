@@ -8,7 +8,6 @@
 namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\TypedData\TranslatableInterface;
 
 /**
  * Defines a common interface for Workflow*Transition* objects.
@@ -27,7 +26,7 @@ interface WorkflowConfigTransitionInterface {
    * - By permission hooks, implemented by other modules.
    *
    * @param array $roles
-   * @param AccountInterface $user
+   * @param \Drupal\Core\Session\AccountInterface|NULL $user
    * @param bool $force
    *
    * @return bool
@@ -64,4 +63,5 @@ interface WorkflowConfigTransitionInterface {
    * @return string
    */
   public function getToSid();
+
 }

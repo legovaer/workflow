@@ -20,7 +20,7 @@ use Drupal\Core\Form\FormStateInterface;
  * Used to save some expensive operations on every form.
  */
 function _workflow_use_action_buttons($new_value = NULL) {
-//  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+//  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   global $_workflow_use_actions_buttons;
 
@@ -51,7 +51,7 @@ function workflow_form_alter(&$form, FormStateInterface $form_state, $form_id) {
     return;
   }
 
-  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   // Find the first workflow.
   // (So this won't work with multiple workflows per entity.)
@@ -153,7 +153,7 @@ function workflow_form_alter(&$form, FormStateInterface $form_state, $form_id) {
  * a transition to be executed later by cron.
  */
 function workflow_transition_form_validate($form, &$form_state) {
-  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   // Empty. But required.
   // $transition_form = WorkflowTransitionForm::create($field, $instance, $entity_type, $entity);
@@ -167,7 +167,7 @@ function workflow_transition_form_validate($form, &$form_state) {
  * a transition to be executed later by cron.
  */
 function workflow_transition_form_submit($form, &$form_state) {
-  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   // Retrieve the data from the form.
   if (isset($form_state['values']['workflow_field'])) {
@@ -213,7 +213,7 @@ function _workflow_transition_form_element_validate_time($element, &$form_state,
  * another hook_form_alter. We guess the first button is the Save button.
  */
 function _workflow_transition_form_validate_buttons($form, &$form_state) {
-  workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
   $field_name = $form_state['triggering_element']['#workflow_field_name'];
   $new_sid = $form_state['triggering_element']['#workflow_sid'];

@@ -9,7 +9,7 @@
  * Implements hook_install().
  */
 function workflow_install() {
-//  workflow_debug(get_class($this), __FUNCTION__, __LINE__, $form_id);  // @todo D8-port: still test this snippet.
+//  workflow_debug(__FILE__), __FUNCTION__, __LINE__, $form_id);  // @todo D8-port: still test this snippet.
   // TODO D8-port: the display of the link is not OK.
   // TODO: Add the suffix: /admin/modules#edit-modules-workflow .
   $message = t('Thanks for using Workflow. To maintain workflows, enable the
@@ -47,7 +47,7 @@ function workflow_requirements($phase) {
       break;
 
     case 'runtime':
-//      workflow_debug(get_class($this), __FUNCTION__, __LINE__, $form_id);  // @todo D8-port: still test this snippet.
+//      workflow_debug(__FILE__), __FUNCTION__, __LINE__, $form_id);  // @todo D8-port: still test this snippet.
 
 /*
       // Show info on admin/reports/status.

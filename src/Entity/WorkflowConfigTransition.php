@@ -10,7 +10,6 @@ namespace Drupal\workflow\Entity;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\workflow\Entity\ConfigEntityStorage;
 
 /**
  * Workflow configuration entity to persistently store configuration.
@@ -53,7 +52,8 @@ class WorkflowConfigTransition extends ConfigEntityBase {
 
   // Extra fields.
   public $wid;
-  // The following must explicitely defined, and not be public, to avoid errors when exporting with json_encode().
+  // The following must explicitly defined, and not be public, to avoid errors
+  // when exporting with json_encode().
   protected $workflow = NULL;
 
   /**
@@ -62,7 +62,7 @@ class WorkflowConfigTransition extends ConfigEntityBase {
 
   public function __construct(array $values = array(), $entityType = NULL) {
     // Please be aware that $entity_type and $entityType are different things!
-    $result = parent::__construct($values, $entityType = 'workflow_config_transition');
+    $result = parent::__construct($values, $entity_type = 'workflow_config_transition');
 
     return $result;
   }
@@ -78,10 +78,10 @@ class WorkflowConfigTransition extends ConfigEntityBase {
   /**
    * {@inheritdoc}
    *
-   * @return static[]
+   * @return WorkflowConfigTransition[]
    *   An array of entity objects indexed by their IDs. Filtered by $wid.
    */
-  public static function loadMultiple(array $ids = NULL, $wid = '') {
+  public static function loadMultiple(array $ids = NULL, $wid = '', $reset = FALSE) {
     return parent::loadMultiple($ids);
     //TODO D8-port: filter for $wid.
   }
@@ -104,8 +104,6 @@ class WorkflowConfigTransition extends ConfigEntityBase {
     if (empty($this->id())) {
       $this->set('id', implode('_', [$workflow->id(), $this->from_sid, $this->to_sid]));
     }
-
-//    dpm('TODO D8-port: test function WorkflowConfigTransition::' . __FUNCTION__ .' '. $this->id());
 
     $status = parent::save();
 
@@ -138,6 +136,9 @@ class WorkflowConfigTransition extends ConfigEntityBase {
   public static function sort(ConfigEntityInterface $a, ConfigEntityInterface $b) {
     // Sort the entities using the entity class's sort() method.
     // See \Drupal\Core\Config\Entity\ConfigEntityBase::sort().
+
+    /* @var $a WorkflowTransitionInterface */
+    /* @var $b WorkflowTransitionInterface */
 
     // First sort on From-State.
     $from_state_a = $a->getFromState();
@@ -211,23 +212,16 @@ class WorkflowConfigTransition extends ConfigEntityBase {
    * {@inheritdoc}
    */
   public function isAllowed(array $user_roles, AccountInterface $user = NULL, $force = FALSE) {
-//    dpm('TODO D8-port: test function WorkflowConfigTransition::' . __FUNCTION__ );
-// TODO D8: add usage of api user_has_role().
-    /*
-  $role = user_role_load('Author');
-  if ($role && user_has_role($role->rid)) {
-   // Code if user has 'Author' role...
-  }
-  else {
-   // Code if user doesn't have 'Author' role...
-  }
-    */
-
     if ($user_roles == 'ALL') {
-      // Superuser.
+      // Superuser. // @todo: migrate to $force parameter.
+      workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      $force = TRUE;
+    }
+
+    if ($force) {
       return TRUE;
     }
-    elseif ($user_roles) {
+    if ($user_roles) {
       return array_intersect($user_roles, $this->roles) == TRUE;
     }
     return TRUE;

@@ -43,7 +43,7 @@ class WorkflowTransitionForm extends ContentEntityForm {
 
     $form_id = implode('_', array('workflow_transition_form', $entity_type, $entity_bundle, $field_name, $entity_id));
 
-//    workflow_debug(get_class($this), __FUNCTION__, __LINE__, $form_id);  // @todo D8-port: still test this snippet.
+//    workflow_debug(__FILE__, __FUNCTION__, __LINE__, $form_id);  // @todo D8-port: still test this snippet.
 
     return $form_id;
   }
@@ -111,7 +111,7 @@ class WorkflowTransitionForm extends ContentEntityForm {
 
     // Change the Form, to add action buttons, not select list/radios.
     // @see EntityForm's parent::actionsElement($form, $form_state);
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     return $element;
   }
 
@@ -129,7 +129,7 @@ class WorkflowTransitionForm extends ContentEntityForm {
       return $actions;
     }
 
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     return $actions;
   }
 

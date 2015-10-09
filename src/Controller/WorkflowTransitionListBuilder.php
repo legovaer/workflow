@@ -189,7 +189,7 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     $form = parent::buildForm($form, $form_state);
 
     return $form;
@@ -247,7 +247,7 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
   public function getDefaultOperations(EntityInterface $entity) {
     $operations = parent::getDefaultOperations($entity);
 
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     // TODO D8-port: convert workflow-operations to core-style.
     return $operations;
@@ -255,7 +255,7 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     /* @var WorkflowTransitionInterface $transition */
     $transition = $entity;
 
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     // TODO D8-port: test invokeAll('workflow_operations',).
     // Allow modules to insert operations per state.
     $workflow = $transition->getWorkflow();

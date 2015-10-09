@@ -197,7 +197,7 @@ class WorkflowTransitionElement extends FormElement {
 // then change the form id, too.
     $form_id = 'workflow_transition_form'; // TODO D8-port: add $form_id for widget and History tab.
 //    $form_id = $this->getFormId();
-//    workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__ );  // @todo D8-port: still test this snippet.
+//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     /*
         if (!isset($form_state->getValue('build_info')['base_form_id'])) {
           // Strange: on node form, the base_form_id is node_form,
@@ -205,7 +205,7 @@ class WorkflowTransitionElement extends FormElement {
           // In both cases, it is OK.
         }
         else {
-          workflow_debug( (isset($this) ? get_class($this) : __FILE__) , __FUNCTION__, __LINE__ );  // @todo D8-port: still test this snippet.
+          workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
           if ($form_state['build_info']['base_form_id'] == 'workflow_transition_wrapper_form') {
             $form_state['build_info']['base_form_id'] = 'workflow_transition_form';
           }

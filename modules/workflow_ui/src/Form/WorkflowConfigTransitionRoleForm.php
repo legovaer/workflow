@@ -186,10 +186,10 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
         }
         else {
           // Should not be possible.
-          $config_transition = [];
+          // $config_transition = [];
         }
 
-//        dpm('TODO D8-port: test function WorkflowConfigTransitionPermissionForm::' . __FUNCTION__ );
+//        workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
         /*
                 foreach ($transition_data->roles as $role => $can_do) {
                   if ($can_do) {
@@ -202,7 +202,8 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
                     $config_transition->save();
                 }
                 else {
-                  foreach ($workflow->getTransitionsByStateId($from, $to_sid, 'ALL') as $config_transition) {
+                  // foreach ($workflow->getTransitionsByStateId($from, $to_sid, 'ALL') as $config_transition) {
+                  foreach ($workflow->getTransitionsByStateId($from, $to_sid) as $config_transition) {
                     $config_transition->delete();
                   }
                 }
@@ -214,6 +215,5 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
 
     return;
   }
-
 
 }

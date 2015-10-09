@@ -129,7 +129,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $this->setEntity($entity);
 
     if (!$entity && !$from_sid && !$to_sid) {
-      workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
       // If constructor is called without arguments, e.g., loading from db.
     }
     elseif ($entity && $from_sid) {
@@ -143,7 +143,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       $this->setComment($comment);
     }
     elseif (!$from_sid) {
-      workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
       // Not all parameters are passed programmatically.
       drupal_set_message(
         t('Wrong call to constructor Workflow*Transition(@from_sid to @to_sid)',
@@ -196,7 +196,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       if ($found_transition &&
         $found_transition->getTimestamp() == REQUEST_TIME &&
         $found_transition->getToSid() == $this->getToSid()) {
-        workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+        workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
         return SAVED_UPDATED;
       }
       else {
@@ -205,7 +205,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     }
     else {
       // Update the transition.
-      workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
       return parent::save();
     }
 
@@ -270,25 +270,48 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    */
   public function isAllowed(array $roles, AccountInterface $user = NULL, $force = FALSE) {
 
+    // Get user's ID and Role IDs, to get the proper permissions.
+    $uid = ($user) ? $user->id() : -1;
+    $user_roles = $roles;
+
+    /**
+     * Get permissions of user, adding a Role to user, depending on situation.
+     */
+    // @todo: Keep below code aligned between WorkflowState, ~Transition, ~TransitionListController
+    // Check allow-ability of state change if user is not superuser (might be cron).
+//    if($uid == 1) {
+//      // @TODO D8-port: Special user 1 is removed. Undo?? N.B. Several locations. Test each use case!!
+//      workflow_debug(__FILE__, __FUNCTION__, __LINE__); // @todo D8-port:  'Make user 1 special' (several locations);
+//      // Superuser is special. And $force allows Rules to cause transition.
+//      $force = TRUE;
+//    }
+
+    if ($user_roles == 'ALL') {
+      // Superuser. // @todo: migrate to $force parameter.
+      workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      $force = TRUE;
+    }
     if ($force) {
       // $force allows Rules to cause transition.
       return TRUE;
     }
-    elseif($user && $user->id() == 1) {
-//      workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-//     'TODO D8-port: test function WorkflowState::' . __FUNCTION__.'/'.__LINE__ . 'Make user 1 special' (several locationss);
-//      // Superuser is special. And $force allows Rules to cause transition.
-//      return TRUE;
-    }
 
-    // Check allow-ability of state change if user is not superuser (might be cron).
-    // Get the WorkflowConfigTransition.
-    // @todo: some day, WorkflowConfigTransition can be a parent of WorkflowTransition.
-    // @todo: There is a watchdog error, but no UI-error. Is this ok?
+    /**
+     * Get the object and its permissions.
+     */
     $workflow = $this->getWorkflow();
     $config_transitions = $workflow->getTransitionsByStateId($this->getFromSid(), $this->getToSid());
-    $config_transition = reset($config_transitions);
-    if (!$config_transition || !$config_transition->isAllowed($roles)) {
+
+    /**
+     * Determine if user has Access.
+     */
+    $result = FALSE;
+    foreach ($config_transitions as $config_transition) {
+      $result = $config_transition->isAllowed($user_roles, $user, $force) ? TRUE: $result;
+    }
+
+    if ($result == FALSE) {
+      // @todo: There is a watchdog error, but no UI-error. Is this ok?
       $message = t('Attempt to go to nonexistent transition (from %from_sid to %to_sid)');
       $t_args = array(
         '%from_sid' => $this->getFromSid(),
@@ -296,10 +319,9 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
         'link' =>  $this->getEntity()->link(t('View')),
       );
       \Drupal::logger('workflow')->error($message, $t_args);
-      return FALSE;
     }
 
-    return TRUE;
+    return $result;
   }
 
   /**
@@ -358,7 +380,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       // Why does this happen?? ( BTW. This happens with every submit.)
       // Remedies:
       // - search root cause of second call.
-      // - try adapting code of transtion->save() to avoid second record.
+      // - try adapting code of transition->save() to avoid second record.
       // - avoid executing twice.
       $message = 'Transition is executed twice in a call. The second call is
         not executed.';
@@ -424,8 +446,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       if (!$force) {
         // Make sure this transition is allowed by custom module.
         // @todo D8: remove, or replace by 'transition pre'. See WorkflowState::getOptions().
-        // @todo D8: replace all parameters that are inlcuded in $transition.
-        // @todo: in case of error, ther is a log, but no UI error.
+        // @todo D8: replace all parameters that are included in $transition.
+        // @todo: in case of error, there is a log, but no UI error.
         $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition permitted', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this, $user]);
         // Stop if a module says so.
         if (in_array(FALSE, $permitted, TRUE)) {
@@ -444,7 +466,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition pre', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this]);
       // Stop if a module says so.
       if (in_array(FALSE, $permitted, TRUE)) {
-        workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+        workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
         \Drupal::logger('workflow')->notice('Transition vetoed by module.', []);
         return $from_sid;
       }
@@ -484,11 +506,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
             '@type' => $entity_type_info->getLabel(),
             '%label' => $entity->label(),
             '%state_name' => t($new_state->label()), // @todo check_plain()?
-            '%user' => isset($user->name) ? $user->name : '',
-            '%old' => $from_sid,
-            '%new' => $to_sid,
-            '%label' => $this->entity->label(),
-// @todo      'link' =>  $this->getEntity()->link(t('View')),
+            'link' =>  $this->getEntity()->link(t('View')),
           );
           \Drupal::logger('workflow')->notice($message, $args);
         }
@@ -501,7 +519,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       // We have a problem here with Rules, Trigger, etc. when invoking
       // 'transition post': the entity has not been saved, yet. we are still
       // IN the transition, not AFTER. Alternatives:
-      // 1. Save the field here explicitely, using field_attach_save;
+      // 1. Save the field here explicitly, using field_attach_save;
       // 2. Move the invoke to another place: hook_entity_insert(), hook_entity_update();
       // 3. Rely on the entity hooks. This works for Rules, not for Trigger.
       // --> We choose option 2:
@@ -519,7 +537,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function post_execute($force = FALSE) {
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     $from_sid = $this->getFromSid();
     $to_sid = $this->getToSid();

@@ -7,7 +7,6 @@
 
 namespace Drupal\workflow_ui\Form;
 
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\workflow\Entity\Workflow;
@@ -40,7 +39,7 @@ abstract class WorkflowConfigTransitionFormBase implements FormInterface {
 //  protected $formBuilder;
 
   /**
-   * The Workflowconfig_transition form type.
+   * The WorkflowConfigTransition form type.
    *
    * @var string
    */
@@ -97,7 +96,6 @@ abstract class WorkflowConfigTransitionFormBase implements FormInterface {
           $config_transitions = $workflow->getTransitionsByStateId($from_sid, $to_sid);
           if (!$config_transition = reset($config_transitions)) {
             $config_transition = $workflow->createTransition($from_sid, $to_sid);
-            $tid = $config_transition->id();
           }
           $entities[] = $config_transition;
         }

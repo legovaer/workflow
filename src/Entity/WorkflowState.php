@@ -141,7 +141,7 @@ class WorkflowState extends ConfigEntityBase {
    *   FALSE if state does not belong to requested Workflow.
    */
   public static function load($id, $wid = '') {
-//    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     foreach ($states = WorkflowState::loadMultiple([], $wid) as $state) {
       if ($id == $state->id()) {
         return $state;
@@ -155,18 +155,18 @@ class WorkflowState extends ConfigEntityBase {
    */
   public function save($create_creation_state = TRUE) {
     // Create the machine_name for new states.
-    // N.B.: Keep machine_name in WorkflowState and ~ListBuillder aligned.
+    // N.B.: Keep machine_name in WorkflowState and ~ListBuilder aligned.
     $sid = $this->id();
     $wid = $this->wid;
 
     if (empty($sid) || $sid == WORKFLOW_CREATION_STATE_NAME) {
       if ($label = $this->label()) {
-//        workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+        // Format the machine_name. @todo Use a proper machine_name regex.
         $sid = str_replace(' ', '_', strtolower($label));
       }
       else {
-//        workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-        $sid = 'state_' . $entity->id();
+        workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+        $sid = 'state_' . $this->id();
       }
       $this->set('id', implode('_', [$wid, $sid]));
     }
@@ -238,9 +238,7 @@ class WorkflowState extends ConfigEntityBase {
    *   The state ID, to which all affected entities must be moved.
    */
   public function deactivate($new_sid) {
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
-    $user = \Drupal::currentUser(); // We can use global, since deactivate() is a UI-only function.
+    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     $current_sid = $this->id();
     $force = TRUE;
@@ -252,15 +250,16 @@ class WorkflowState extends ConfigEntityBase {
     \Drupal::moduleHandler()->invokeAll('workflow', ['state delete', $current_sid, $new_sid, NULL, $force]);
 
     // TODO D8-port: re-implement below code.
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: re-implement re-assign states when deactivating state in function WorkflowState::' . deactivate );
+    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: re-implement re-assign states when deactivating state in function WorkflowState::' . deactivate );
     // Re-parent any entity that we don't want to orphan, whilst deactivating a State.
     // This is called in WorkflowState::deactivate().
-    // @todo: reparent Workflow Field, whilst deactivating a state.
+    // @todo: re-parent Workflow Field, whilst deactivating a state.
     // TODO D8- State should not know about Transition: move this to Workflow->DeactivateState.
 //    if ($new_sid) {
 //      // A candidate for the batch API.
 //      // @TODO: Future updates should seriously consider setting this with batch.
 //
+//      $user = \Drupal::currentUser(); // We can use global, since deactivate() is a UI-only function.
 //      $comment = t('Previous state deleted');
 //      foreach (workflow_get_workflow_node_by_sid($current_sid) as $workflow_node) {
 //        // @todo: add Field support in 'state delete', by using workflow_transition_history or reading current field.
@@ -280,10 +279,10 @@ class WorkflowState extends ConfigEntityBase {
 
     // Delete the transitions this state is involved in.
     $workflow = Workflow::load($this->wid);
-    foreach ($workflow->getTransitionsByStateId($current_sid, '', 'ALL') as $transition) {
+    foreach ($workflow->getTransitionsByStateId($current_sid, '') as $transition) {
       $transition->delete();
     }
-    foreach ($workflow->getTransitionsByStateId('', $current_sid, 'ALL') as $transition) {
+    foreach ($workflow->getTransitionsByStateId('', $current_sid) as $transition) {
       $transition->delete();
     }
 
@@ -333,7 +332,7 @@ class WorkflowState extends ConfigEntityBase {
   }
 
   public function setWorkflow(Workflow $workflow) {
-    workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     $this->wid = $workflow->id();
     $this->workflow = $workflow;
@@ -405,49 +404,66 @@ class WorkflowState extends ConfigEntityBase {
 
     $current_sid = $this->id();
     $current_state = $this;
-    // Get the role IDs of the user, to get the proper permissions.
-    $roles = $user ? $user->getRoles() : array();
-    // Get the Author of the entity.
+
+//    if (!$workflows = workflow_get_workflows_by_type($entity_bundle, $entity_type)) { /* Testing... */ }
+
+    // Get user's ID and Role IDs, to get the proper permissions.
+    $uid = ($user) ? $user->id() : -1;
+    $user_roles = $user ? $user->getRoles() : array();
+    // Get the entity's ID and Author ID.
+    $entity_id = ($entity) ? $entity->id() : '';
     // Some entities (e.g., taxonomy_term) do not have a uid.
     // $entity_uid = $entity->get('uid');// ; isset($entity->uid) ? $entity->uid : 0;
     $entity_uid = (method_exists($entity, 'getOwnerId')) ? $entity->getOwnerId() : -1;
-    $uid = ($user) ? $user->id() : -1;
-    // Fetch entity_id from entity for _newness_ check
-    $entity_id = ($entity) ? $entity->id() : '';
 
-    if ($force) {
-      workflow_debug(get_class($this), __FUNCTION__, __LINE__); // @todo D8-port:  'Make user 1 special' (several locations);
-      // $force allows Rules to cause transition.
-      $roles = 'ALL';
-    }
-//    elseif($user && $user->id() == 1) {
-//    workflow_debug(get_class($this), __FUNCTION__, __LINE__); // @todo D8-port:  'Make user 1 special' (several locations);
-//      // Superuser is special. And $force allows Rules to cause transition.
-//      $roles = 'ALL';
+    /**
+     * Get permissions of user, adding a Role to user, depending on situation.
+     */
+    // @todo: Keep below code aligned between WorkflowState, ~Transition, ~TransitionListController
+    // Check allow-ability of state change if user is not superuser (might be cron)
+    // Do not set 'ALL', since this is covered by $force.
+//    if ($force) {
+//      // $force allows Rules to cause transition.
+//      $user_roles = 'ALL';
 //    }
-    elseif ($entity && (!empty($entity->is_new) || empty($entity_id))) {
-      // Add 'author' role to user, if this is a new entity.
+//    elseif($uid == 1) {
+//      // @TODO D8-port: Special user 1 is removed. Undo?? N.B. Several locations. Test each use case!!
+//      workflow_debug(__FILE__, __FUNCTION__, __LINE__); // @todo D8-port:  'Make user 1 special' (several locations);
+//      // Superuser is special. And $force allows Rules to cause transition.
+//      $user_roles = 'ALL';
+//    }
+//    elseif (!$entity_id) {
+    if (!$entity_id) {
+      // This is a new entity. User is author. Add 'author' role to user.
       // - $entity can be NULL (E.g., on a Field settings page).
       // - on display of new entity, $entity_id and $is_new are not set.
       // - on submit of new entity, $entity_id and $is_new are both set.
-      $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
+      $user_roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $user_roles);
     }
     elseif (($entity_uid > 0) && ($uid > 0) && ($entity_uid == $uid)) {
-      // Add 'author' role to user, if user is author of this entity.
-      // - Some entities (e.g, taxonomy_term) do not have a uid.
-      // - If 'anonymous' is the author, don't allow access to History Tab,
-      //   since anyone can access it, and it will be published in Search engines.
-      $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
+      // This is an existing entity. User is author. Add 'author' role to user.
+      // N.B.: If 'anonymous' is the author, don't allow access to History Tab,
+      // since anyone can access it, and it will be published in Search engines.
+      $user_roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $user_roles);
     }
     else {
-      workflow_debug(get_class($this), __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      // This is an existing entity. User is not the author. Do nothing.
     }
 
+    /**
+     * Get the object and its permissions.
+     */
     // Set up an array with states - they are already properly sorted.
     // Unfortunately, the config_transitions are not sorted.
     // Also, $transitions does not contain the 'stay on current state' transition.
     // The allowed objects will be replaced with names.
-    $transitions = $workflow->getTransitionsByStateId($current_sid, '', $roles);
+    /* @var $transitions WorkflowConfigTransition[] */
+    $transitions = $workflow->getTransitionsByStateId($current_sid, '');
+    foreach ($transitions as $key => $transition) {
+      if (!$transition->isAllowed($user_roles, $user, $force)) {
+        unset($transitions[$key]);
+      }
+    }
 
     // Let custom code add/remove/alter the available transitions.
     // Using the new drupal_alter.
@@ -460,11 +476,13 @@ class WorkflowState extends ConfigEntityBase {
       'workflow' => $workflow,
       'state' => $current_state,
       'user' => $user,
-      'user_roles' => $roles, // @todo: can be removed in D8, since $user is in.
+      'user_roles' => $user_roles, // $user_roles can be different from $user->getRoles().
     );
-    // @todo D8: rename to 'workflow_permitted_transitions'. / Remove redundant context.
     \Drupal::moduleHandler()->alter('workflow_permitted_state_transitions', $transitions, $context);
 
+    /**
+     * Determine if user has Access.
+     */
     // Let custom code change the options, using old_style hook.
     // @todo D8: delete below foreach/hook for better performance and flexibility.
     // Above drupal_alter() calls hook_workflow_permitted_state_transitions_alter() only once.
@@ -476,7 +494,7 @@ class WorkflowState extends ConfigEntityBase {
       // Invoke a callback indicating that we are collecting state choices.
       // Modules may veto a choice by returning FALSE.
       // In this case, the choice is never presented to the user.
-      if ($roles != 'ALL') {
+      if (!$force) {
         // TODO: D8-port: simplify interface for workflow_hook. Remove redundant context.
         $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition permitted', $current_sid, $to_sid, $entity, $force, $entity_type = '', $field_name, $transition, $user]);
       }
