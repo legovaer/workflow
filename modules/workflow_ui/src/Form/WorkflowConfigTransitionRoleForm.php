@@ -156,7 +156,10 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
       $author_has_permission = FALSE;
       foreach ($form_state->getValue($this->entitiesKey) as $from_sid => $to_data) {
         foreach ($to_data as $to_sid => $transition_data) {
-          if (!empty($transition_data['roles'][WORKFLOW_ROLE_AUTHOR_RID])) {
+          if ($from_sid == $to_sid) {
+            // Same-state-transition do not count.
+          }
+          elseif (!empty($transition_data['roles'][WORKFLOW_ROLE_AUTHOR_RID])) {
             $author_has_permission = TRUE;
             break;
           }
