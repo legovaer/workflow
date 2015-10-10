@@ -200,16 +200,16 @@ class WorkflowDefaultWidget extends WidgetBase {
           // The current value is still the previous state.
           $to_sid = $from_sid;
         }
-        elseif ($transition->isScheduled()) {
-          /*
-           * A scheduled transition must only be saved to the database.
-           * The entity is not changed.
-           */
-          $transition->save();
-
-          // The current value is still the previous state.
-          $to_sid = $from_sid;
-        }
+//        elseif ($transition->isScheduled()) {
+//          /*
+//           * A scheduled transition must only be saved to the database.
+//           * The entity is not changed.
+//           */
+//          $transition->save();
+//
+//          // The current value is still the previous state.
+//          $to_sid = $from_sid;
+//        }
         else {
           // It's an immediate change. Do the transition.
           // - validate option; add hook to let other modules change comment.
@@ -228,7 +228,8 @@ class WorkflowDefaultWidget extends WidgetBase {
             $to_sid = $transition->getToSid();
           }
           else {
-            workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+            // Entity is updated. To stay in sync with insert, we rely on
+            // function/hook workflow_entity_update($entity) in file workflow.module.
             // $to_sid = $transition->execute($force);
             $to_sid = $transition->getToSid();
           }
@@ -237,6 +238,10 @@ class WorkflowDefaultWidget extends WidgetBase {
         // Now the data is captured in the Transition, and before calling the
         // Execution, restore the default values for Workflow Field.
         // For instance, workflow_rules evaluates this.
+        //
+        // Set the transition back, to be used in hook_entity_update().
+        $item['workflow']['workflow_transition'] = $transition;
+        //
         // Set the value at the proper location.
         $item['value'] = $to_sid;
       }

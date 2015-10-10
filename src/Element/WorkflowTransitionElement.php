@@ -134,6 +134,7 @@ class WorkflowTransitionElement extends FormElement {
       $show_widget = $from_state->showWidget($entity, $field_name, $user, $force);
       // Determine the default value. If we are in CreationState, use a fast alternative for $workflow->getFirstSid().
       $default_value = $from_state->isCreationState() ? key($options) : $current_sid;
+      $default_value = $transition->isScheduled() ? $transition->getToSid() : $default_value;
     }
     elseif (!$entity) {
       workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.

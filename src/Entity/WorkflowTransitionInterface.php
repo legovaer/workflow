@@ -84,6 +84,12 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface,
   /**
    * Execute a transition (change state of an entity).
    *
+   * A Scheduled Transition shall only be saved, unless the
+   * 'schedule' property is set.
+   * @usage
+   *   $transition->schedule(FALSE);
+   *   $to_sid = $transition->execute(TRUE);
+   *
    * @param bool $force
    *   If set to TRUE, workflow permissions will be ignored.
    *

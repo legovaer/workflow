@@ -168,17 +168,17 @@ class Workflow extends ConfigEntityBase {
 
            // Reset state cache.
           $this->getStates(TRUE, TRUE);
-          foreach ($this->transitions as &$transition) {
+          foreach ($this->transitions as &$config_transition) {
             // Can be array when cloning or with features.
-            $transition = is_array($transition) ? WorkflowConfigTransition::create($transition, 'WorkflowConfigTransition') : $transition;
+            $config_transition = is_array($config_transition) ? WorkflowConfigTransition::create($config_transition, 'WorkflowConfigTransition') : $config_transition;
             // Convert the old sids of each transitions before saving.
-            // @todo: is this be done in 'clone $transition'?
+            // @todo: is this be done in 'clone $config_transition'?
             // (That requires a list of transitions without tid and a wid-less conversion table.)
-            if (isset($sid_conversion[$transition->getFromSid()])) {
-              $transition->set('id', FALSE);
-              $transition->set('from_sid', $sid_conversion[$transition->getFromSid()]);
-              $transition->set('to_sid', $sid_conversion[$transition->getToSid()]);
-              $transition->save();
+            if (isset($sid_conversion[$config_transition->getFromSid()])) {
+              $config_transition->set('id', FALSE);
+              $config_transition->set('from_sid', $sid_conversion[$config_transition->getFromSid()]);
+              $config_transition->set('to_sid', $sid_conversion[$config_transition->getToSid()]);
+              $config_transition->save();
             }
           }
         }
@@ -474,26 +474,26 @@ class Workflow extends ConfigEntityBase {
    * @return mixed|null|static
    */
   public function createTransition($from_sid, $to_sid, $values = array()) {
-    $transition = NULL;
+    $config_transition = NULL;
 
     $workflow = $this;
 
     // First check if this transition already exists.
     if ($transitions = $this->getTransitionsByStateId($from_sid, $to_sid)) {
-      $transition = reset($transitions);
+      $config_transition = reset($transitions);
     }
     else {
       $values['wid'] = $workflow->id();
       $values['from_sid'] = $from_sid;
       $values['to_sid'] = $to_sid;
-      $transition = WorkflowConfigTransition::create($values);
-      $transition->save();
+      $config_transition = WorkflowConfigTransition::create($values);
+      $config_transition->save();
     }
-    $transition->setWorkflow($this);
+    $config_transition->setWorkflow($this);
     // Maintain the new object in the workflow.
-    $this->transitions[$transition->id()] = $transition;
+    $this->transitions[$config_transition->id()] = $config_transition;
 
-    return $transition;
+    return $config_transition;
   }
 
   /**

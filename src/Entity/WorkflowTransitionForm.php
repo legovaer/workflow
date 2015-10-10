@@ -179,16 +179,17 @@ class WorkflowTransitionForm extends ContentEntityForm {
     // // Save the transition, Update the entity.
     // workflow_execute_transition($transition);
 
-    // Save the transition.
+    // Save the (scheduled) transition.
     $result = $transition->execute();
-    if ($result == $transition->getToSid())
-    {
+    if ($result == $transition->getToSid()) {
       if (!$transition->isScheduled()) {
+        // Update the entity.
         $result = $transition->updateEntity();
       }
     }
     else {
       // The transition was not allowed.
+      // @todo: validateForm().
     }
 
     return $result;
