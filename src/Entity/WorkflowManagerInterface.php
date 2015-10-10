@@ -28,6 +28,22 @@ interface WorkflowManagerInterface {
    */
   public function executeScheduledTransitionsBetween($start = 0, $end = 0);
 
+  /**
+   * Execute a single transition for the given entity.
+   *
+   * Implements hook_entity insert(), hook_entity_update().
+   *
+   * When inserting an entity with workflow field, the initial Transition is
+   * saved without reference to the proper entity, since Id is not yet known.
+   * So, we cannot save Transition in the Widget, but only(?) in a hook.
+   * To keep things simple, this is done for both insert() and update().
+   *
+   * This is referenced in from WorkfowDefaultWidget::massageFormValues().
+   *
+   * @param \Drupal\workflow\Entity\Drupal\Core\Entity\EntityInterface $entity
+   */
+  public function executeTransitionsOfEntity(EntityInterface $entity);
+
   /********************************************************************
    *
    * Hook-implementing functions.

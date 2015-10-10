@@ -571,7 +571,8 @@ class Workflow extends ConfigEntityBase {
 
   /**
    *
-   * Get a specific transition. Therefore, use $roles = 'ALL'.
+   * Get a specific transition.
+   *
    * @param string $from_sid
    * @param string $to_sid
    *

@@ -26,6 +26,12 @@ use Drupal\workflow\Entity\WorkflowTransitionInterface;
 
 module_load_include('inc', 'workflow', 'workflow.form');
 
+/**********************************************************************
+ *
+ * Info hooks.
+ *
+ */
+
 /**
  * Implements hook_help().
  */
@@ -167,6 +173,28 @@ function workflow_hook_info() {
 }
 
 /**
+ * Implements hook_forms().
+ *
+ * Allows the workflow tab form to be repeated multiple times on a page.
+ * @see http://drupal.org/node/1970846
+ * @see https://www.drupal.org/node/2188851
+ */
+function workflow_forms($form_id, $args) {
+  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+
+  $forms = array();
+  if (strpos($form_id, 'workflow_transition_form_') !== FALSE) {
+    $forms[$form_id] = array('callback' => 'workflow_transition_form');
+  }
+  // For the 'edit a comment' form.
+  if (strpos($form_id, 'WorkflowTransition_edit_') !== FALSE) {
+    $forms[$form_id] = array('callback' => 'workflow_transition_wrapper_form');
+  }
+
+  return $forms;
+}
+
+/**
  * Implements hook_features_api().
  */
 function workflow_features_api() {
@@ -197,14 +225,11 @@ function TODOworkflow_entity_type_build(array &$entity_types) {
   //$entity_types['node']->setFormClass('mymodule_foo', 'Drupal\mymodule\NodeFooFormController');
 }
 
-/**
- * Implements hook_cron().
+/**********************************************************************
  *
- * Given a timeframe, execute all scheduled transitions.
+ * CRUD hooks.
+ *
  */
-function workflow_cron() {
-  Workflow::workflowManager()->executeScheduledTransitionsBetween(0, REQUEST_TIME);
-}
 
 /**
  * Implements hook_user_cancel().
@@ -235,13 +260,15 @@ function workflow_user_role_insert($role) {
 
 /**
  * Implements hook_entity_insert().
- *
- * When adding an entity with workflow field, the initial Transition is
- * saved without reference to the proper entity, since Id is not yet known.
- * So when adding (not updating), we use an extra hook.
- * This is referenced in from WorkfowDefaultWidget::massageFormValues
  */
-function workflow_entity_insert(Drupal\Core\Entity\EntityInterface $entity) {
+function workflow_entity_insert(EntityInterface $entity) {
+  workflow_entity_update($entity);
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function workflow_entity_update(EntityInterface $entity) {
   // Avoid this hook on workflow objects.
   if (!in_array($entity->getEntityTypeId(), [
     'workflow_workflow',
@@ -250,40 +277,23 @@ function workflow_entity_insert(Drupal\Core\Entity\EntityInterface $entity) {
     'workflow_transition',
     'workflow_scheduled_transition',
   ])) {
-    // Get the field name.
-    $field_name = workflow_get_field_name($entity);
-    /* @var $transition WorkflowTransitionInterface */
-    $transition = $entity->$field_name->workflow['workflow_transition'];
-    $transition->setEntity($entity);
-    $transition->save();
+    // Execute/save the transitions fom the widgets in the entity form.
+    Workflow::workflowManager()->executeTransitionsOfEntity($entity);
   }
+}
+
+/**
+ * Implements hook_cron().
+ *
+ * Given a timeframe, execute all scheduled transitions.
+ */
+function workflow_cron() {
+  Workflow::workflowManager()->executeScheduledTransitionsBetween(0, REQUEST_TIME);
 }
 
 /**
  * Business related functions, the API.
  */
-
-/**
- * Implements hook_forms().
- *
- * Allows the workflow tab form to be repeated multiple times on a page.
- * @see http://drupal.org/node/1970846
- * @see https://www.drupal.org/node/2188851
- */
-function workflow_forms($form_id, $args) {
-  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
-  $forms = array();
-  if (strpos($form_id, 'workflow_transition_form_') !== FALSE) {
-    $forms[$form_id] = array('callback' => 'workflow_transition_form');
-  }
-  // For the 'edit a comment' form.
-  if (strpos($form_id, 'WorkflowTransition_edit_') !== FALSE) {
-    $forms[$form_id] = array('callback' => 'workflow_transition_wrapper_form');
-  }
-
-  return $forms;
-}
 
 /**
  * Executes a transition (change state of an entity), from OUTSIDE the entity,
@@ -503,6 +513,21 @@ function workflow_url_get_entity(EntityInterface $entity = NULL) {
   return $entity;
 }
 
+/**
+ * Helper function to get the entity from a route.
+ *
+ */
+function workflow_url_get_operation(EntityInterface $entity = NULL) {
+  $url = \Drupal\Core\Url::fromRoute('<current>');
+  // The last part of the path is the operation: edit, workflow, devel.
+  $url_parts = explode('/', $url->toString());
+  $operation = array_pop($url_parts);
+  // Except for view pages.
+  if (is_numeric($operation) || $operation == 'view') {
+    $operation = '';
+  }
+  return $operation;
+}
 
 /**
  * Functions to get the state of an entity.

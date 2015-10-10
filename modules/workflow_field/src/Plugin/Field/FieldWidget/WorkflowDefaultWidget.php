@@ -200,12 +200,6 @@ class WorkflowDefaultWidget extends WidgetBase {
           // The current value is still the previous state.
           $to_sid = $from_sid;
         }
-        elseif(!$entity || !$entity->id()) {
-          // When an entity is added/inserted, the id is not yet known.
-          // So we can't yet save the transition, and rely on function/hook
-          // workflow_entity_insert($entity) in file workflow.module.
-          $to_sid = $transition->getToSid();
-        }
         elseif ($transition->isScheduled()) {
           /*
            * A scheduled transition must only be saved to the database.
@@ -217,17 +211,32 @@ class WorkflowDefaultWidget extends WidgetBase {
           $to_sid = $from_sid;
         }
         else {
-          // Now the data is captured in the Transition, and before calling the
-          // Execution, restore the default values for Workflow Field.
-          // For instance, workflow_rules evaluates this.
-
           // It's an immediate change. Do the transition.
           // - validate option; add hook to let other modules change comment.
           // - add to history; add to watchdog
           // Return the new State ID. (Execution may fail and return the old Sid.)
-          $to_sid = $transition->execute($force);
+
+          if (!$transition->isAllowed([], $user, $force)) {
+            // Transition is not allowed.
+            $to_sid = $from_sid;
+          }
+          elseif (!$entity || !$entity->id()) {
+            // Entity is inserted. The Id is not yet known.
+            // So we can't yet save the transition right now, but must rely on
+            // function/hook workflow_entity_insert($entity) in file workflow.module.
+            // $to_sid = $transition->execute($force);
+            $to_sid = $transition->getToSid();
+          }
+          else {
+            workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+            // $to_sid = $transition->execute($force);
+            $to_sid = $transition->getToSid();
+          }
         }
 
+        // Now the data is captured in the Transition, and before calling the
+        // Execution, restore the default values for Workflow Field.
+        // For instance, workflow_rules evaluates this.
         // Set the value at the proper location.
         $item['value'] = $to_sid;
       }

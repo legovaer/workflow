@@ -74,6 +74,38 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
+  public function executeTransitionsOfEntity(EntityInterface $entity) {
+    // Avoid this hook on workflow objects.
+    if (in_array($entity->getEntityTypeId(), [
+      'workflow_workflow',
+      'workflow_state',
+      'workflow_config_transition',
+      'workflow_transition',
+      'workflow_scheduled_transition',
+    ])) {
+      return;
+    }
+
+    foreach (_workflow_info_fields($entity) as $field_name => $field_info) {
+      /* @var $transition WorkflowTransitionInterface */
+      $transition = $entity->$field_name->workflow['workflow_transition'];
+      // Set the just-saved entity explicitly. Not necessary for update,
+      // but upon insert, the old version didn't have an ID, yet.
+      if ($transition) {
+        // We come from Content edit page, from widget.
+        $transition->setEntity($entity);
+        $transition->execute();
+      }
+      else {
+        // We come from WorkflowTransitionForm, which explicitly save the entity.
+        // The transiition is executed by  the form.
+      }
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function deleteUser(AccountInterface $account) {
     workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     self::cancelUser([], $account, 'user_cancel_delete');

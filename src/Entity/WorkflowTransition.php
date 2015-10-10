@@ -335,7 +335,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $entity->{$field_name}->setValue($to_sid);
     // @todo D7: perhaps use field_attach_update, for better performance, and not change entity properties.
     // @todo D7: if transition is scheduled or new_sid == old_sid and no comment, proceed as if no $field_name.
-     return $entity->save();
+    return $entity->save();
     // field_attach_update($entity_type, $entity);
     //$to_sid = workflow_node_current_state($entity, $field_name);
   }
