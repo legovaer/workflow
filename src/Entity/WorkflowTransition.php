@@ -196,7 +196,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       if ($found_transition &&
         $found_transition->getTimestamp() == REQUEST_TIME &&
         $found_transition->getToSid() == $this->getToSid()) {
-        workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
         return SAVED_UPDATED;
       }
       else {
@@ -205,7 +204,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     }
     else {
       // Update the transition.
-      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
       return parent::save();
     }
 
@@ -373,6 +371,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       $static_last_tid = $this->id();
     }
     else {
+//      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, '2e keer');  // @todo D8-port: still test this snippet.
+//      $this->dpm();
       // Error: this Transition is already executed.
       // On the development machine, execute() is called twice, when
       // on an Edit Page, the entity has a scheduled transition, and
@@ -929,7 +929,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $output[] = 'Entity  = ' . $entity->getEntityTypeId().'/'.$entity->bundle().'/'.$entity->id();
     $output[] = 'Field   = ' . $transition->getFieldName();
     $output[] = 'From/To = ' . $transition->getFromSid() . ' > ' . $transition->getToSid() . ' @ ' . $time;
-    $output[] = 'Comment = ' . $transition->getComment();
+    $output[] = 'Comment = ' . $transition->getOwner()->getUsername() . ' says: ' . $transition->getComment();
     if (function_exists('dpm')) { dpm($output, $t_string); }
   }
 

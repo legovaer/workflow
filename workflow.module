@@ -234,6 +234,32 @@ function workflow_user_role_insert($role) {
 }
 
 /**
+ * Implements hook_entity_insert().
+ *
+ * When adding an entity with workflow field, the initial Transition is
+ * saved without reference to the proper entity, since Id is not yet known.
+ * So when adding (not updating), we use an extra hook.
+ * This is referenced in from WorkfowDefaultWidget::massageFormValues
+ */
+function workflow_entity_insert(Drupal\Core\Entity\EntityInterface $entity) {
+  // Avoid this hook on workflow objects.
+  if (!in_array($entity->getEntityTypeId(), [
+    'workflow_workflow',
+    'workflow_state',
+    'workflow_config_transition',
+    'workflow_transition',
+    'workflow_scheduled_transition',
+  ])) {
+    // Get the field name.
+    $field_name = workflow_get_field_name($entity);
+    /* @var $transition WorkflowTransitionInterface */
+    $transition = $entity->$field_name->workflow['workflow_transition'];
+    $transition->setEntity($entity);
+    $transition->save();
+  }
+}
+
+/**
  * Business related functions, the API.
  */
 
@@ -433,7 +459,11 @@ function workflow_get_sid_name($sid) {
  * @return string
  */
 function workflow_get_field_name(EntityInterface $entity, $field_name = '') {
-  if (!$field_name) {
+  if (!$entity) {
+    // $entity may be empty on Entity Add page.
+    $field_name = '';
+  }
+  elseif (!$field_name ) {
     $entity_type = $entity->getEntityTypeId();
     $fields = _workflow_info_fields($entity, $entity_type);
     $field_names = array_keys($fields);
@@ -453,13 +483,18 @@ function workflow_get_field_name(EntityInterface $entity, $field_name = '') {
  * @return \Drupal\Core\Entity\EntityInterface
  */
 function workflow_url_get_entity(EntityInterface $entity = NULL) {
-//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
   if (!$entity) {
     $route_match = \Drupal::routeMatch();
+    // On node pages, we'd get an object.
     $entity = $route_match->getParameter('node');
     if(!$entity) {
+      // On term pages, we get objects, or id's.
       $entity = $route_match->getParameter('taxonomy_term');
-      if (!is_object($entity)) {
+      if (!$entity) {
+        // We may be on a entity add page/
+        // Or we may be on a page of some unknown entity.
+      }
+      elseif (!is_object($entity)) {
         $entity = \Drupal\taxonomy\Entity\Term::load($entity);
       }
     }

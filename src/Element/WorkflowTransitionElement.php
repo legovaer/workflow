@@ -56,41 +56,6 @@ class WorkflowTransitionElement extends FormElement {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public static function valueCallback(&$element, $input, FormStateInterface $form_state) {
-    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
-    return 0;
-  }
-
-  /**
-   * Prepares a #type 'checkbox' render element for input.html.twig.
-   *
-   * @param array $element
-   *   An associative array containing the properties of the element.
-   *   Properties used: #title, #value, #return_value, #description, #required,
-   *   #attributes, #checked.
-   *
-   * @return array
-   *   The $element with prepared variables ready for input.html.twig.
-   */
-  public static function preRenderTransition($element) {
-    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
-    $element['#attributes']['type'] = 'workflow_transition';
-    Element::setAttributes($element, array('id', 'name', '#return_value' => 'value'));
-
-    // Unchecked checkbox has #value of integer 0.
-    if (!empty($element['#checked'])) {
-      $element['#attributes']['checked'] = 'checked';
-    }
-    static::setAttributes($element, array('form-workflow-transition'));
-
-    return $element;
-  }
-
-  /**
    * Form element validation handler.
    *
    * Note that #maxlength is validated by _form_validate() already.
@@ -116,6 +81,7 @@ class WorkflowTransitionElement extends FormElement {
    * This function is referenced in the Annoteation for this class.
    */
   public static function processTransition(&$element, FormStateInterface $form_state, &$complete_form) {
+    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     return self::transitionElement($element, $form_state, $complete_form);
   }
 
@@ -133,8 +99,9 @@ class WorkflowTransitionElement extends FormElement {
   public static function transitionElement(&$element, FormStateInterface $form_state, &$complete_form) {
 
     /*
-     * Get data from parameters.
+     * Input.
      */
+    // A Transition object must have been set explicitly.
     /* @var $transition WorkflowTransitionInterface */
     $transition = $element['#default_value'];
     /* @var $user \Drupal\Core\Session\AccountProxyInterface */
@@ -142,7 +109,7 @@ class WorkflowTransitionElement extends FormElement {
     $force = FALSE;
 
     /*
-     * Get derived data from parameters.
+     * Derived input.
      */
     $entity = $transition->getEntity();
     $field_name = $transition->getFieldName();
@@ -216,7 +183,7 @@ class WorkflowTransitionElement extends FormElement {
     */
 
     /*
-     * Generate the element.
+     * Output: generate the element.
      */
     // Get settings from workflow.
     $workflow = $transition->getWorkflow();

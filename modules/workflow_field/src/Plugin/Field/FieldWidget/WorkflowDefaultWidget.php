@@ -177,22 +177,19 @@ class WorkflowDefaultWidget extends WidgetBase {
         /* @var $entity EntityInterface */
         $entity = $form_state->getFormObject()->getEntity();
         $field_name = $item['workflow']['workflow_field_name'];
-
-        $force = FALSE;
-
-        $current_sid = workflow_node_current_state($entity, $field_name);
         /* @var $transition \Drupal\workflow\Entity\WorkflowTransitionInterface */
-        $transition = WorkflowTransition::create();
-        $transition->setValues($entity, $field_name, $current_sid, '', $user->id());
+        $transition = $item['workflow']['workflow_transition'];
         // N.B. Use a proprietary version of copyFormValuesToEntity,
-        // where $entity is passed by reference.
+        // where $entity/$transition is passed by reference.
         // $this->copyFormValuesToEntity($entity, $form, $form_state);
         /* @var $transition \Drupal\workflow\Entity\WorkflowTransitionInterface */
         $transition = WorkflowTransitionElement::copyFormItemValuesToEntity($transition, $form, $item);
 
+        $force = FALSE; // @TODO D8-port: add to form for usage in VBO.
+
         // Now, save/execute the transition.
-          $from_sid = $transition->getFromSid();
-          $force = $force || $transition->isForced();
+        $from_sid = $transition->getFromSid();
+        $force = $force || $transition->isForced();
 
         // Try to execute the transition. Return $from_sid when error.
         if (!$transition) {
@@ -203,7 +200,23 @@ class WorkflowDefaultWidget extends WidgetBase {
           // The current value is still the previous state.
           $to_sid = $from_sid;
         }
-        elseif (!$transition->isScheduled()) {
+        elseif(!$entity || !$entity->id()) {
+          // When an entity is added/inserted, the id is not yet known.
+          // So we can't yet save the transition, and rely on function/hook
+          // workflow_entity_insert($entity) in file workflow.module.
+          $to_sid = $transition->getToSid();
+        }
+        elseif ($transition->isScheduled()) {
+          /*
+           * A scheduled transition must only be saved to the database.
+           * The entity is not changed.
+           */
+          $transition->save();
+
+          // The current value is still the previous state.
+          $to_sid = $from_sid;
+        }
+        else {
           // Now the data is captured in the Transition, and before calling the
           // Execution, restore the default values for Workflow Field.
           // For instance, workflow_rules evaluates this.
@@ -213,16 +226,6 @@ class WorkflowDefaultWidget extends WidgetBase {
           // - add to history; add to watchdog
           // Return the new State ID. (Execution may fail and return the old Sid.)
           $to_sid = $transition->execute($force);
-        }
-        else {
-          /*
-           * A scheduled transition must only be saved to the database.
-           * The entity is not changed.
-           */
-          $transition->save();
-
-          // The current value is still the previous state.
-          $to_sid = $from_sid;
         }
 
         // Set the value at the proper location.
