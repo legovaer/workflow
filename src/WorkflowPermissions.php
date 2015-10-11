@@ -55,17 +55,17 @@ class WorkflowPermissions {
 //      'description' => t('View, edit and delete all transitions regardless of permission restrictions.'),
 //      'restrict access' => TRUE,
 //    ),
-      // D7->D8-Conversion of 'participate in workflow' permission to "create $type_id transition" (@see NodePermissions::create content). // TODO D8-port
+      // D7->D8-Conversion of 'participate in workflow' permission to "create $type_id transition" (@see NodePermissions::create content).
       "create $type_id workflow_transition" => array(
         'title' => $this->t('%type_name: Participate in workflow', $type_params),
         'description' => t('Role is enabled to create state transitions. (Determine transition-specific permission on the workflow admin page.)'),
       ),
-      // D7->D8-Conversion of 'schedule workflow transitions' permission to "schedule $type_id transition" (@see NodePermissions::create content). // TODO D8-port
-//      "schedule $type_id workflow_transition" => array(
-//        'title' => $this->t('%type_name: Schedule state transition', $type_params),
-//        'description' => t('Role is enabled to schedule state transitions.'),
-//      ),
-      // D7->D8-Conversion of 'workflow history' permission on Workflow settings to "access $type_id overview" (@see NodePermissions::access content overview). // TODO D8-port
+      // D7->D8-Conversion of 'schedule workflow transitions' permission to "schedule $type_id transition" (@see NodePermissions::create content).
+      "schedule $type_id workflow_transition" => array(
+        'title' => $this->t('%type_name: Schedule state transition', $type_params),
+        'description' => t('Role is enabled to schedule state transitions.'),
+      ),
+      // D7->D8-Conversion of 'workflow history' permission on Workflow settings to "access $type_id overview" (@see NodePermissions::access content overview). //
       "access own $type_id workflow_transion overview" => array(
         'title' => $this->t('%type_name: Access own State transition history overview page', $type_params),
         'description' => t('Role is enabled to view the "Workflow state transition history" tab on own entity.'),

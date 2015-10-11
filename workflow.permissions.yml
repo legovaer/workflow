@@ -12,11 +12,6 @@ administer workflow:
   description: 'Administer all Workflow configurations and settings.'
   restrict access: true
 
-schedule workflow transitions:
-# TODO D8-port: replace by "schedule $type_id transition"
-  title: 'Schedule workflow transitions (to be deprecated - replaced by type-specific permission)'
-  description: 'Schedule workflow transitions.'
-
 edit workflow comment:
 # TODO D8-port: replace by "edit own/any $type_id transition"
   title: 'Edit comment in workflow transitions (to be deprecated - replaced by type-specific permission)'

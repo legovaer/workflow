@@ -301,16 +301,8 @@ class WorkflowTransitionElement extends FormElement {
     // Display scheduling form, but only if entity is being edited and user has
     // permission. State change cannot be scheduled at entity creation because
     // that leaves the entity in the (creation) state.
-    if ($settings_schedule == TRUE && $user->hasPermission('schedule workflow transitions')) {
-// // @FIXME
-// // This looks like another module's variable. You'll need to rewrite this call
-// // to ensure that it uses the correct configuration object.
-// if (variable_get('configurable_timezones', 1) && $user->id() && drupal_strlen($user->timezone)) {
-//         $timezone = $user->timezone;
-//       }
-//       else {
-//         $timezone = variable_get('date_default_timezone', 0);
-//       }
+    $type_id = $workflow->id();
+    if ($settings_schedule == TRUE && $user->hasPermission("schedule $type_id workflow_transition")) {
       $timezone = $user->getTimeZone();
 
       $timezone_options = array_combine(timezone_identifiers_list(), timezone_identifiers_list());
