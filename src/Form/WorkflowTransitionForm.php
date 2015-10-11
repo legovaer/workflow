@@ -2,10 +2,10 @@
 
 /**
  * @file
- * Contains \Drupal\workflow\Entity\WorkflowTransitionForm.
+ * Contains \Drupal\workflow\Form\WorkflowTransitionForm.
  */
 
-namespace Drupal\workflow\Entity;
+namespace Drupal\workflow\Form;
 
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityInterface;

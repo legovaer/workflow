@@ -31,7 +31,7 @@ use Drupal\Core\Session\AccountInterface;
  *   handlers = {
  *     "list_builder" = "Drupal\workflow\Controller\WorkflowTransitionListBuilder",
  *     "form" = {
- *        "add" = "Drupal\workflow\Entity\WorkflowTransitionForm",
+ *        "add" = "Drupal\workflow\Form\WorkflowTransitionForm",
  *        "delete" = "Drupal\Core\Entity\EntityDeleteForm",
  *      }
  *   },

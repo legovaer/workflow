@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Contains helper functons for WorkflowTransitionForm.
+ * Contains helper functions for WorkflowTransitionForm.
  */
 
 /**
