@@ -86,7 +86,7 @@ class WorkflowItem extends ListItemBase {
         ->addConstraint('Length', array('max' => 128))
         ->setRequired(TRUE);
 
-//      dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__.'/'.__LINE__);
+//      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 /*
  *
        //    TODO D8-port: test this.
@@ -133,7 +133,7 @@ class WorkflowItem extends ListItemBase {
    * {@inheritdoc}
    */
   public function onChange($property_name, $notify = TRUE) {
-//    dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__.': '.$this->value);
+//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     // TODO D8: use this function onChange for adding a line in table workfow_transition_*
 //    // Enforce that the computed date is recalculated.
@@ -150,7 +150,7 @@ class WorkflowItem extends ListItemBase {
     $constraint_manager = \Drupal::typedDataManager()->getValidationConstraintManager();
     $constraints = parent::getConstraints();
 
-  //  dpm('TODO D8-port: test function WorkflowItem::' . __FUNCTION__);
+//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     /*
     $max_length = 128;
     $constraints[] = $constraint_manager->create('ComplexData', array(

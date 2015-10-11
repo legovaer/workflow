@@ -67,7 +67,7 @@ class WorkflowListBuilder extends ConfigEntityListBuilder {
       unset ($operations['delete']);
     }
 
-//    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ .': ' . 'top actions (via own routing??)');
+//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: 'top actions (via own routing??)');
     // Allow modules to insert their own action links to the 'table', like cleanup module.
     $top_actions = \Drupal::moduleHandler()->invokeAll('workflow_operations', ['top_actions', NULL]);
     // @todo: add these top actions next to the core 'Add workflow' action.
@@ -82,7 +82,7 @@ class WorkflowListBuilder extends ConfigEntityListBuilder {
 //     );
 
 
-//    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ .': ' . 'add default operations');
+//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: 'add default operations');
     // Allow modules to insert their own workflow operations.
 //    foreach ($form['table']['#rows'] as &$row) {
 //      $url = $row[0]['data']['#url'];
@@ -100,7 +100,7 @@ class WorkflowListBuilder extends ConfigEntityListBuilder {
     }
 
 
-//    dpm('TODO D8-port: test function WorkflowState::' . __FUNCTION__ .': ' . 'rempve delete operation');
+//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port:  'remove delete operation');
     // Avoid the 'delete' operation if the Workflow is used somewhere.
 //    $status = $entity->status;
 //
