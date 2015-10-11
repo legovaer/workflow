@@ -21,13 +21,35 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * Constructs a new Entity plugin manager.
    */
-  public function __construct() {
+//  public function __construct() {
+//  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function executeTransition(WorkflowTransitionInterface $transition) {
+    // Validate transition, save in history table and delete from schedule table.
+    $to_sid = $transition->execute();
+
+    // Save the (scheduled) transition.
+    if ($to_sid == $transition->getToSid()) {
+      if (!$transition->isScheduled()) {
+        // Update the workflow field of the entity.
+        $result = $transition->updateEntity();
+      }
+    }
+    else {
+      // The transition was not allowed.
+      // @todo: validateForm().
+    }
+
+    return $to_sid;
   }
 
   /**
    * {@inheritdoc}
    */
-  function executeScheduledTransitionsBetween($start = 0, $end = 0) {
+  public function executeScheduledTransitionsBetween($start = 0, $end = 0) {
     $clear_cache = FALSE;
 
     // If the time now is greater than the time to execute a transition, do it.
@@ -150,14 +172,14 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  function insertUserRole(Role $role) {
+  public function insertUserRole(Role $role) {
     user_role_change_permissions($role->id(), array('participate in workflow' => 1));
   }
 
   /**
    * {@inheritdoc}
    */
-  function getCurrentStateId(EntityInterface $entity, $field_name = '') {
+  public function getCurrentStateId(EntityInterface $entity, $field_name = '') {
     $sid = FALSE;
 
     if (!$entity) {
@@ -187,7 +209,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  function getPreviousStateId(EntityInterface $entity, $field_name = '') {
+  public function getPreviousStateId(EntityInterface $entity, $field_name = '') {
     $sid = FALSE;
 
     if (!$entity) {
