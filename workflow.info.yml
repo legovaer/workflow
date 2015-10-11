@@ -4,6 +4,3 @@ package: Workflow
 type: module
 core: 8.x
 # version: VERSION
-
-dependencies:
-  - devel
