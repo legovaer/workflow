@@ -77,13 +77,14 @@ function workflowfield_field_formatter_view($entity_type, $entity, $field, $inst
 
   $current_sid = workflow_node_current_state($entity, $field_name);
   $current_state = workflow_state_load_single($current_sid);
+  $wid = $current_state->getWorkflow()->id();
 
   // First compose the current value with the normal formatter from list.module.
   $list_element = workflow_state_formatter($entity, $field_name, $current_sid);
 
   // Check permission, so that even with state change rights,
   // the form can be suppressed from the entity view (#1893724).
-  if (!\Drupal::currentUser()->hasPermission('show workflow transition form')) {
+  if (!\Drupal::currentUser()->hasPermission('show ' . $wid . ' transition form')) {
     return $list_element;
   }
   if ($entity_type == 'comment') {

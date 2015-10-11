@@ -1,22 +1,32 @@
 # Permissions are declared in Workflow (not Workflow UI) so other contrib
 # modules can make use of it.
 
+#bypass transition access:
+## TODO D8-port: replace by "bypass $type_id transition". This is the D8-version of D7-special user 1
+#  title: 'Bypass transtion access control'
+#  description: 'View, edit and delete all transitions regardless of permission restrictions.'
+#  restrict access: true
+
 administer workflow:
   title: 'Administer workflows'
   description: 'Administer all Workflow configurations and settings.'
+  restrict access: true
 
 schedule workflow transitions:
-  title: 'Schedule workflow transitions'
+# TODO D8-port: replace by "schedule $type_id transition"
+  title: 'Schedule workflow transitions (to be deprecated - replaced by type-specific permission)'
   description: 'Schedule workflow transitions.'
 
-show workflow transition form:
-  title: 'Show workflow state change form on entity view page'
-  description': 'Show workflow state change form on entity viewing.'
-
 participate in workflow:
-  title: 'Participate in workflows'
+# TODO D8-port: replace by "create $type_id transition"
+  title: 'Participate in workflows (to be deprecated - replaced by type-specific permission)'
   description: 'Role is enabled for transitions on the workflow admin pages.'
 
 edit workflow comment:
-  title: 'Edit comment in workflow transitions'
+# TODO D8-port: replace by "edit own/any $type_id transition"
+  title: 'Edit comment in workflow transitions (to be deprecated - replaced by type-specific permission)'
   description: 'Edit comment of Logged transitions via a Views link.'
+  restrict access: true
+
+permission_callbacks:
+  - \Drupal\workflow\WorkflowPermissions::workflowTypePermissions
