@@ -17,11 +17,6 @@ schedule workflow transitions:
   title: 'Schedule workflow transitions (to be deprecated - replaced by type-specific permission)'
   description: 'Schedule workflow transitions.'
 
-participate in workflow:
-# TODO D8-port: replace by "create $type_id transition"
-  title: 'Participate in workflows (to be deprecated - replaced by type-specific permission)'
-  description: 'Role is enabled for transitions on the workflow admin pages.'
-
 edit workflow comment:
 # TODO D8-port: replace by "edit own/any $type_id transition"
   title: 'Edit comment in workflow transitions (to be deprecated - replaced by type-specific permission)'

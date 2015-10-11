@@ -49,10 +49,7 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     $entity = $this->workflow_entity; // This is a custom variable.
     // Get the field name. It is yet unknown. N.B. This does not work with multiple workflows per entity!
     $field_name = workflow_get_field_name($entity);
-    if (!$field_name) {
-      // @todo D8-port: if no workflow_field found, then no history_tab -> error log?
-    }
-    else {
+    if ($field_name) {
       $entity_type = $entity->getEntityTypeId();
       $entity_id = $entity->id();
 

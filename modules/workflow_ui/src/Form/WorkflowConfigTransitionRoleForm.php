@@ -90,7 +90,9 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
 
       $states = $workflow->getStates($all = 'CREATION');
       if ($states) {
-        $roles = workflow_get_user_role_names();
+        // Only get the roles with proper permission + Author role.
+        $type_id = $workflow->id();
+        $roles = workflow_get_user_role_names("create $type_id workflow_transition");
         // Prepare default value for 'stay_on_this_state'.
         $allow_all_roles = array_combine (array_keys($roles) , array_keys($roles));
 
@@ -191,26 +193,6 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
           // Should not be possible.
           // $config_transition = [];
         }
-
-//        workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-        /*
-                foreach ($transition_data->roles as $role => $can_do) {
-                  if ($can_do) {
-                    $roles += array($role => $role);
-                  }
-                }
-                if (count($roles)) {
-                    $config_transition = $transitions_data->config_transition;
-                    $config_transition->roles = $roles;
-                    $config_transition->save();
-                }
-                else {
-                  // foreach ($workflow->getTransitionsByStateId($from, $to_sid, 'ALL') as $config_transition) {
-                  foreach ($workflow->getTransitionsByStateId($from, $to_sid) as $config_transition) {
-                    $config_transition->delete();
-                  }
-                }
-        */
       }
     }
 

@@ -84,7 +84,7 @@ function workflowfield_field_formatter_view($entity_type, $entity, $field, $inst
 
   // Check permission, so that even with state change rights,
   // the form can be suppressed from the entity view (#1893724).
-  if (!\Drupal::currentUser()->hasPermission('show ' . $wid . ' transition form')) {
+  if (!\Drupal::currentUser()->hasPermission("access $wid workflow_transition form")) {
     return $list_element;
   }
   if ($entity_type == 'comment') {

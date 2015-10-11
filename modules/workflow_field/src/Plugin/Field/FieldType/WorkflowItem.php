@@ -186,10 +186,6 @@ class WorkflowItem extends ListItemBase {
               'comment' => 1,
             ),
             'watchdog_log' => 1,
-            'history' => array(
-              'history_tab_show' => 1,
-              'roles' => array(),
-            ),
       */
     ) + parent::defaultStorageSettings();
   }

@@ -234,14 +234,16 @@ function workflow_execute_transition(WorkflowTransitionInterface $transition, $f
  */
 
 /**
- * Get a list of roles.
+ * Retrieves the names of roles matching specified conditions.
  *
  * deprecated D8: workflow_get_roles --> workflow_get_user_role_names
  *
- * @param $permission
- *   The permission to filter with.
+ * @param string $permission
+ *   (optional) A string containing a permission. If set, only roles
+ *    containing that permission are returned. Defaults to NULL, which
+ *    returns all roles.
  *
- * @return array $options
+ * @return array
  *   Array of role names keyed by role ID, including the 'author' role.
  */
 function workflow_get_user_role_names($permission = 'participate in workflow') {
@@ -251,7 +253,7 @@ function workflow_get_user_role_names($permission = 'participate in workflow') {
     $roles[$permission] =
       array(WORKFLOW_ROLE_AUTHOR_RID => WORKFLOW_ROLE_AUTHOR_NAME) +
       // Copied from AccountForm::form().
-      array_map(array('\Drupal\Component\Utility\SafeMarkup', 'checkPlain'), user_role_names(TRUE));
+      array_map(array('\Drupal\Component\Utility\SafeMarkup', 'checkPlain'), user_role_names(TRUE, $permission));
   }
 
   return $roles[$permission];

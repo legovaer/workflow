@@ -37,7 +37,6 @@ use Drupal\Core\Session\AccountInterface;
  *     "label",
  *     "status",
  *     "module",
- *     "tab_roles",
  *     "options",
  *   },
  *   links = {
@@ -66,7 +65,6 @@ class Workflow extends ConfigEntityBase {
 // TODO D8-port Workflow: complete below variables. (Add get()-functions).
 // @see https://www.drupal.org/node/1809494
 // @see https://codedrop.com.au/blog/creating-custom-config-entities-drupal-8
-  public $tab_roles = array();
   public $options = array();
 
   /**

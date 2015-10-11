@@ -46,7 +46,7 @@ class WorkflowTransitionBlock extends BlockBase  {
 
     foreach(_workflow_info_fields($entity) as $field_name => $definition) {
       $type_id = $definition->getSetting('workflow_type');
-      if ($account->hasPermission('show ' . $type_id . ' transition form')) {
+      if ($account->hasPermission("access $type_id workflow_transition form")) {
         return AccessResult::allowed();
       }
     }

@@ -43,6 +43,33 @@ class WorkflowForm extends EntityForm {
       ],
     ];
 
+    $form['permissions'] = array(
+      '#type' => 'details',
+      '#title' => t('Workflow permissions'),
+      '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
+      '#description' => t("To enable further Workflow functionality, go to the
+        /admin/people/permissions page and select any roles that should have
+        access to below and other functionalities.
+        "),
+    );
+    $form['permissions']['transition_execute'] = array(
+      '#type' => 'item',
+      '#title' => t('Transition execute permissions'),
+      '#markup' => t("You can determine which roles are enabled on the 'Workflow
+        Transitions & roles' configuration page.
+        Use this to enable only the relevant roles. Some sites have too many roles
+        to show on the configuration page."),
+    );
+    $form['permissions']['history_tab'] = array(
+      '#type' => 'item',
+      '#title' => t('Workflow history permissions'),
+      '#markup' => t("You can determine if a tab 'Workflow history' is
+         shown on the entity view page, which gives access to the History of
+         the workflow.
+         If you have multiple workflows per bundle, better disable this feature,
+         and use, clone & adapt the Views display 'Workflow history per Entity'."),
+    );
+
     $form['basic'] = array(
       '#type' => 'details',
       '#title' => t('Workflow form settings'),
@@ -82,7 +109,7 @@ class WorkflowForm extends EntityForm {
 
     $form['schedule'] = array(
       '#type' => 'details',
-      '#title' => t('Scheduling for Workflow'),
+      '#title' => t('Scheduling'),
       '#description' => t('Workflow transitions may be scheduled to a moment in the future.
         Soon after the desired moment, the transition is executed by Cron.'),
       '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
@@ -107,7 +134,7 @@ class WorkflowForm extends EntityForm {
 
     $form['comment'] = array(
       '#type' => 'details',
-      '#title' => t('Comment for Workflow Log'),
+      '#title' => t('Comment'),
       '#description' => t(
         'A Comment form can be shown on the Workflow Transition form so that the person
          making a state change can record reasons for doing so. The comment is
@@ -184,35 +211,6 @@ class WorkflowForm extends EntityForm {
       '#description' => t(''),
     );
 
-    $form['history'] = array(
-      '#type' => 'details',
-      '#title' => t('Workflow history permissions'),
-      '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
-      '#description' => t("Every state change is recorded in database table
-        {workflow_transition_history}. The history of the workflow can be shown on a
-        tab 'Workflow', which is shown on the entity view page."),
-    );
-    $form['history']['history_tab_show'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Use the workflow history, and show it on a separate tab. (If user has proper permissions.)'),
-      '#required' => FALSE,
-      '#default_value' => isset($workflow->options['history_tab_show']) ? $workflow->options['history_tab_show'] : 1,
-      '#description' => t("Every state change is recorded in table
-            {workflow_transition_history}. If checked and user has proper permission, a
-            tab 'Workflow' is shown on the entity view page, which gives access to
-            the History of the workflow. If you have multiple workflows per bundle,
-            better disable this feature, and use, clone & adapt the Views display
-            'Workflow history per Entity'."),
-    );
-
-    $form['history']['tab_roles'] = array(
-      '#type' => 'checkboxes',
-      '#title' => $this->t('Roles'),
-      '#options' => workflow_get_user_role_names(),
-      '#default_value' => array_keys($workflow->tab_roles),
-      '#description' => t('Select any roles that should have access to the workflow tab on content that has a workflow.'),
-    );
-
     return parent::form($form, $form_state);
   }
 
@@ -235,7 +233,6 @@ class WorkflowForm extends EntityForm {
     // Prevent leading and trailing spaces.
     $entity->set('label', trim($entity->label()));
 
-    $entity->set('tab_roles', array_filter($form_state->getValue('tab_roles')));
     $entity->set('options', array(
         'name_as_title' => $form_state->getValue('name_as_title'),
         'options' => $form_state->getValue('options'),
@@ -244,7 +241,6 @@ class WorkflowForm extends EntityForm {
         'comment_log_node' => $form_state->getValue('comment_log_node'),
         'comment_log_tab' => $form_state->getValue('comment_log_tab'),
         'watchdog_log' => $form_state->getValue('watchdog_log'),
-        'history_tab_show' => $form_state->getValue('history_tab_show'),
       )
     );
 
@@ -257,7 +253,7 @@ class WorkflowForm extends EntityForm {
       '%action' => $action,
       'link' => $entity->link(t('Edit'))
     ];
-    drupal_set_message($this->t('Workflow %label has been %action. Please maintain the states and transitions.', $args));
+    drupal_set_message($this->t('Workflow %label has been %action. Please maintain the permissions, states and transitions.', $args));
     $this->logger('workflow')->notice('Workflow %label has been %action.', $args);
 
     if ($status == SAVED_NEW){
