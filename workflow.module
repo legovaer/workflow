@@ -195,22 +195,6 @@ function workflow_forms($form_id, $args) {
 }
 
 /**
- * Implements hook_features_api().
- */
-function workflow_features_api() {
-  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
-  return array(
-//    'workflow' => array(
-//      'name' => t('Workflow'),
-//      'file' => drupal_get_path('module', 'workflow') . '/workflow.features.inc',
-//      'default_hook' => 'workflow_default_workflows',
-//      'feature_source' => TRUE,
-//    ),
-  );
-}
-
-/**
  * Implements hook_entity_type_build().
  *
  * @see https://www.drupal.org/node/2196275 "hook_entity_info() renamed to hook_entity_type_build()"

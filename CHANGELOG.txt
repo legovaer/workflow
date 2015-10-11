@@ -1,2 +1,4 @@
 Changes since 8.x-1.x
 Issue #2351299 by johnv: Porting D7-version to D8 using drupalmoduleupgrader module.
+Issue #2585093 by johnv: Fixed lost error message on Workflow UI - Transitions page.
+Issue #2587165 by johnv: Port Workflow to D8: dropped features, clone support.

@@ -84,18 +84,6 @@ class Workflow extends ConfigEntityBase {
    * CRUD functions.
    */
 
-  public function __clone() {
-//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
-    // Clone the arrays of States and Transitions.
-    foreach ($this->states as &$state) {
-      $state = clone $state;
-    }
-    foreach ($this->transitions as &$transition) {
-      $transition = clone $transition;
-    }
-  }
-
   /**
    * Given information, update or insert a new workflow.
    *
@@ -116,76 +104,10 @@ class Workflow extends ConfigEntityBase {
    */
 
   public function save() {
-//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
-    /*
-        // Are we rebuilding, reverting a new Workflow? @see workflow.features.inc
-        $is_rebuild = !empty($this->is_rebuild);
-        $is_reverted = !empty($this->is_reverted);
-
-        // If rebuild by Features, make some conversions.
-        if (!$is_rebuild && !$is_reverted) {
-          // Avoid troubles with features clone/revert/..
-          unset($this->module);
-        }
-        else {
-          $role_map = isset($this->system_roles) ? $this->system_roles : array();
-          if ($role_map) {
-            // Remap roles. They can come from another system with shifted role IDs.
-            // See also https://drupal.org/node/1702626 .
-            $this->tab_roles = _workflow_rebuild_roles($this->tab_roles, $role_map);
-            foreach ($this->transitions as &$transition) {
-              $transition['roles'] = _workflow_rebuild_roles($transition['roles'], $role_map);
-            }
-          }
-
-        }
-        // After update.php or import feature, label might be empty. @todo: remove in D8.
-        if (empty($this->label)) {
-          $this->label = $this->name;
-        }
-    */
-
     $status = parent::save();
     // Are we saving a new Workflow?
-    $is_new = ($status == SAVED_NEW);
-
-    /*
-        // If a workflow is cloned in Admin UI, it contains data from original workflow.
-        // Redetermine the keys.
-        if (($is_new) && $this->states) {
-          foreach ($this->states as $state) {
-            // Can be array when cloning or with features.
-            $state = is_array($state) ? new WorkflowState($state) : $state;
-            // Set up a conversion table, while saving the states.
-            $old_sid = $state->id();
-            $state->wid = $this->id();
-            // @todo: setting sid to FALSE should be done by entity_ui_clone_entity().
-            $state->set('id', FALSE);
-            $state->save();
-            $sid_conversion[$old_sid] = $state->id();
-          }
-
-           // Reset state cache.
-          $this->getStates(TRUE, TRUE);
-          foreach ($this->transitions as &$config_transition) {
-            // Can be array when cloning or with features.
-            $config_transition = is_array($config_transition) ? WorkflowConfigTransition::create($config_transition, 'WorkflowConfigTransition') : $config_transition;
-            // Convert the old sids of each transitions before saving.
-            // @todo: is this be done in 'clone $config_transition'?
-            // (That requires a list of transitions without tid and a wid-less conversion table.)
-            if (isset($sid_conversion[$config_transition->getFromSid()])) {
-              $config_transition->set('id', FALSE);
-              $config_transition->set('from_sid', $sid_conversion[$config_transition->getFromSid()]);
-              $config_transition->set('to_sid', $sid_conversion[$config_transition->getToSid()]);
-              $config_transition->save();
-            }
-          }
-        }
-    */
-
     // Make sure a Creation state exists.
-    if ($is_new) {
+    if ($status == SAVED_NEW) {
       $state = $this->getCreationState();
     }
 
