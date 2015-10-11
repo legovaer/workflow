@@ -24,6 +24,12 @@ define('WORKFLOW_MARK_STATE_IS_DELETED', '*');
  */
 class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInterface {
 
+  /**
+   * A variable to pass the entity of a transition to the ListBuilder.
+   * @todo: There should be a better way.
+   *
+   * @var EntityInterface
+   */
   public $workflow_entity;
 
   /**
@@ -158,9 +164,13 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     }
     unset($from_state); // Not needed anymore.
 
+    $owner = $transition->getOwner();
     $variables = array(
       'transition' => $transition,
       'extra' => '',
+      'from_label' => $from_label,
+      'to_label' => $to_label,
+      'user' => $owner,
     );
     // Allow other modules to modify the row.
     \Drupal::moduleHandler()->alter('workflow_history', $variables);
@@ -169,19 +179,16 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     $row['timestamp']['data'] = $transition->getTimestampFormatted(); // 'class' => array('timestamp')
     $row['from_state']['data'] = $from_label; // 'class' => array('previous-state-name'))
     $row['to_state']['data'] = $to_label; // 'class' => array('state-name'))
-    $row['user_name']['data'] = $transition->getOwner()->getUsername(); // 'class' => array('user-name')
+    $row['user_name']['data'] = $owner->getUsername(); // 'class' => array('user-name')
     $row['comment']['data'] = Html::escape($transition->getComment()); // 'class' => array('log-comment')
 //    $row['comment'] = array(
 //      '#type' => 'textarea',
 //      '#default_value' => $transition->getComment(),
 //    );
 
-    // column 'Operations' is now added by core.
+    // Column 'Operations' is now added by core.
     // D7: $row['operations']['data'] = $this->buildOperations($entity);
-    $row += parent::buildRow($entity);
-
-    // @TODO D8-port: add operations column.
-    $row['operations'] = []; // @TODO D8-port filter operations.
+    $row += parent::buildRow($transition);
 
     return $row;
   }
@@ -248,28 +255,21 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
   public function getDefaultOperations(EntityInterface $entity) {
     $operations = parent::getDefaultOperations($entity);
 
-//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
-    // TODO D8-port: convert workflow-operations to core-style.
-    return $operations;
-
-    /* @var WorkflowTransitionInterface $transition */
+    /* @var $transition WorkflowTransitionInterface */
     $transition = $entity;
 
-    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-    // TODO D8-port: test invokeAll('workflow_operations',).
+    if (isset($operations['edit'])) {
+      $destination = \Drupal::destination()->getAsArray();
+      $operations['edit']['query'] = $destination;
+    }
+
+    // @TODO D8-port: convert workflow-operations to core-style.
+//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    // TODO D8-port: test invokeAll('workflow_operations', []).
     // Allow modules to insert operations per state.
     $workflow = $transition->getWorkflow();
-    $links = \Drupal::moduleHandler()->invokeAll('workflow_operations', ['state', $workflow, $state]);
-    /*
-        if ($entity->hasLinkTemplate('edit-form')) {
-          $operations['edit'] = array(
-            'title' => t('Edit ball'),
-            'weight' => 20,
-            'url' => $entity->urlInfo('edit-form'),
-          );
-        }
-    */
+    $operations += \Drupal::moduleHandler()->invokeAll('workflow_operations', ['workflow_transition', $workflow, NULL, $transition]);
+
     return $operations;
   }
 

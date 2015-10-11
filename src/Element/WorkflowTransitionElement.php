@@ -112,11 +112,26 @@ class WorkflowTransitionElement extends FormElement {
      * Derived input.
      */
     $entity = $transition->getEntity();
+    $entity_type = ($entity) ? $transition->getEntity()->getEntityTypeId() : '';
+    $entity_id = ($entity) ? $transition->getEntity()->id() : '';
     $field_name = $transition->getFieldName();
-    if ($entity) {
+    if ($transition->isExecuted()) {
+      // We are editing an existing/executed/not-scheduled transition.
+      // Only the comments may be changed!
+
+      // You may not schedule an existing Transition.
+      $scheduled = FALSE;
+
+      $current_sid = $from_sid = $transition->getFromSid();
+      $from_state = $transition->getFromState();
+      // The states may not be changed anymore.
+      $options = array($transition->getToSid() => $transition->getToState()->label());
+      // We do need to see the comment section of the widget.
+      $show_widget = TRUE;
+      $default_value = $transition->getToSid();
+    }
+    elseif ($entity) {
       // E.g., on VBO-page, no entity may be given.
-      $entity_type = $transition->getEntity()->getEntityTypeId();
-      $entity_id = $transition->getEntity()->id();
       $langcode = $entity->language()->getId();
 
       // TODO D8-port: load Scheduled transitions, only for existing entities.
@@ -236,7 +251,7 @@ class WorkflowTransitionElement extends FormElement {
     // Show comment, when both Field and Instance allow this.
     $settings_comment = $workflow_settings['comment'];
 
-    $transition_is_scheduled = ($transition && $transition->isScheduled());
+    $transition_is_scheduled = $transition->isScheduled();
     // Save the current value of the entity in the form, for later Workflow-module specific references.
     // We add prefix, since #tree == FALSE.
     $element['workflow']['workflow_field_name'] = array(
@@ -262,7 +277,7 @@ class WorkflowTransitionElement extends FormElement {
 
     // Add a state formatter before the rest of the form,
     // when transition is scheduled or widget is hidden.
-    if ( (!$show_widget) || $transition_is_scheduled ) {
+    if ( (!$show_widget) || $transition_is_scheduled || $transition->isExecuted()) {
       $element['workflow_current_state'] = workflow_state_formatter($entity, $field_name, $current_sid);
       // Set a proper weight, which works for Workflow Options in select list AND action buttons.
       $element['workflow_current_state']['#weight'] = -0.005;
@@ -290,7 +305,7 @@ class WorkflowTransitionElement extends FormElement {
       // The 'options' widget. May be removed later if 'Action buttons' are chosen.
       $element['workflow']['workflow_to_sid'] = array(
         '#type' => $settings_options_type,
-        '#title' => $settings_title_as_name ? t('Change !name state', array('!name' => $workflow_label)) : t('Target state'),
+        '#title' => ($settings_title_as_name && !$transition->isExecuted()) ? t('Change !name state', array('!name' => $workflow_label)) : t('Target state'),
         '#options' => $options,
         // '#name' => $workflow_label,
         // '#parents' => array('workflow'),
@@ -298,11 +313,11 @@ class WorkflowTransitionElement extends FormElement {
       );
     }
 
-    // Display scheduling form, but only if entity is being edited and user has
-    // permission. State change cannot be scheduled at entity creation because
-    // that leaves the entity in the (creation) state.
+    // Display scheduling form, but only if new entity is being edited and user
+    // has permission. State change cannot be scheduled at entity creation
+    // because that leaves the entity in the (creation) state.
     $type_id = $workflow->id();
-    if ($settings_schedule == TRUE && $user->hasPermission("schedule $type_id workflow_transition")) {
+    if ($settings_schedule == TRUE && !$transition->isExecuted() && $user->hasPermission("schedule $type_id workflow_transition")) {
       $timezone = $user->getTimeZone();
 
       $timezone_options = array_combine(timezone_identifiers_list(), timezone_identifiers_list());

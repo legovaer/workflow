@@ -29,9 +29,11 @@ use Drupal\Core\Session\AccountInterface;
  *   bundle_label = @Translation("Workflow type"),
  *   module = "workflow",
  *   handlers = {
+ *     "access" = "Drupal\workflow\WorkflowTransitionAccessControlHandler",
  *     "list_builder" = "Drupal\workflow\Controller\WorkflowTransitionListBuilder",
  *     "form" = {
  *        "add" = "Drupal\workflow\Form\WorkflowTransitionForm",
+ *        "edit" = "Drupal\workflow\Form\WorkflowTransitionForm",
  *        "delete" = "Drupal\Core\Entity\EntityDeleteForm",
  *      }
  *   },
@@ -41,9 +43,9 @@ use Drupal\Core\Session\AccountInterface;
  *     "id" = "hid",
  *   },
  *   links = {
- *     "canonical" = "/workflow_transition/{workflow_transition}",
- *     "delete-form" = "/workflow_transition/{workflow_transition}/delete",
- *     "edit-form" = "/workflow_transition/{workflow_transition}/edit",
+ *     "canonical" = "/workflow/transition/{workflow_transition}",
+ *     "delete-form" = "/workflow/transition/{workflow_transition}/delete",
+ *     "edit-form" = "/workflow/transition/{workflow_transition}/edit",
  *   }
  * )
  */
@@ -175,6 +177,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 
     $transition = $this;
     $field_name = $transition->getFieldName();
+    // getEntity() also sets properties.
     $entity = $transition->getEntity();
     $entity_type = $entity->getEntityTypeId();
     $entity_id = $entity->id();

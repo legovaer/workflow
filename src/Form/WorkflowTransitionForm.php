@@ -11,6 +11,7 @@ use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\workflow\Element\WorkflowTransitionElement;
+use Drupal\workflow\Entity\Workflow;
 
 /**
  * Provides a Transition Form to be used in the Workflow Widget.

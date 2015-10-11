@@ -12,11 +12,5 @@ administer workflow:
   description: 'Administer all Workflow configurations and settings.'
   restrict access: true
 
-edit workflow comment:
-# TODO D8-port: replace by "edit own/any $type_id transition"
-  title: 'Edit comment in workflow transitions (to be deprecated - replaced by type-specific permission)'
-  description: 'Edit comment of Logged transitions via a Views link.'
-  restrict access: true
-
 permission_callbacks:
   - \Drupal\workflow\WorkflowPermissions::workflowTypePermissions
