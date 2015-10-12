@@ -75,7 +75,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /*
    * Cache data.
    */
-  protected $wid; // Use WorkflowTransition->getWorkflow() to fetch this.
+  protected $wid; // Use WorkflowTransition->getWorkflowId() to fetch this.
+  protected $workflow; // Use WorkflowTransition->getWorkflow() to fetch this.
   protected $entity = NULL; // Use WorkflowTransition->getEntity() to fetch this.
   protected $user = NULL; // Use WorkflowTransition->getOwner() to fetch this.
 
@@ -316,66 +317,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       return FALSE;  // <-- exit !!!
     }
 
-    // Check if the state has changed.
-    // If so, check the permissions.
-    $state_changed = ($from_sid != $to_sid);
-    if ($state_changed) {
-      // State has changed. Do some checks upfront.
-
-      if (!$force) {
-        // Make sure this transition is allowed by workflow module Admin UI.
-        $roles = array_keys($user->getRoles());
-        $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
-        if (!$this->isAllowed($roles, $user, $force)) {
-          $message = 'User %user not allowed to go from state %old to %new';
-          \Drupal::logger('workflow')->error($message, $args);
-          // If incorrect, quit.
-          return FALSE;  // <-- exit !!!
-        }
-      }
-      else {
-        // OK. All state changes allowed.
-      }
-
-      if (!$force) {
-        // Make sure this transition is allowed by custom module.
-        // @todo D8: remove, or replace by 'transition pre'. See WorkflowState::getOptions().
-        // @todo D8: replace all parameters that are included in $transition.
-        // @todo: in case of error, there is a log, but no UI error.
-        $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition permitted', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this, $user]);
-        // Stop if a module says so.
-        if (in_array(FALSE, $permitted, TRUE)) {
-          \Drupal::logger('workflow')->notice('Transition vetoed by module.', $args);
-          return FALSE;  // <-- exit !!!
-        }
-      }
-      else {
-        // OK. All state changes allowed.
-      }
-
-      // Make sure this transition is valid and allowed for the current user.
-      // Invoke a callback indicating a transition is about to occur.
-      // Modules may veto the transition by returning FALSE.
-      // (Even if $force is TRUE, but they shouldn't do that.)
-      $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition pre', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this]);
-      // Stop if a module says so.
-      if (in_array(FALSE, $permitted, TRUE)) {
-        workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-        \Drupal::logger('workflow')->notice('Transition vetoed by module.', $args);
-        return FALSE;  // <-- exit !!!
-      }
-
-    }
-    elseif ($this->getComment()) {
-      // No need to ask permission for adding comments.
-      // Since you should not add actions to a 'transition pre' event, there is
-      // no need to invoke the event.
-    }
-    else {
-      // There is no state change, and no comment.
-      // We may need to clean up something.
-    }
-
     // The transition is OK.
     return TRUE;
   }
@@ -383,7 +324,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /**
    * {@inheritdoc}
    */
-  public function isAllowed(array $roles, AccountInterface $user = NULL, $force = FALSE) {
+  public function isAllowed(array $roles, AccountInterface $user, $force = FALSE) {
 
     // Get user's ID and Role IDs, to get the proper permissions.
     $uid = ($user) ? $user->id() : -1;
@@ -394,18 +335,12 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
      */
     // @todo: Keep below code aligned between WorkflowState, ~Transition, ~TransitionListController
     // Check allow-ability of state change if user is not superuser (might be cron).
-//    if($uid == 1) {
-//      // @TODO D8-port: Special user 1 is removed. Undo?? N.B. Several locations. Test each use case!!
-//      workflow_debug(__FILE__, __FUNCTION__, __LINE__); // @todo D8-port:  'Make user 1 special' (several locations);
-//      // Superuser is special. And $force allows Rules to cause transition.
-//      $force = TRUE;
-//    }
-
-    if ($user_roles == 'ALL') {
-      // Superuser. // @todo: migrate to $force parameter.
-      workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-      $force = TRUE;
+    $type_id = $this->getWorkflowId();
+    if ($user->hasPermission("bypass $type_id workflow_transition access")) {
+      // Superuser is special. And $force allows Rules to cause transition.
+      return TRUE;
     }
+
     if ($force) {
       // $force allows Rules to cause transition.
       return TRUE;
@@ -414,15 +349,14 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     /**
      * Get the object and its permissions.
      */
-    $workflow = $this->getWorkflow();
-    $config_transitions = $workflow->getTransitionsByStateId($this->getFromSid(), $this->getToSid());
+    $config_transitions = $this->getWorkflow()->getTransitionsByStateId($this->getFromSid(), $this->getToSid());
 
     /**
      * Determine if user has Access.
      */
     $result = FALSE;
     foreach ($config_transitions as $config_transition) {
-      $result = $config_transition->isAllowed($user_roles, $user, $force) ? TRUE: $result;
+      $result |= $config_transition->isAllowed($user_roles, $user, $force);
     }
 
     if ($result == FALSE) {
@@ -505,9 +439,79 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
         // This is a.o. used in hook_entity_update to trigger 'transition post'.
         $entity->workflow_transitions[$field_name] = $this;
     */
+
     if (!$this->isValid()) {
       return $from_sid;  // <-- exit !!!
     }
+
+    // @todo: move below code to $this->isAllowed().
+    // Prepare an array of arguments for error messages.
+    $args = array(
+      '%user' => ($user) ? $user->getUsername() : '',
+      '%old' => $from_sid,
+      '%new' => $to_sid,
+      '%label' => $entity->label(),
+      'link' => ($this->getEntity()->id()) ? $this->getEntity()->link(t('View')) : '',
+    );
+    // Check if the state has changed.
+    // If so, check the permissions.
+    $state_changed = ($from_sid != $to_sid);
+    if ($state_changed) {
+      // State has changed. Do some checks upfront.
+
+      if (!$force) {
+        // Make sure this transition is allowed by workflow module Admin UI.
+        $roles = $user->getRoles();
+        $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
+        if (!$this->isAllowed($roles, $user, $force)) {
+          $message = 'User %user not allowed to go from state %old to %new';
+          \Drupal::logger('workflow')->error($message, $args);
+          // If incorrect, quit.
+          return FALSE;  // <-- exit !!!
+        }
+      }
+      else {
+        // OK. All state changes allowed.
+      }
+
+      if (!$force) {
+        // Make sure this transition is allowed by custom module.
+        // @todo D8: remove, or replace by 'transition pre'. See WorkflowState::getOptions().
+        // @todo D8: replace all parameters that are included in $transition.
+        // @todo: in case of error, there is a log, but no UI error.
+        $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition permitted', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this, $user]);
+        // Stop if a module says so.
+        if (in_array(FALSE, $permitted, TRUE)) {
+          \Drupal::logger('workflow')->notice('Transition vetoed by module.', $args);
+          return FALSE;  // <-- exit !!!
+        }
+      }
+      else {
+        // OK. All state changes allowed.
+      }
+
+      // Make sure this transition is valid and allowed for the current user.
+      // Invoke a callback indicating a transition is about to occur.
+      // Modules may veto the transition by returning FALSE.
+      // (Even if $force is TRUE, but they shouldn't do that.)
+      $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition pre', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this]);
+      // Stop if a module says so.
+      if (in_array(FALSE, $permitted, TRUE)) {
+        \Drupal::logger('workflow')->notice('Transition vetoed by module.', $args);
+        return FALSE;  // <-- exit !!!
+      }
+
+    }
+    elseif ($this->getComment()) {
+      // No need to ask permission for adding comments.
+      // Since you should not add actions to a 'transition pre' event, there is
+      // no need to invoke the event.
+    }
+    else {
+      // There is no state change, and no comment.
+      // We may need to clean up something.
+    }
+
 
     /**
      * Output: process the transition.
@@ -601,19 +605,23 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function getWorkflow() {
-    $workflow = NULL;
+    if (!$this->workflow && $wid = $this->getWorkflowId()) {
+      $this->workflow = Workflow::load($wid);
+    }
+    return $this->workflow;
+  }
 
-    $from_sid = $this->getFromSid();
-    $to_sid = $this->getToSid();
-
+  /**
+   * {@inheritdoc}
+   */
+  public function getWorkflowId() {
     if (!$this->wid) {
+      $from_sid = $this->getFromSid();
+      $to_sid = $this->getToSid();
       $state = WorkflowState::load($to_sid ? $to_sid : $from_sid);
       $this->wid = $state->getWorkflowId();
     }
-    if ($this->wid) {
-      $workflow = Workflow::load($this->wid);
-    }
-    return $workflow;
+    return $this->wid;
   }
 
   /**

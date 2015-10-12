@@ -16,8 +16,8 @@ use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Entity\EntityAccessControlHandler;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\workflow\Entity\WorkflowTransitionInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Defines the access control handler for the workflow entity type.
@@ -41,13 +41,10 @@ class WorkflowTransitionAccessControlHandler extends EntityAccessControlHandler 
    */
   public function access(EntityInterface $entity, $operation, $langcode = LanguageInterface::LANGCODE_DEFAULT, AccountInterface $account = NULL, $return_as_object = FALSE) {
     $account = $this->prepareUser($account);
+    // $account = workflow_current_user($account);
+
     /* @var $transition WorkflowTransitionInterface */
     $transition = $entity;
-
-//    if ($account->hasPermission('bypass workflow access')) {
-//      $result = AccessResult::allowed()->cachePerPermissions();
-//      return $return_as_object ? $result : $result->isAllowed();
-//    }
 
     // This is only for Edit/Delete transtion. For Add/create, use createAccess.
     switch($entity->getEntityTypeId()) {
@@ -60,6 +57,11 @@ class WorkflowTransitionAccessControlHandler extends EntityAccessControlHandler 
         }
 
         $type_id = $transition->getWorkflow()->id();
+        if ($account->hasPermission("bypass $type_id workflow_transition access")) {
+          // This is not a task a super user should need.
+          // $result = AccessResult::allowed()->cachePerPermissions();
+          // return $return_as_object ? $result : $result->isAllowed();
+        }
         if ($account->hasPermission( "edit any $type_id workflow_transition")) {
           $result = AccessResult::allowed()->cachePerPermissions();
           return $return_as_object ? $result : $result->isAllowed();

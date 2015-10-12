@@ -104,7 +104,7 @@ class WorkflowTransitionElement extends FormElement {
     // A Transition object must have been set explicitly.
     /* @var $transition WorkflowTransitionInterface */
     $transition = $element['#default_value'];
-    /* @var $user \Drupal\Core\Session\AccountProxyInterface */
+    /* @var $user \Drupal\Core\Session\AccountInterface */
     $user = \Drupal::currentUser();
     $force = FALSE;
 
@@ -492,7 +492,6 @@ class WorkflowTransitionElement extends FormElement {
     // Get user input from element.
     $to_sid = $transition_values['workflow_to_sid'];
     $comment = $transition_values['workflow_comment'];
-    $timestamp = REQUEST_TIME;
     $force = FALSE;
 
 // @todo D8: add the VBO use case.
@@ -521,6 +520,7 @@ class WorkflowTransitionElement extends FormElement {
     }
 */
 
+    $timestamp = REQUEST_TIME;
     if ($scheduled) {
       // Fetch the (scheduled) timestamp to change the state.
       // Override $timestamp.
@@ -555,14 +555,16 @@ class WorkflowTransitionElement extends FormElement {
       $transition = WorkflowScheduledTransition::create(['entity' => $transition_entity, 'field_name' => $field_name, 'from_sid' => $from_sid]);
       $transition->setValues($transition_entity, $field_name, $from_sid, $to_sid, $user->id(), $timestamp, $comment);
     }
-
-    // Set new values.
-    $transition->set('to_sid', $to_sid);
-    $transition->setOwner($user);
-    $transition->setTimestamp($timestamp);
+    if (!$transition->isExecuted()) {
+      // Set new values.
+      // When editing an existing Transition, only comments may change.
+      $transition->set('to_sid', $to_sid);
+      $transition->setOwner($user);
+      $transition->setTimestamp($timestamp);
+      $transition->schedule($scheduled);
+      $transition->force($force);
+    }
     $transition->setComment($comment);
-    $transition->schedule($scheduled);
-    $transition->force($force);
 
     // Explicitely set $entity in case of ScheduleTransition. It is now returned as parameter, not result.
     $entity = $transition;

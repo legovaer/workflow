@@ -162,8 +162,7 @@ class WorkflowDefaultWidget extends WidgetBase {
    */
   public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
 
-    /* @var \Drupal\Core\Session\AccountProxyInterface */
-    $user = \Drupal::currentUser(); // @todo #2287057: verify if submit() really is only used for UI. If not, $user must be passed.
+    $user = workflow_current_user(); // @todo #2287057: verify if submit() really is only used for UI. If not, $user must be passed.
 
     // Set the new value.
     // Beware: We presume cardinality = 1 !!

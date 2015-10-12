@@ -37,12 +37,20 @@ interface WorkflowConfigTransitionInterface {
    *
    * @see WorkflowConfigTransition::isAllowed()
    */
-  public function isAllowed(array $roles, AccountInterface $user = NULL, $force = FALSE);
+  public function isAllowed(array $roles, AccountInterface $user, $force = FALSE);
 
   /**
-   * @return Workflow
+   * @return Workflow $workflow
    */
   public function getWorkflow();
+
+  /**
+   * Returns the Workflow ID of this Transition
+   *
+   * @return string
+   *   Workflow Id.
+   */
+  public function getWorkflowId();
 
   /**
    * @return WorkflowState

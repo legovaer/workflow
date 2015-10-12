@@ -421,19 +421,12 @@ class WorkflowState extends ConfigEntityBase {
      */
     // @todo: Keep below code aligned between WorkflowState, ~Transition, ~TransitionListController
     // Check allow-ability of state change if user is not superuser (might be cron)
-    // Do not set 'ALL', since this is covered by $force.
-//    if ($force) {
-//      // $force allows Rules to cause transition.
-//      $user_roles = 'ALL';
-//    }
-//    elseif($uid == 1) {
-//      // @TODO D8-port: Special user 1 is removed. Undo?? N.B. Several locations. Test each use case!!
-//      workflow_debug(__FILE__, __FUNCTION__, __LINE__); // @todo D8-port:  'Make user 1 special' (several locations);
-//      // Superuser is special. And $force allows Rules to cause transition.
-//      $user_roles = 'ALL';
-//    }
-//    elseif (!$entity_id) {
-    if (!$entity_id) {
+    $type_id = $this->getWorkflowId();
+    if ($user->hasPermission("bypass $type_id workflow_transition access")) {
+      // Superuser is special. And $force allows Rules to cause transition.
+      $force = TRUE;
+    }
+    elseif (!$entity_id) {
       // This is a new entity. User is author. Add 'author' role to user.
       // - $entity can be NULL (E.g., on a Field settings page).
       // - on display of new entity, $entity_id and $is_new are not set.

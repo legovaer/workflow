@@ -1,12 +1,6 @@
 # Permissions are declared in Workflow (not Workflow UI) so other contrib
 # modules can make use of it.
 
-#bypass transition access:
-## TODO D8-port: replace by "bypass $type_id transition". This is the D8-version of D7-special user 1
-#  title: 'Bypass transtion access control'
-#  description: 'View, edit and delete all transitions regardless of permission restrictions.'
-#  restrict access: true
-
 administer workflow:
   title: 'Administer workflows'
   description: 'Administer all Workflow configurations and settings.'

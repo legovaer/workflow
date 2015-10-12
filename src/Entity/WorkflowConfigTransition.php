@@ -163,10 +163,23 @@ class WorkflowConfigTransition extends ConfigEntityBase {
   }
 
   public function getWorkflow() {
-    if (isset($this->workflow)) {
-      return $this->workflow;
+    if (!isset($this->workflow)) {
+      $this->workflow = Workflow::load($this->wid);
     }
-    return Workflow::load($this->wid);
+    return $this->workflow;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getWorkflowId() {
+    if (!$this->wid) {
+      $from_sid = $this->getFromSid();
+      $to_sid = $this->getToSid();
+      $state = WorkflowState::load($to_sid ? $to_sid : $from_sid);
+      $this->wid = $state->getWorkflowId();
+    }
+    return $this->wid;
   }
 
   /**
@@ -200,11 +213,12 @@ class WorkflowConfigTransition extends ConfigEntityBase {
   /**
    * {@inheritdoc}
    */
-  public function isAllowed(array $user_roles, AccountInterface $user = NULL, $force = FALSE) {
-    if ($user_roles == 'ALL') {
-      // Superuser. // @todo: migrate to $force parameter.
-      workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-      $force = TRUE;
+  public function isAllowed(array $user_roles, AccountInterface $user, $force = FALSE) {
+
+    $type_id = $this->getWorkflowId();
+    if ($user->hasPermission("bypass $type_id workflow_transition access")) {
+      // Superuser is special. And $force allows Rules to cause transition.
+      return TRUE;
     }
 
     if ($force) {

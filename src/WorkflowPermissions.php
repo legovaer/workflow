@@ -49,12 +49,12 @@ class WorkflowPermissions {
     $type_params = array('%type_name' => $type->label());
 
     return array(
-      // D7->D8-Conversion of the 'User 1 is special' permission (@see NodePermissions::bypass node access). // TODO D8-port
-//      "bypass $type_id workflow_transition access" => array(
-//      'title' => $this->t('%type_name: Bypass transition access control', $type_params),
-//      'description' => t('View, edit and delete all transitions regardless of permission restrictions.'),
-//      'restrict access' => TRUE,
-//    ),
+      // D7->D8-Conversion of the 'User 1 is special' permission (@see NodePermissions::bypass node access).
+      "bypass $type_id workflow_transition access" => array(
+        'title' => $this->t('%type_name: Bypass transition access control', $type_params),
+        'description' => t('View, edit and delete all transitions regardless of permission restrictions.'),
+        'restrict access' => TRUE,
+      ),
       // D7->D8-Conversion of 'participate in workflow' permission to "create $type_id transition" (@see NodePermissions::create content).
       "create $type_id workflow_transition" => array(
         'title' => $this->t('%type_name: Participate in workflow', $type_params),
@@ -65,7 +65,7 @@ class WorkflowPermissions {
         'title' => $this->t('%type_name: Schedule state transition', $type_params),
         'description' => t('Role is enabled to schedule state transitions.'),
       ),
-      // D7->D8-Conversion of 'workflow history' permission on Workflow settings to "access $type_id overview" (@see NodePermissions::access content overview). //
+      // D7->D8-Conversion of 'workflow history' permission on Workflow settings to "access $type_id overview" (@see NodePermissions::access content overview).
       "access own $type_id workflow_transion overview" => array(
         'title' => $this->t('%type_name: Access own Workflow state transition history overview page', $type_params),
         'description' => t('Role is enabled to view the "Workflow state transition history" tab on own entity.'),
