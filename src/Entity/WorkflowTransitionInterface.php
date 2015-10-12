@@ -230,10 +230,4 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface,
    */
   public function isForced();
   public function force($force = TRUE);
-
-  /**
-   *  Helper/Debugging function: Prints the content of a transition.
-   */
-  public function dpm();
-
 }

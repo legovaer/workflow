@@ -40,7 +40,10 @@ interface WorkflowConfigTransitionInterface {
   public function isAllowed(array $roles, AccountInterface $user, $force = FALSE);
 
   /**
-   * @return Workflow $workflow
+   * Returns the Workflow object of this State.
+   *
+   * @return Workflow
+   *   Workflow object.
    */
   public function getWorkflow();
 

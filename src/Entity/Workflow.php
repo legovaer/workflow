@@ -162,7 +162,6 @@ class Workflow extends ConfigEntityBase {
    *   $is_valid
    */
   public function isValid() {
-    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     $is_valid = TRUE;
 
     // Don't allow Workflow without states. There should always be a creation state.
@@ -409,7 +408,6 @@ class Workflow extends ConfigEntityBase {
       $config_transition = WorkflowConfigTransition::create($values);
       $config_transition->save();
     }
-    $config_transition->setWorkflow($this);
     // Maintain the new object in the workflow.
     $this->transitions[$config_transition->id()] = $config_transition;
 
@@ -457,7 +455,6 @@ class Workflow extends ConfigEntityBase {
       $transitions = WorkflowConfigTransition::loadMultiple($ids, []);
       foreach ($transitions as &$config_transition) {
         if (isset($states[$config_transition->getFromSid()])) {
-          $config_transition->setWorkflow($this);
           $this->transitions[$config_transition->id()] = $config_transition;
         }
       }
@@ -478,7 +475,6 @@ class Workflow extends ConfigEntityBase {
       }
       else {
         // Transition is allowed, permitted. Add to list.
-        $config_transition->setWorkflow($this);
         $config_transitions[$config_transition->id()] = $config_transition;
       }
     }

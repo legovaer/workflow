@@ -42,7 +42,7 @@ use Drupal\Core\Session\AccountInterface;
  *   }
  * )
  */
-class WorkflowConfigTransition extends ConfigEntityBase {
+class WorkflowConfigTransition extends ConfigEntityBase implements WorkflowConfigTransitionInterface{
 
   // Transition data.
   public $id;
@@ -51,7 +51,7 @@ class WorkflowConfigTransition extends ConfigEntityBase {
   public $roles = array();
 
   // Extra fields.
-  public $wid;
+  protected $wid;
   // The following must explicitly defined, and not be public, to avoid errors
   // when exporting with json_encode().
   protected $workflow = NULL;
@@ -157,14 +157,9 @@ class WorkflowConfigTransition extends ConfigEntityBase {
    * @return Workflow
    *   Workflow object.
    */
-  public function setWorkflow($workflow) {
-    $this->wid = $workflow->id();
-    $this->workflow = $workflow;
-  }
-
   public function getWorkflow() {
-    if (!isset($this->workflow)) {
-      $this->workflow = Workflow::load($this->wid);
+    if (!$this->workflow && $wid = $this->getWorkflowId()) {
+      $this->workflow = Workflow::load($wid);
     }
     return $this->workflow;
   }

@@ -174,7 +174,7 @@ class WorkflowForm extends EntityForm {
       ),
       '#attributes' => array('class' => array('container-inline')),
       '#title' => t('Show comment on the Content edit form'),
-      '#default_value' => isset($workflow->options['comment_log_node']) ? $workflow->options['comment_log_node'] : 0,
+      '#default_value' => isset($workflow->options['comment_log_node']) ? $workflow->options['comment_log_node'] : 1,
 //      '#description' => t(
 //        'On the node editing form.'
 //      ),
@@ -191,7 +191,7 @@ class WorkflowForm extends EntityForm {
       ),
       '#attributes' => array('class' => array('container-inline')),
       '#title' => t('Show comment on the Workflow history tab of content'),
-      '#default_value' => isset($workflow->options['comment_log_tab']) ? $workflow->options['comment_log_tab'] : 0,
+      '#default_value' => isset($workflow->options['comment_log_tab']) ? $workflow->options['comment_log_tab'] : 1,
 //      '#description' => t(
 //        'On the workflow tab.'
 //      ),

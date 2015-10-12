@@ -83,8 +83,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /*
    * Extra data: describe the state of the transition.
    */
-  protected $is_scheduled = FAlSE;
-  protected $is_executed = FALSE;
+  protected $is_scheduled;
+  protected $is_executed;
   protected $is_forced = FALSE;
 
   /**
@@ -112,8 +112,11 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     // This transition is not scheduled.
     $this->is_scheduled = FALSE;
     // This transition is not executed, if it has no hid, yet, upon load.
-    $hid = $this->id();
-    $this->is_executed = ($hid > 0);
+    $this->is_executed = ($this->id() > 0);
+
+    if (!$this->wid && $from_state = $this->getFromState()) {
+      $this->wid = ($from_state->getWorkflowId());
+    }
   }
 
   /**
@@ -144,6 +147,9 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       $this->setOwnerId($uid);
       $this->setTimestamp($timestamp);
       $this->setComment($comment);
+      if (!$this->wid && $from_state = $this->getFromState()) {
+        $this->wid = ($from_state->getWorkflowId());
+      }
     }
     elseif (!$from_sid) {
       workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
@@ -222,9 +228,9 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /**
    * {@inheritdoc}
    */
-  public static function loadMultiple(array $ids = NULL) {
-    return parent::loadMultiple($ids);
-  }
+//  public static function loadMultiple(array $ids = NULL) {
+//    return parent::loadMultiple($ids);
+//  }
 
   /**
    * {@inheritdoc}
@@ -268,6 +274,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $transitions = self::loadMultiple($ids);
     return $transitions;
   }
+
 
   /**
    * Property functions.

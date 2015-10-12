@@ -238,7 +238,7 @@ class WorkflowState extends ConfigEntityBase {
    *   The state ID, to which all affected entities must be moved.
    */
   public function deactivate($new_sid) {
-    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     $current_sid = $this->id();
     $force = TRUE;
@@ -250,7 +250,7 @@ class WorkflowState extends ConfigEntityBase {
     \Drupal::moduleHandler()->invokeAll('workflow', ['state delete', $current_sid, $new_sid, NULL, $force]);
 
     // TODO D8-port: re-implement below code.
-    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: re-implement re-assign states when deactivating state in function WorkflowState::' . deactivate );
+//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: re-implement re-assign states when deactivating state in function WorkflowState::' . deactivate );
     // Re-parent any entity that we don't want to orphan, whilst deactivating a State.
     // This is called in WorkflowState::deactivate().
     // @todo: re-parent Workflow Field, whilst deactivating a state.

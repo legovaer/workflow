@@ -42,7 +42,9 @@ class WorkflowScheduledTransition extends WorkflowTransition {
     // Please be aware that $entity_type and $entityType are different things!
     parent::__construct($values, $entityType);
 
+    // This transition is scheduled.
     $this->is_scheduled = TRUE;
+    // This transition is not executed.
     $this->is_executed = FALSE;
   }
 
@@ -53,65 +55,14 @@ class WorkflowScheduledTransition extends WorkflowTransition {
     parent::setValues($entity, $field_name, $from_sid, $to_sid, $uid, $scheduled, $comment);
   }
 
-
   /**
-   * @param int $id
-   *   A Transition Id.
-   * @return array An array of WorkflowScheduledTransitions.
-   *   An array of WorkflowScheduledTransitions.
+   * CRUD functions.
    */
-  public static function load($id) {
-    return parent::load($id);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function loadByProperties($entity_type, $entity_id, array $revision_ids = [], $field_name = '', $langcode = '', $sort = 'ASC', $transition_type = 'workflow_scheduled_transition') {
-    // N.B. $transition_type is set as parameter default.
-    return parent::loadByProperties($entity_type, $entity_id, $revision_ids, $field_name, $langcode, $sort, $transition_type);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function loadMultipleByProperties($entity_type, array $entity_ids, array $revision_ids = [], $field_name = '', $langcode = '', $limit = NULL, $sort = 'ASC', $transition_type = 'workflow_scheduled_transition') {
-    // N.B. $transition_type is set as parameter default.
-    return parent::loadMultipleByProperties($entity_type, $entity_ids, $revision_ids, $field_name, $langcode, $limit, $sort, $transition_type);
-  }
-
-  /**
-   * Given a timeframe, get all scheduled transitions.
-   *
-   * @param int $start
-   * @param int $end
-   *
-   * @return WorkflowScheduledTransition[] $transitions
-   *   An array of transitions.
-   */
-  public static function loadBetween($start = 0, $end = 0) {
-    $transition_type = 'workflow_scheduled_transition'; // TODO get this from annotation.
-
-    /* @var $query \Drupal\Core\Entity\Query\QueryInterface */
-    $query = \Drupal::entityQuery($transition_type)
-      ->sort('timestamp', 'ASC')
-      ->addTag($transition_type);
-    if ($start) {
-      $query->condition('timestamp', $start, '>');
-    }
-    if ($end) {
-      $query->condition('timestamp', $end, '<');
-    }
-
-    $ids = $query->execute();
-    $transitions = self::loadMultiple($ids);
-    return $transitions;
-  }
 
   /**
    * {@inheritdoc}
    *
-   * Save a scheduled transition. If the transition is executed, save in history.
+   * Saves a scheduled transition. If the transition is executed, save in history.
    */
   public function save() {
 
@@ -170,6 +121,58 @@ class WorkflowScheduledTransition extends WorkflowTransition {
 
     return $result;
   }
+
+  /**
+   * {@inheritdoc}
+   */
+//  public static function loadMultiple(array $ids = NULL) {
+//    return parent::loadMultiple($ids);
+//  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function loadByProperties($entity_type, $entity_id, array $revision_ids = [], $field_name = '', $langcode = '', $sort = 'ASC', $transition_type = 'workflow_scheduled_transition') {
+    // N.B. $transition_type is set as parameter default.
+    return parent::loadByProperties($entity_type, $entity_id, $revision_ids, $field_name, $langcode, $sort, $transition_type);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function loadMultipleByProperties($entity_type, array $entity_ids, array $revision_ids = [], $field_name = '', $langcode = '', $limit = NULL, $sort = 'ASC', $transition_type = 'workflow_scheduled_transition') {
+    // N.B. $transition_type is set as parameter default.
+    return parent::loadMultipleByProperties($entity_type, $entity_ids, $revision_ids, $field_name, $langcode, $limit, $sort, $transition_type);
+  }
+
+  /**
+   * Given a timeframe, get all scheduled transitions.
+   *
+   * @param int $start
+   * @param int $end
+   *
+   * @return WorkflowScheduledTransition[] $transitions
+   *   An array of transitions.
+   */
+  public static function loadBetween($start = 0, $end = 0) {
+    $transition_type = 'workflow_scheduled_transition'; // TODO get this from annotation.
+
+    /* @var $query \Drupal\Core\Entity\Query\QueryInterface */
+    $query = \Drupal::entityQuery($transition_type)
+      ->sort('timestamp', 'ASC')
+      ->addTag($transition_type);
+    if ($start) {
+      $query->condition('timestamp', $start, '>');
+    }
+    if ($end) {
+      $query->condition('timestamp', $end, '<');
+    }
+
+    $ids = $query->execute();
+    $transitions = self::loadMultiple($ids);
+    return $transitions;
+  }
+
 
   /**
    * Property functions.
