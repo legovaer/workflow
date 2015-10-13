@@ -224,7 +224,6 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
     }
     else {
       $entity_type = $entity->getEntityTypeId();
-      $langcode = $entity->language()->getId();
 
       if (isset($entity->original)) {
         // A changed node.
@@ -238,7 +237,8 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
           $sid = $this->getCreationStateId($entity, $field_name);
         }
         elseif (!$sid) {
-          // Read the history with an explicit langcode.
+          // @todo?: Read the history with an explicit langcode.
+          $langcode = ''; // $entity->language()->getId();
           if ($last_transition = WorkflowTransition::loadByProperties($entity_type, $entity->id(), [], $field_name, $langcode, 'DESC')) {
             $sid = $last_transition->getFromSid();
           }

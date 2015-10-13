@@ -208,7 +208,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       // Insert the transition. Make sure it hasn't already been inserted.
       $entity = $this->getEntity();
       // @todo: Allow a scheduled transition per revision.
-      $found_transition = self::loadByProperties($entity->getEntityTypeId(), $entity->id(), [], $this->getFieldName(), $this->getLangcode());
+      // @todo: Allow a state per language version (langcode).
+      $found_transition = self::loadByProperties($entity->getEntityTypeId(), $entity->id(), [], $this->getFieldName());
       if ($found_transition &&
         $found_transition->getTimestamp() == REQUEST_TIME &&
         $found_transition->getToSid() == $this->getToSid()) {

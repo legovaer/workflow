@@ -137,6 +137,8 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface,
   /**
    * Get the language code for which the Transition is valid.
    *
+   * @todo: OK?? Shouldn't we use entity's language() method for langcode?
+   *
    * @return string $langcode
    */
   public function getLangcode();
