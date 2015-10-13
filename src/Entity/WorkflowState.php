@@ -560,15 +560,6 @@ class WorkflowState extends ConfigEntityBase {
         $options[$to_sid] = SafeMarkup::checkPlain(t($label));
       }
 
-      // Include current state for same-state transitions, except when $sid = 0.
-      // Caveat: this unnecessary since 7.x-2.3 (where stay-on-state transitions are saved, too.)
-      // but only if the transitions have been saved at least one time.
-      if ($current_sid && ($current_sid != $workflow->getCreationSid())) {
-        if (!isset($options[$current_sid])) {
-          $options[$current_sid] = SafeMarkup::checkPlain(t($this->label()));
-        }
-      }
-
       // Save to entity-specific cache.
       $cache[$entity_type][$entity_index][$force][$current_sid] = $options;
     }

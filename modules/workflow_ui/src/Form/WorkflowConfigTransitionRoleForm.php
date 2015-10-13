@@ -94,7 +94,7 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
         $type_id = $workflow->id();
         $roles = workflow_get_user_role_names("create $type_id workflow_transition");
         // Prepare default value for 'stay_on_this_state'.
-        $allow_all_roles = array_combine (array_keys($roles) , array_keys($roles));
+        $allow_all_roles = []; // array_combine (array_keys($roles) , array_keys($roles));
 
         foreach ($states as $state) {
           $label = SafeMarkup::checkPlain($from_state->label());
@@ -124,7 +124,7 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase 
             $row[$to_sid]['workflow_config_transition'] = ['#type' => 'value', '#value' => $config_transition,];
             $row[$to_sid]['roles'] = [
               '#type' => $stay_on_this_state ? 'checkboxes' : 'checkboxes',
-              '#options' => $roles,
+              '#options' => $stay_on_this_state ? [] : $roles,
               '#disabled' => $stay_on_this_state,
               // When $stay_on_this_state, allow all roles.
               '#default_value' => $stay_on_this_state ? $allow_all_roles : $config_transition->roles,

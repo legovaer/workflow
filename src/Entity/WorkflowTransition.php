@@ -363,7 +363,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
      */
     $result = FALSE;
     foreach ($config_transitions as $config_transition) {
-      $result |= $config_transition->isAllowed($user_roles, $user, $force);
+      $result = $result || $config_transition->isAllowed($user_roles, $user, $force);
     }
 
     if ($result == FALSE) {

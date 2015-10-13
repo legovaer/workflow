@@ -219,6 +219,10 @@ class WorkflowConfigTransition extends ConfigEntityBase implements WorkflowConfi
     if ($force) {
       return TRUE;
     }
+    if ($this->getFromSid() == $this->getToSid()) {
+      // Anyone may save an entity without changing state.
+      return TRUE;
+    }
     if ($user_roles) {
       return array_intersect($user_roles, $this->roles) == TRUE;
     }
