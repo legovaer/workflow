@@ -626,8 +626,9 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     if (!$this->wid) {
       $from_sid = $this->getFromSid();
       $to_sid = $this->getToSid();
-      $state = WorkflowState::load($to_sid ? $to_sid : $from_sid);
-      $this->wid = $state->getWorkflowId();
+      $state = WorkflowState::load($to_sid);
+      $state = ($state) ? $state : WorkflowState::load($from_sid);
+      $this->wid = ($state) ? $state->getWorkflowId() : '';
     }
     return $this->wid;
   }

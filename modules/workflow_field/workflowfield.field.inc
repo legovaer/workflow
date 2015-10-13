@@ -93,12 +93,7 @@ function workflow_state_allowed_values(FieldStorageDefinitionInterface $definiti
 // N.B. the parameter $user is added by Workflow module.
   $allowed_options = array();
 
-  if (!$user) {
-    $user = \Drupal::currentUser(); // @todo #2287057: OK?
-    // @todo: Perhaps global user is not always the correct user.
-    // E.g., on ScheduledTransition->execute()? But this function is mostly used in UI.
-  }
-
+  $user = workflow_current_user($user); // @todo #2287057: OK?
   $field_name = $definition->getName();
 
   if ($entity) {
@@ -107,7 +102,7 @@ function workflow_state_allowed_values(FieldStorageDefinitionInterface $definiti
     // $sid = $value = $this->getValue();
     $sid = workflow_node_current_state($entity, $field_name);
     $state = WorkflowState::load($sid);
-    $allowed_options = $state->getOptions($entity, $field_name, $user, FALSE);
+    $allowed_options = ($state) ? $state->getOptions($entity, $field_name, $user, FALSE) : [];
   }
   else {
     workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.

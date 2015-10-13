@@ -146,10 +146,10 @@ class WorkflowTransitionElement extends FormElement {
       $current_sid = $from_sid = $transition->getFromSid();
       $from_state = $transition->getFromState();
       // The states may not be changed anymore.
-      $options = ($transition->isExecuted()) ? array() : $from_state->getOptions($entity, $field_name, $user, $force);
-      $show_widget = $from_state->showWidget($entity, $field_name, $user, $force);
+      $options = (!$transition->isExecuted() && $state) ? $from_state->getOptions($entity, $field_name, $user, $force) : [];
+      $show_widget = ($state) ? $from_state->showWidget($entity, $field_name, $user, $force) : [];
       // Determine the default value. If we are in CreationState, use a fast alternative for $workflow->getFirstSid().
-      $default_value = $from_state->isCreationState() ? key($options) : $current_sid;
+      $default_value = ($state && $from_state->isCreationState()) ? key($options) : $current_sid;
       $default_value = $transition->isScheduled() ? $transition->getToSid() : $default_value;
     }
     elseif (!$entity) {
@@ -205,7 +205,7 @@ class WorkflowTransitionElement extends FormElement {
     // Get settings from workflow.
     $workflow = $transition->getWorkflow();
     $workflow_settings = $workflow->options;
-    $workflow_label = SafeMarkup::checkPlain(t($workflow->label()));
+    $workflow_label = ($workflow) ? SafeMarkup::checkPlain(t($workflow->label())) : '';
     // Current sid and default value may differ in a scheduled transition.
     // Set 'grouped' option. Only valid for select list and undefined/multiple workflows.
     $settings_options_type = $workflow_settings['options'];
