@@ -248,8 +248,9 @@ class Workflow extends ConfigEntityBase {
    */
   public function createState($sid, $save = TRUE) {
     $wid = $this->id();
-    $state = WorkflowState::load($sid, $wid);
-    if (!$state) {
+    /* @var $state WorkflowState */
+    $state = WorkflowState::load($sid);
+    if (!$state || $wid != $state->getWorkflowId()) {
       $state = WorkflowState::create($values = array('id' => $sid, 'wid' => $wid));
       if ($save) {
         $status = $state->save();

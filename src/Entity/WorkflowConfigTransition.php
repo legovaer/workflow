@@ -25,7 +25,7 @@ use Drupal\Core\Session\AccountInterface;
  *      }
  *   },
  *   admin_permission = "administer workflow",
- *   config_prefix = "workflow_config_transition",
+ *   config_prefix = "transition",
  *   entity_keys = {
  *     "id" = "id",
  *   },
@@ -102,7 +102,8 @@ class WorkflowConfigTransition extends ConfigEntityBase implements WorkflowConfi
 
     // Create the machine_name. This can be used to rebuild/revert the Feature in a target system.
     if (empty($this->id())) {
-      $this->set('id', implode('_', [$workflow->id(), $this->from_sid, $this->to_sid]));
+      $wid = $workflow->id();
+      $this->set('id', implode('', [$wid, str_replace($wid, '', $this->from_sid), str_replace($wid, '', $this->to_sid)]));
     }
 
     $status = parent::save();

@@ -28,7 +28,7 @@ use Drupal\Core\Session\AccountInterface;
  *      }
  *   },
  *   admin_permission = "administer workflow",
- *   config_prefix = "workflow_state",
+ *   config_prefix = "state",
  *   entity_keys = {
  *     "id" = "id",
  *     "label" = "label",
@@ -125,29 +125,6 @@ class WorkflowState extends ConfigEntityBase {
 
     // Reset cache.
     self::$states = array();
-  }
-
-  /**
-   * Alternative constructor, loading objects from table {workflow_states}.
-   *
-   * @param string $id
-   *   The requested State ID
-   * @param string $wid
-   *   An optional Workflow ID, to check if the requested State is valid for the Workflow.
-   *
-   * @return WorkflowState|NULL $state
-   *   WorkflowState if state is successfully loaded,
-   *   NULL if not loaded,
-   *   FALSE if state does not belong to requested Workflow.
-   */
-  public static function load($id, $wid = '') {
-//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-    foreach ($states = WorkflowState::loadMultiple([], $wid) as $state) {
-      if ($id == $state->id()) {
-        return $state;
-      }
-    }
-    return NULL;
   }
 
   /**
