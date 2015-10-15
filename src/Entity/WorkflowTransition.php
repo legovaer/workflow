@@ -75,7 +75,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /*
    * Cache data.
    */
-  protected $wid; // Use WorkflowTransition->getWorkflowId() to fetch this.
+//  protected $wid; // Use WorkflowTransition->getWorkflowId() to fetch this.
   protected $workflow; // Use WorkflowTransition->getWorkflow() to fetch this.
   protected $entity = NULL; // Use WorkflowTransition->getEntity() to fetch this.
   protected $user = NULL; // Use WorkflowTransition->getOwner() to fetch this.
@@ -113,10 +113,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $this->is_scheduled = FALSE;
     // This transition is not executed, if it has no hid, yet, upon load.
     $this->is_executed = ($this->id() > 0);
-
-    if (!$this->wid && $from_state = $this->getFromState()) {
-      $this->wid = ($from_state->getWorkflowId());
-    }
+    // Initialize wid property.
+    $this->getWorkflowId();
   }
 
   /**
@@ -147,9 +145,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       $this->setOwnerId($uid);
       $this->setTimestamp($timestamp);
       $this->setComment($comment);
-      if (!$this->wid && $from_state = $this->getFromState()) {
-        $this->wid = ($from_state->getWorkflowId());
-      }
     }
     elseif (!$from_sid) {
       workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
@@ -159,6 +154,9 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
           array('@from_sid' => $from_sid, '@to_sid' => $to_sid)),
         'error');
     }
+
+    // Initialize wid property.
+    $this->getWorkflowId();
   }
 
   /**
@@ -623,14 +621,16 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function getWorkflowId() {
-    if (!$this->wid) {
-      $from_sid = $this->getFromSid();
+
+    if (!$this->wid->value && $from_sid = $this->getFromSid()) {
+      $state = WorkflowState::load($from_sid);
+      // Fallback
       $to_sid = $this->getToSid();
-      $state = WorkflowState::load($to_sid);
-      $state = ($state) ? $state : WorkflowState::load($from_sid);
-      $this->wid = ($state) ? $state->getWorkflowId() : '';
+      $state = ($state) ? $state : WorkflowState::load($to_sid);
+
+      $this->wid->value = ($state) ? $state->getWorkflowId() : '';
     }
-    return $this->wid;
+    return $this->wid->value;
   }
 
   /**

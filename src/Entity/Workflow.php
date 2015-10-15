@@ -377,11 +377,13 @@ class Workflow extends ConfigEntityBase {
    * @return WorkflowState
    *   A WorkflowState object.
    */
-  public function getState($key) {
-    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
+  public function getState($sid) {
     $wid = $this->id();
-    WorkflowState::load($key, $wid);
+    $state = WorkflowState::load($sid);
+    if (!$wid || $wid == $state->getWorkflowId()) {
+      return $state;
+    }
+    return NULL;
   }
 
   /**
@@ -439,26 +441,15 @@ class Workflow extends ConfigEntityBase {
   public function getTransitions(array $ids = NULL, array $conditions = array()) {
     $config_transitions = array();
 
-    // Get valid states + creation state.
-    $states = $this->getStates('CREATION');
-
     // Get filters on 'from' states, 'to' states, roles.
     $from_sid = isset($conditions['from_sid']) ? $conditions['from_sid'] : FALSE;
     $to_sid = isset($conditions['to_sid']) ? $conditions['to_sid'] : FALSE;
 
+    // Get valid states + creation state.
+    $states = $this->getStates('CREATION');
     // Cache all transitions in the workflow.
-    // We may have 0 transitions....
     if (!$this->transitions) {
-      $this->transitions = array();
-
-      // Get all transitions. (Even from other workflows. :-( )
-      /* @var $config_transitions WorkflowConfigTransition[] */
-      $transitions = WorkflowConfigTransition::loadMultiple($ids, []);
-      foreach ($transitions as &$config_transition) {
-        if (isset($states[$config_transition->getFromSid()])) {
-          $this->transitions[$config_transition->id()] = $config_transition;
-        }
-      }
+      $this->transitions = WorkflowConfigTransition::loadMultiple($ids);
 
       $this->sortTransitions();
     }
@@ -466,7 +457,7 @@ class Workflow extends ConfigEntityBase {
     /* @var $config_transition WorkflowConfigTransition */
     foreach ($this->transitions as &$config_transition) {
       if (!isset($states[$config_transition->getFromSid()])) {
-        // Not a valid transition for this workflow.
+        // Not a valid transition for this workflow. @todo: delete them.
       }
       elseif ($from_sid && $from_sid != $config_transition->getFromSid()) {
         // Not the requested 'from' state.

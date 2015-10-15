@@ -146,10 +146,10 @@ class WorkflowTransitionElement extends FormElement {
       $current_sid = $from_sid = $transition->getFromSid();
       $from_state = $transition->getFromState();
       // The states may not be changed anymore.
-      $options = (!$transition->isExecuted() && $state) ? $from_state->getOptions($entity, $field_name, $user, $force) : [];
-      $show_widget = ($state) ? $from_state->showWidget($entity, $field_name, $user, $force) : [];
+      $options = (!$transition->isExecuted() && $from_state) ? $from_state->getOptions($entity, $field_name, $user, $force) : [];
+      $show_widget = ($from_state) ? $from_state->showWidget($entity, $field_name, $user, $force) : [];
       // Determine the default value. If we are in CreationState, use a fast alternative for $workflow->getFirstSid().
-      $default_value = ($state && $from_state->isCreationState()) ? key($options) : $current_sid;
+      $default_value = ($from_state && $from_state->isCreationState()) ? key($options) : $current_sid;
       $default_value = $transition->isScheduled() ? $transition->getToSid() : $default_value;
     }
     elseif (!$entity) {

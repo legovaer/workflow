@@ -77,14 +77,15 @@ class WorkflowConfigTransition extends ConfigEntityBase implements WorkflowConfi
 
   /**
    * {@inheritdoc}
-   *
-   * @return WorkflowConfigTransition[]
-   *   An array of entity objects indexed by their IDs. Filtered by $wid.
    */
-  public static function loadMultiple(array $ids = NULL, $wid = '', $reset = FALSE) {
-    return parent::loadMultiple($ids);
-    //TODO D8-port: filter for $wid.
-  }
+//  public static function loadMultiple(array $ids = NULL, $wid = '') {
+//    foreach ($transitions = parent::loadMultiple($ids) as $key =>$transition) {
+//      if ($wid && $transition->getWorkflowId() != $wid) {
+//        unset($transitions[$key]);
+//      }
+//    }
+//    return $transitions;
+//  }
 
   public function save() {
     $workflow = $this->getWorkflow();
