@@ -58,7 +58,6 @@ function workflow_operations_entity_operation(\Drupal\Core\Entity\EntityInterfac
   if ($first) {
     $handler = new WorkflowAccessControlHandler();
     $is_allowed = $handler->access($transition, 'revert', LanguageInterface::LANGCODE_DEFAULT, $user, FALSE);
-      dpm($is_allowed);
     if (!$is_allowed) {
       // No access. We may try at next row.
       return $operations;
@@ -78,7 +77,7 @@ function workflow_operations_entity_operation(\Drupal\Core\Entity\EntityInterfac
       // Stop if a module says so.
       if (!in_array(FALSE, $permitted, TRUE)) {
         // Add the operation - it is not vetoed.
-        // @todo: Pluggability problem: the revert_form route is fixed in WorkflowTranstion Annotation. Add to some alter() function.
+        // @todo: Pluggability problem: the revert_form route is fixed in WorkflowTransition Annotation. Add to some alter() function.
         $operations['revert'] = array(
           'title' => t('Revert to last state'),
           'url' => \Drupal\Core\Url::fromRoute('entity.workflow_transition.revert_form', ['workflow_transition' => $transition->id()]),

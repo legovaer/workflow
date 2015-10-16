@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\workflow\WorkflowTransitionAccessControlHandler.
+ * Contains \Drupal\workflow\WorkflowAccessControlHandler.
  */
 
 namespace Drupal\workflow;
@@ -25,7 +25,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @see \Drupal\workflow\Entity\Workflow
  * @ingroup workflow_access
  */
-class WorkflowTransitionAccessControlHandler extends EntityAccessControlHandler implements EntityHandlerInterface {
+class WorkflowAccessControlHandler extends EntityAccessControlHandler implements EntityHandlerInterface {
 
   /**
    * {@inheritdoc}

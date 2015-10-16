@@ -28,7 +28,7 @@ use Drupal\user\UserInterface;
  *   bundle_label = @Translation("Workflow type"),
  *   module = "workflow",
  *   handlers = {
- *     "access" = "Drupal\workflow\WorkflowTransitionAccessControlHandler",
+ *     "access" = "Drupal\workflow\WorkflowAccessControlHandler",
  *     "list_builder" = "Drupal\workflow\Controller\WorkflowTransitionListBuilder",
  *     "form" = {
  *        "add" = "Drupal\workflow\Form\WorkflowTransitionForm",
