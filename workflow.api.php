@@ -128,8 +128,15 @@ function hook_workflow($op, WorkflowTransitionInterface $transition, UserInterfa
       // case 3: use the 'transition pre' operation;
       return TRUE;
 
+    case 'transition revert':
+      drupal_set_message(__FILE__ . '/'. __FUNCTION__ . '/' .  __LINE__ . ' ' . $op);
+      // Hook is called when showing the Transition Revert form.
+      // Implement this hook if you need to control this.
+      // If you return FALSE here, you will veto the transition.
+      break;
+
     case 'transition pre':
-      drupal_set_message(__FUNCTION__ . '/' . $op);
+      drupal_set_message(__FILE__ . '/'. __FUNCTION__ . '/' .  __LINE__ . ' ' . $op);
       // The workflow module does nothing during this operation.
       // Implement this hook if you need to change/do something BEFORE anything
       // is saved to the database.
@@ -137,7 +144,7 @@ function hook_workflow($op, WorkflowTransitionInterface $transition, UserInterfa
       break;
 
     case 'transition post':
-      drupal_set_message(__FUNCTION__ . '/' . $op);
+      drupal_set_message(__FILE__ . '/'. __FUNCTION__ . '/' .  __LINE__ . ' ' . $op);
       // In D7, this is called by Workflow Node during update of the state, directly
       // after updating the Workflow. Workflow Field does not call this,
       // since you can call a hook_entity_* event after saving the entity.
@@ -175,17 +182,10 @@ function hook_workflow($op, WorkflowTransitionInterface $transition, UserInterfa
  *   'transition' - a WorkflowTransition object, containing all of the above.
  */
 function hook_workflow_history_alter(array &$variables) {
-  drupal_set_message(__FILE__ . '/' . __FUNCTION__ . '/' . __LINE__);
   // The Workflow module does nothing with this hook.
   // For an example implementation, see the Workflow Revert add-on.
-  $options = array();
-  $path = '<front>';
 
-  // If you want to add additional data, such as an operation link,
-  // place it in the 'extra' value.
-  // @FIXME
-// l() expects a Url object, created from a route name or external URI.
-// $variables['extra'] = l(t('My new operation: go to frontpage'), $path, $options);
+  // drupal_set_message(__FILE__ . '/' . __FUNCTION__ . '/' . __LINE__);
 }
 
 /**

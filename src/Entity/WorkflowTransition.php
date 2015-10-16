@@ -33,6 +33,7 @@ use Drupal\user\UserInterface;
  *     "form" = {
  *        "add" = "Drupal\workflow\Form\WorkflowTransitionForm",
  *        "edit" = "Drupal\workflow\Form\WorkflowTransitionForm",
+ *        "revert" = "Drupal\workflow_operations\Form\WorkflowTransitionRevertForm",
  *        "delete" = "Drupal\Core\Entity\EntityDeleteForm",
  *      }
  *   },
@@ -44,6 +45,7 @@ use Drupal\user\UserInterface;
  *   links = {
  *     "canonical" = "/workflow/transition/{workflow_transition}",
  *     "edit-form" = "/workflow/transition/{workflow_transition}/edit",
+ *     "revert-form" = "/workflow/transition/{workflow_transition}/revert",
  *     "delete-form" = "/workflow/transition/{workflow_transition}/delete",
  *   }
  * )
