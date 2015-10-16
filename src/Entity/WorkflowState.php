@@ -381,19 +381,7 @@ class WorkflowState extends ConfigEntityBase {
       return $transitions;
     }
 
-    $current_sid = $this->id();
-    $current_state = $this;
-
-//    if (!$workflows = workflow_get_workflows_by_type($entity_bundle, $entity_type)) { /* Testing... */ }
-
     // @todo: Keep below code aligned between WorkflowState, ~Transition, ~TransitionListController
-    // Get user's ID and Role IDs, to get the proper permissions.
-    $uid = ($account) ? $account->id() : -1;
-    // Get the entity's ID and Author ID.
-    $entity_id = ($entity) ? $entity->id() : '';
-    // Some entities (e.g., taxonomy_term) do not have a uid.
-    // $entity_uid = $entity->get('uid');// ; isset($entity->uid) ? $entity->uid : 0;
-    $entity_uid = (method_exists($entity, 'getOwnerId')) ? $entity->getOwnerId() : -1;
 
     /**
      * Get permissions of user, adding a Role to user, depending on situation.
@@ -401,34 +389,24 @@ class WorkflowState extends ConfigEntityBase {
     // Load a User object, since we cannot add Roles to AccountInterface.
     /* @var $user \Drupal\user\UserInterface */
     $user = workflow_current_user($account);
+    // Determine if user is owner of the entity.
+    $is_owner = WorkflowManager::isOwner($user, $entity);
+
     // Check allow-ability of state change if user is not superuser (might be cron)
     $type_id = $this->getWorkflowId();
     if ($user->hasPermission("bypass $type_id workflow_transition access")) {
       // Superuser is special. And $force allows Rules to cause transition.
       $force = TRUE;
     }
-    elseif (!$entity_id) {
-      // This is a new entity. User is author. Add 'author' role to user.
-      // - $entity can be NULL (E.g., on a Field settings page).
-      // - on display of new entity, $entity_id and $is_new are not set.
-      // - on submit of new entity, $entity_id and $is_new are both set.
+    elseif ($is_owner) {
       $user->addRole(WORKFLOW_ROLE_AUTHOR_RID);
-    }
-    elseif (($entity_uid > 0) && ($uid > 0) && ($entity_uid == $uid)) {
-      // This is an existing entity. User is author. Add 'author' role to user.
-      // N.B.: If 'anonymous' is the author, don't allow access to History Tab,
-      // since anyone can access it, and it will be published in Search engines.
-      $user->addRole(WORKFLOW_ROLE_AUTHOR_RID);
-    }
-    else {
-      // This is an existing entity. User is not the author. Do nothing.
     }
 
     /**
      * Get the object and its permissions.
      */
     /* @var $transitions WorkflowConfigTransition[] */
-    $transitions = $workflow->getTransitionsByStateId($current_sid, '');
+    $transitions = $workflow->getTransitionsByStateId($this->id(), '');
 
     /**
      * Determine if user has Access.
@@ -446,7 +424,7 @@ class WorkflowState extends ConfigEntityBase {
     $context = array(
       'user' => $user, // user may have the custom role AUTHOR.
       'workflow' => $workflow,
-      'state' => $current_state,
+      'state' => $this,
       'force' => $force,
     );
     \Drupal::moduleHandler()->alter('workflow_permitted_state_transitions', $transitions, $context);

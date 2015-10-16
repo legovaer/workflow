@@ -249,7 +249,20 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     return $build;
   }
 
-    /**
+  /**
+   * Just for reference: parent::getOperations calls 2 hooks/alters.
+   * {@inheritdoc}
+   */
+//  public function getOperations(EntityInterface $entity) {
+//    $operations = $this->getDefaultOperations($entity);
+//    $operations += $this->moduleHandler()->invokeAll('entity_operation', array($entity));
+//    $this->moduleHandler->alter('entity_operation', $operations, $entity);
+//    uasort($operations, '\Drupal\Component\Utility\SortArray::sortByWeightElement');
+//
+//    return $operations;
+//  }
+
+  /**
    * {@inheritdoc}
    */
   public function getDefaultOperations(EntityInterface $entity) {
@@ -262,13 +275,6 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
       $destination = \Drupal::destination()->getAsArray();
       $operations['edit']['query'] = $destination;
     }
-
-    // @TODO D8-port: convert workflow-operations to core-style.
-//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-    // TODO D8-port: test invokeAll('workflow_operations', []).
-    // Allow modules to insert operations per state.
-    $workflow = $transition->getWorkflow();
-    $operations += \Drupal::moduleHandler()->invokeAll('workflow_operations', ['workflow_transition', $workflow, NULL, $transition]);
 
     return $operations;
   }

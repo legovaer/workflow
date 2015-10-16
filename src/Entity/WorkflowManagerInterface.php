@@ -143,4 +143,14 @@ interface WorkflowManagerInterface {
    */
   public function getPreviousStateId(EntityInterface $entity, $field_name = '');
 
-}
+  /**
+   * Determins if User is owner/author of the entity.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *
+   * @return bool
+   */
+  public static function isOwner(AccountInterface $account, EntityInterface $entity);
+
+  }

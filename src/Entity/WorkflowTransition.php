@@ -43,8 +43,8 @@ use Drupal\user\UserInterface;
  *   },
  *   links = {
  *     "canonical" = "/workflow/transition/{workflow_transition}",
- *     "delete-form" = "/workflow/transition/{workflow_transition}/delete",
  *     "edit-form" = "/workflow/transition/{workflow_transition}/edit",
+ *     "delete-form" = "/workflow/transition/{workflow_transition}/delete",
  *   }
  * )
  */
@@ -432,6 +432,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     if ($force) {
       $this->force($force);
     }
+    $force = $this->isForced();
 
     // TODO D8-port: figure out usage of $entity->workflow_transitions[$field_name]
     /*
@@ -980,6 +981,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $output[] = 'Field   = ' . $transition->getFieldName();
     $output[] = 'From/To = ' . $transition->getFromSid() . ' > ' . $transition->getToSid() . ' @ ' . $time;
     $output[] = 'Comment = ' . $transition->getOwner()->getUsername() . ' says: ' . $transition->getComment();
+    $output[] = 'Forced  = ' . ($transition->isForced() ? 'yes' : 'no');
     if (function_exists('dpm')) { dpm($output, $t_string); }
   }
 

@@ -16,6 +16,7 @@ use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\workflow\Entity\Workflow;
+use Drupal\workflow\Entity\WorkflowManager;
 use Drupal\workflow\Entity\WorkflowTransition;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -174,7 +175,6 @@ class WorkflowTransitionListController extends EntityListController implements C
 
     // TODO D8-port: make Workflow History tab happen for every entity_type.
     // @see workflow.routing.yml, workflow.links.task.yml, WorkflowTransitionListController.
-//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     // ATM it only works for Nodes and Terms.
     // This is a hack. The Route should always pass an object.
     // On view tab, $entity is object,
@@ -198,35 +198,12 @@ class WorkflowTransitionListController extends EntityListController implements C
       return AccessResult::forbidden();
     }
     else {
-
       // @todo: Keep below code aligned between WorkflowState, ~Transition, ~TransitionListController
-      // Determine if user is owner of the entity.
       $uid = ($account) ? $account->id() : -1;
-      // Get the entity's ID and Author ID.
       $entity_id = ($entity) ? $entity->id() : '';
-      // Some entities (e.g., taxonomy_term) do not have a uid.
-      // $entity_uid = $entity->get('uid'); // isset($entity->uid) ? $entity->uid : 0;
-      $entity_uid = (method_exists($entity, 'getOwnerId')) ? $entity->getOwnerId() : -1;
+      // Determine if user is owner of the entity.
+      $is_owner = WorkflowManager::isOwner($account, $entity);
 
-      $is_owner = FALSE;
-      if (!$entity_id) {
-        // This is a new entity. User is author. Add 'author' role to user.
-        $is_owner = TRUE;
-      }
-      elseif (($entity_uid > 0) && ($uid > 0) && ($entity_uid == $uid)) {
-        // This is an existing entity. User is author.
-        // D8: use "access own" permission. D7: Add 'author' role to user.
-        // N.B.: If 'anonymous' is the author, don't allow access to History Tab,
-        // since anyone can access it, and it will be published in Search engines.
-        $is_owner = TRUE;
-      }
-      else {
-        // This is an existing entity. User is not the author. Do nothing.
-      }
-
-      /**
-       * Get the object and its permissions.
-       */
       /**
        * Determine if user has Access. Fill the cache.
        */

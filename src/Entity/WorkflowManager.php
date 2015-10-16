@@ -35,7 +35,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
     if ($to_sid == $transition->getToSid()) {
       if (!$transition->isScheduled()) {
         // Update the workflow field of the entity.
-        $result = $transition->updateEntity();
+        $transition->updateEntity();
       }
     }
     else {
@@ -285,5 +285,36 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
     return $sid;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public static function isOwner(AccountInterface $account, EntityInterface $entity) {
+    $is_owner = FALSE;
+
+    // @todo: Keep below code aligned between WorkflowState, ~Transition, ~TransitionListController
+    // Determine if user is owner of the entity.
+    $uid = ($account) ? $account->id() : -1;
+    // Get the entity's ID and Author ID.
+    $entity_id = ($entity) ? $entity->id() : '';
+    // Some entities (e.g., taxonomy_term) do not have a uid.
+    // $entity_uid = $entity->get('uid'); // isset($entity->uid) ? $entity->uid : 0;
+    $entity_uid = (method_exists($entity, 'getOwnerId')) ? $entity->getOwnerId() : -1;
+
+    if (!$entity_id) {
+      // This is a new entity. User is author. Add 'author' role to user.
+      $is_owner = TRUE;
+    }
+    elseif (($entity_uid > 0) && ($uid > 0) && ($entity_uid == $uid)) {
+      // This is an existing entity. User is author.
+      // D8: use "access own" permission. D7: Add 'author' role to user.
+      // N.B.: If 'anonymous' is the author, don't allow access to History Tab,
+      // since anyone can access it, and it will be published in Search engines.
+      $is_owner = TRUE;
+    }
+    else {
+      // This is an existing entity. User is not the author. Do nothing.
+    }
+    return $is_owner;
+  }
 }
 
