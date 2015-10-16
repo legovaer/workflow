@@ -8,9 +8,79 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\user\UserInterface;
 use Drupal\workflow\Entity\Workflow;
-use Drupal\workflow\Entity\WorkflowConfigTransition;
 use Drupal\workflow\Entity\WorkflowState;
+use Drupal\workflow\Entity\WorkflowConfigTransition;
 use Drupal\workflow\Entity\WorkflowTransitionInterface;
+
+/**
+ * Implements hook_workflow_operations().
+ *
+ * Adds extra operations to ListBuilders.
+ * - workflow_ui: Workflow, State;
+ * - workflow: WorkflowTransition;
+ *
+ * @param string $op
+ *   'top_actions': Allow modules to insert their own front page action links.
+ *   'operations': Allow modules to insert their own workflow operations.
+ *   'state':  Allow modules to insert state operations.
+ * @param \Drupal\workflow\Entity\Workflow|NULL $workflow
+ *   The current workflow object.
+ * @param \Drupal\workflow\Entity\WorkflowState|NULL $state
+ *   The current state object.
+ * @param \Drupal\workflow\Entity\WorkflowTransitionInterface|NULL $transition
+ *   The current transition object.
+ *
+ * @return array
+ *   The new actions, to be added to the entity list.
+ */
+function hook_workflow_operations($op, Workflow $workflow = NULL, WorkflowState $state = NULL, WorkflowTransitionInterface $transition = NULL) {
+  $operations = array();
+  switch ($op) {
+    case 'top_actions':
+//      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $op);  // @todo D8-port: still test this snippet.
+      // The workflow_admin_ui module creates links to add a new state,
+      // and reach each workflow.
+      // Your module may add to these actions.
+      return $operations;
+
+    case 'operations':
+//      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $op);  // @todo D8-port: still test this snippet.
+      // The workflow_admin_ui module creates links to add a new state,
+      // edit the workflow, and delete the workflow.
+      // Your module may add to these actions.
+      return $operations;
+
+    case 'workflow':
+      // Allow modules to insert their own workflow operations.
+      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $op);  // @todo D8-port: still test this snippet.
+      $wid = $workflow->id();
+
+      $alt = t('Test for @wf', array('@wf' => $workflow->label()));
+      $operation = array(
+        'workflow_access_form' => array(
+          'title' => t('Go to front page'),
+          'href' => "<front>",
+          'attributes' => array('alt' => $alt, 'title' => $alt),
+        ),
+      );
+
+      return $operations;
+
+    case 'state':
+      // Your module may add operations to the States list.
+//      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $op);  // @todo D8-port: still test this snippet.
+      return $operations;
+
+    case 'workflow_transition':
+      // Your module may add actions to the workflow history list.
+      // In D8, this is the replacement for hook_workflow_history_alter().
+      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $op);  // @todo D8-port: still test this snippet.
+      return $operations;
+
+    default:
+      return $operations;
+  }
+}
 
 /**
  * Implements hook_workflow().
