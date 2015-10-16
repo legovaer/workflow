@@ -19,7 +19,6 @@ use Drupal\workflow\Entity\WorkflowState;
  */
 class WorkflowStateListBuilder extends DraggableListBuilder {
 
-  // @TODO D8-port WorkflowStateListBuilder: enable Operations: column + hook_workflow_operations + edit permissions.
   // @TODO D8-port WorkflowStateListBuilder: enable De-activate: status + reassign + count.
   // @TODO D8-port WorkflowStateListBuilder: enable machine_name: interactive WorkflowState element.
 
@@ -229,22 +228,14 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
   public function getDefaultOperations(EntityInterface $entity) {
     $operations = parent::getDefaultOperations($entity);
 
-    // Allow other modules to insert operations per state.
-    // @TODO D8-port: enable Operations: column + hook_workflow_operations + edit permissions.
-//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-    /* @var $state WorkflowState */
-    $state = $entity;
-    $workflow = $state->getWorkflow();
-    $links = \Drupal::moduleHandler()->invokeAll('workflow_operations', ['state', $workflow, $state]);
-    /*
-        if ($entity->hasLinkTemplate('edit-form')) {
-          $operations['edit'] = array(
-            'title' => t('Edit ball'),
-            'weight' => 20,
-            'url' => $entity->urlInfo('edit-form'),
-          );
-        }
-    */
+    // As of D8, below hook_workflow_operations is removed, in favour core hooks.
+    // @see EntityListBuilder::getOperations, workflow_operations, workflow.api.php.
+//    // Allow other modules to insert operations per state.
+//    /* @var $state WorkflowState */
+//    $state = $entity;
+//    $workflow = $state->getWorkflow();
+//    $links = \Drupal::moduleHandler()->invokeAll('workflow_operations', ['state', $workflow, $state]);
+
     return $operations;
   }
 

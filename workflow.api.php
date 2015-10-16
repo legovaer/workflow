@@ -44,37 +44,13 @@ function hook_workflow_operations($op, Workflow $workflow = NULL, WorkflowState 
       return $operations;
 
     case 'operations':
-//      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $op);  // @todo D8-port: still test this snippet.
-      // The workflow_admin_ui module creates links to add a new state,
-      // edit the workflow, and delete the workflow.
-      // Your module may add to these actions.
-      return $operations;
-
     case 'workflow':
-      // Allow modules to insert their own workflow operations.
-      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $op);  // @todo D8-port: still test this snippet.
-      $wid = $workflow->id();
-
-      $alt = t('Test for @wf', array('@wf' => $workflow->label()));
-      $operation = array(
-        'workflow_access_form' => array(
-          'title' => t('Go to front page'),
-          'href' => "<front>",
-          'attributes' => array('alt' => $alt, 'title' => $alt),
-        ),
-      );
-
-      return $operations;
-
     case 'state':
-      // Your module may add operations to the States list.
-//      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $op);  // @todo D8-port: still test this snippet.
-      return $operations;
-
     case 'workflow_transition':
-      // Your module may add actions to the workflow history list.
-      // In D8, this is the replacement for hook_workflow_history_alter().
-      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $op);  // @todo D8-port: still test this snippet.
+      // As of D8, below hook_workflow_operations is removed, in favour core hooks.
+      // @see EntityListBuilder::getOperations, workflow_operations, workflow.api.php.
+
+      // Your module may add operations to the Entity list.
       return $operations;
 
     default:

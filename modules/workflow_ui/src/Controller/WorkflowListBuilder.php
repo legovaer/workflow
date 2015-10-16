@@ -82,22 +82,12 @@ class WorkflowListBuilder extends ConfigEntityListBuilder {
 //     );
 
 
-//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: 'add default operations');
-    // Allow modules to insert their own workflow operations.
-//    foreach ($form['table']['#rows'] as &$row) {
-//      $url = $row[0]['data']['#url'];
-//      $workflow = $url['options']['entity'];
-    foreach ($actions = \Drupal::moduleHandler()->invokeAll('workflow_operations', ['workflow', $workflow]) as $action) {
-      $action['attributes'] = isset($action['attributes']) ? $action['attributes'] : array();
-
-      $operations['MY_NEW_OPERATION'] = array(
-        'title' => t('MY_NEW_OPERATION'),
-        'weight' => -10,
-        // @FIXME
-        'url' => $entity->urlInfo('MY_NEW_OPERATION'),
-//      'url'=> l(strtolower($action['title']), $action['href'], $action['attributes']);
-      );
-    }
+    // As of D8, below hook_workflow_operations is removed, in favour core hooks.
+    // @see EntityListBuilder::getOperations, workflow_operations, workflow.api.php.
+//    // Allow modules to insert their own workflow operations.
+//    foreach ($actions = \Drupal::moduleHandler()->invokeAll('workflow_operations', ['workflow', $workflow]) as $action) {
+//      $action['attributes'] = isset($action['attributes']) ? $action['attributes'] : array();
+//    }
 
 
 //    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port:  'remove delete operation');
