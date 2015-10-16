@@ -8,7 +8,6 @@
 namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Session\AccountInterface;
 
 /**
  * Defines a common interface for Workflow*Transition* objects.
@@ -162,16 +161,16 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface,
   /**
    * Set the Owner.
    *
-   * @param AccountInterface $account
+   * @param \Drupal\Core\Session\AccountInterface $account
    *
    * @return WorkflowTransitionInterface
    */
-  public function setOwner(AccountInterface $account);
+  public function setOwner(\Drupal\Core\Session\AccountInterface $account);
 
   /**
    * Get the Owner.
    *
-   * @return \Drupal\Core\Session\AccountInterface $user
+   * @return \Drupal\user\UserInterface $user
    *   The entity, that is added to the Transition.
    */
   public function getOwner();

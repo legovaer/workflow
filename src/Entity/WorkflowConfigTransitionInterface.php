@@ -7,7 +7,7 @@
 
 namespace Drupal\workflow\Entity;
 
-use Drupal\Core\Session\AccountInterface;
+use Drupal\user\UserInterface;
 
 /**
  * Defines a common interface for Workflow*Transition* objects.
@@ -19,25 +19,21 @@ use Drupal\Core\Session\AccountInterface;
 interface WorkflowConfigTransitionInterface {
 
   /**
-   * Determines if the current transition between 2 states is allowed.
+   * Determines if the current transition between 2 states is allowed:
+   * - in settings;
+   * - in permissions;
+   * - by permission hooks, implemented by other modules.
    *
-   * - In settings;
-   * - In permissions;
-   * - By permission hooks, implemented by other modules.
-   *
-   * @param array $roles
-   * @param \Drupal\Core\Session\AccountInterface|NULL $user
+   * @param \Drupal\user\UserInterface $user
+   *   The user to act upon.
+   *   May have the custom WORKFLOW_ROLE_AUTHOR_RID role.
    * @param bool $force
+   *   Indicates if the transition must be forced(E.g., by cron, rules).
    *
    * @return bool
    *   TRUE if OK, else FALSE.
-   *
-   *   Having both $roles AND $user seems redundant, but $roles have been
-   *   tampered with, even though they belong to the $user.
-   *
-   * @see WorkflowConfigTransition::isAllowed()
    */
-  public function isAllowed(array $roles, AccountInterface $user, $force = FALSE);
+  public function isAllowed(UserInterface $user, $force = FALSE);
 
   /**
    * Returns the Workflow object of this State.

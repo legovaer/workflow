@@ -215,7 +215,7 @@ class WorkflowDefaultWidget extends WidgetBase {
           // - add to history; add to watchdog
           // Return the new State ID. (Execution may fail and return the old Sid.)
 
-          if (!$transition->isAllowed([], $user, $force)) {
+          if (!$transition->isAllowed($user, $force)) {
             // Transition is not allowed.
             $to_sid = $from_sid;
           }

@@ -11,6 +11,9 @@ define('WORKFLOW_DELETION', 0);
 // Couldn't find a more elegant way to preserve translation.
 define('WORKFLOW_CREATION_STATE_NAME', '(' . t('creation') . ')');
 
+/**
+ * Role ID for anonymous users.
+ */
 // Add brackets to indicate a special role, and distinguish from frequently used 'author' role.
 define('WORKFLOW_ROLE_AUTHOR_NAME', '(' . t('author') . ')');
 define('WORKFLOW_ROLE_AUTHOR_RID', 'workflow_author');
@@ -413,14 +416,16 @@ function workflow_url_get_operation(EntityInterface $entity = NULL) {
  */
 
 /**
- * Wrapper function.
+ * Wrapper function to get a UserInterface object.
+ * We use UserInterface to check permissions.
  *
  * @param \Drupal\Core\Session\AccountInterface|NULL $account
  *
- * @return \Drupal\Core\Session\AccountInterface|\Drupal\Core\Session\AccountProxyInterface
+ * @return \Drupal\user\UserInterface
  */
 function workflow_current_user(\Drupal\Core\Session\AccountInterface $account = NULL) {
-  return ($account) ? $account : \Drupal::currentUser();
+  $account = ($account) ? $account : \Drupal::currentUser();
+  return \Drupal\user\Entity\User::load($account->id());
 }
 
 /**
@@ -569,7 +574,7 @@ function _workflow_info_fields($entity = NULL, $entity_type = '', $entity_bundle
  */
 function workflow_debug($class_name, $function_name, $line = '', $value1 = '', $value2 = '') {
   $debug_switch = FALSE;
-  $debug_switch = TRUE;
+//  $debug_switch = TRUE;
 
   if (!$debug_switch || !function_exists('dpm')) {
     return;
@@ -585,5 +590,3 @@ function workflow_debug($class_name, $function_name, $line = '', $value1 = '', $
   }
   if (function_exists('dpm')) { dpm($output); }
 }
-
-//module_load_include('inc', 'workflow', 'workflow.api.php');

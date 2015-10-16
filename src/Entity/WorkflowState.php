@@ -13,6 +13,7 @@ use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\Entity;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\user\UserInterface;
 
 /**
  * Workflow configuration entity to persistently store configuration.
@@ -220,11 +221,12 @@ class WorkflowState extends ConfigEntityBase {
     $current_sid = $this->id();
     $force = TRUE;
 
-    // Notify interested modules. We notify first to allow access to data before we zap it.
-    // E.g., Node API (@todo Field API):
-    // - re-parents any entity that we don't want to orphan, whilst deactivating a State.
-    // - delete any lingering entity to state values.
-    \Drupal::moduleHandler()->invokeAll('workflow', ['state delete', $current_sid, $new_sid, NULL, $force]);
+    // As of 8.x-1.x, below custom hook is removed, in favour of core hook_workflow_state_predelete().
+//    // Notify interested modules. We notify first to allow access to data before we zap it.
+//    // E.g., Node API (@todo Field API):
+//    // - re-parents any entity that we don't want to orphan, whilst deactivating a State.
+//    // - delete any lingering entity to state values.
+//    \Drupal::moduleHandler()->invokeAll('workflow', ['state delete', $current_sid, $new_sid, NULL, $force]);
 
     // TODO D8-port: re-implement below code.
 //    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: re-implement re-assign states when deactivating state in function WorkflowState::' . deactivate );
@@ -336,14 +338,14 @@ class WorkflowState extends ConfigEntityBase {
    *
    * @param EntityInterface$entity
    * @param string $field_name
-   * @param \Drupal\Core\Session\AccountInterface $user
+   * @param \Drupal\Core\Session\AccountInterface $account
    * @param bool $force
    *
    * @return bool $show_widget
    *   TRUE = a form (a.k.a. widget) must be shown; FALSE = no form, a formatter must be shown instead.
    */
-  public function showWidget(EntityInterface $entity, $field_name, AccountInterface $user, $force) {
-    $options = $this->getOptions($entity, $field_name, $user, $force);
+  public function showWidget(EntityInterface $entity, $field_name, AccountInterface $account, $force) {
+    $options = $this->getOptions($entity, $field_name, $account, $force);
     $count = count($options);
     // The easiest case first: more then one option: always show form.
     if ($count > 1) {
@@ -365,13 +367,13 @@ class WorkflowState extends ConfigEntityBase {
    * @param \Drupal\Core\Entity\EntityInterface|NULL $entity
    *   The entity at hand. May be NULL (E.g., on a Field settings page).
    * @param string $field_name
-   * @param \Drupal\Core\Session\AccountInterface|NULL $user
+   * @param \Drupal\Core\Session\AccountInterface|NULL $account
    * @param bool|FALSE $force
    *
    * @return \Drupal\workflow\Entity\WorkflowConfigTransition[]
    *   An array of id=>transition pairs with allowed transitions for State.
    */
-  public function getTransitions(EntityInterface $entity = NULL, $field_name = '', AccountInterface $user = NULL, $force = FALSE) {
+  public function getTransitions(EntityInterface $entity = NULL, $field_name = '', AccountInterface $account = NULL, $force = FALSE) {
     $transitions = array();
 
     if (!$workflow = $this->getWorkflow()) {
@@ -384,9 +386,9 @@ class WorkflowState extends ConfigEntityBase {
 
 //    if (!$workflows = workflow_get_workflows_by_type($entity_bundle, $entity_type)) { /* Testing... */ }
 
+    // @todo: Keep below code aligned between WorkflowState, ~Transition, ~TransitionListController
     // Get user's ID and Role IDs, to get the proper permissions.
-    $uid = ($user) ? $user->id() : -1;
-    $user_roles = $user ? $user->getRoles() : array();
+    $uid = ($account) ? $account->id() : -1;
     // Get the entity's ID and Author ID.
     $entity_id = ($entity) ? $entity->id() : '';
     // Some entities (e.g., taxonomy_term) do not have a uid.
@@ -396,7 +398,9 @@ class WorkflowState extends ConfigEntityBase {
     /**
      * Get permissions of user, adding a Role to user, depending on situation.
      */
-    // @todo: Keep below code aligned between WorkflowState, ~Transition, ~TransitionListController
+    // Load a User object, since we cannot add Roles to AccountInterface.
+    /* @var $user \Drupal\user\UserInterface */
+    $user = workflow_current_user($account);
     // Check allow-ability of state change if user is not superuser (might be cron)
     $type_id = $this->getWorkflowId();
     if ($user->hasPermission("bypass $type_id workflow_transition access")) {
@@ -408,13 +412,13 @@ class WorkflowState extends ConfigEntityBase {
       // - $entity can be NULL (E.g., on a Field settings page).
       // - on display of new entity, $entity_id and $is_new are not set.
       // - on submit of new entity, $entity_id and $is_new are both set.
-      $user_roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $user_roles);
+      $user->addRole(WORKFLOW_ROLE_AUTHOR_RID);
     }
     elseif (($entity_uid > 0) && ($uid > 0) && ($entity_uid == $uid)) {
       // This is an existing entity. User is author. Add 'author' role to user.
       // N.B.: If 'anonymous' is the author, don't allow access to History Tab,
       // since anyone can access it, and it will be published in Search engines.
-      $user_roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $user_roles);
+      $user->addRole(WORKFLOW_ROLE_AUTHOR_RID);
     }
     else {
       // This is an existing entity. User is not the author. Do nothing.
@@ -423,57 +427,54 @@ class WorkflowState extends ConfigEntityBase {
     /**
      * Get the object and its permissions.
      */
-    // Set up an array with states - they are already properly sorted.
-    // Unfortunately, the config_transitions are not sorted.
-    // Also, $transitions does not contain the 'stay on current state' transition.
-    // The allowed objects will be replaced with names.
     /* @var $transitions WorkflowConfigTransition[] */
     $transitions = $workflow->getTransitionsByStateId($current_sid, '');
+
+    /**
+     * Determine if user has Access.
+     */
+    // Use default module permissions.
     foreach ($transitions as $key => $transition) {
-      if (!$transition->isAllowed($user_roles, $user, $force)) {
+      if (!$transition->isAllowed($user, $force)) {
         unset($transitions[$key]);
       }
     }
-
-    // Let custom code add/remove/alter the available transitions.
-    // Using the new drupal_alter.
+    // Let custom code add/remove/alter the available transitions,
+    // using the new drupal_alter.
     // Modules may veto a choice by removing a transition from the list.
+    // Lots of data can be fetched via the $transition object.
     $context = array(
-      'entity_type' => $entity->getEntityTypeId(),
-      'entity' => $entity,
-      'field_name' => $field_name,
-      'force' => $force,
+      'user' => $user, // user may have the custom role AUTHOR.
       'workflow' => $workflow,
       'state' => $current_state,
-      'user' => $user,
-      'user_roles' => $user_roles, // $user_roles can be different from $user->getRoles().
+      'force' => $force,
     );
     \Drupal::moduleHandler()->alter('workflow_permitted_state_transitions', $transitions, $context);
 
     /**
      * Determine if user has Access.
      */
+    // As of 8.x-1.x, below hook() is removed, in favour of above alter().
     // Let custom code change the options, using old_style hook.
-    // @todo D8: delete below foreach/hook for better performance and flexibility.
     // Above drupal_alter() calls hook_workflow_permitted_state_transitions_alter() only once.
-    foreach ($transitions as $transition) {
-      $to_sid = $transition->to_sid;
-      $permitted = array();
-
-      // We now have a list of config_transitions. Check each against the Entity.
-      // Invoke a callback indicating that we are collecting state choices.
-      // Modules may veto a choice by returning FALSE.
-      // In this case, the choice is never presented to the user.
-      if (!$force) {
-        // TODO: D8-port: simplify interface for workflow_hook. Remove redundant context.
-        $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition permitted', $current_sid, $to_sid, $entity, $force, $entity_type = '', $field_name, $transition, $user]);
-      }
-
-      // If vetoed by a module, remove from list.
-      if (in_array(FALSE, $permitted, TRUE)) {
-        unset($transitions[$transition->id()]);
-      }
-    }
+//    foreach ($transitions as $transition) {
+//      $to_sid = $transition->to_sid;
+//      $permitted = array();
+//
+//      // We now have a list of config_transitions. Check each against the Entity.
+//      // Invoke a callback indicating that we are collecting state choices.
+//      // Modules may veto a choice by returning FALSE.
+//      // In this case, the choice is never presented to the user.
+//      if (!$force) {
+//        // TODO: D8-port: simplify interface for workflow_hook. Remove redundant context.
+//        $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition permitted', $transition, $user]);
+//      }
+//
+//      // If vetoed by a module, remove from list.
+//      if (in_array(FALSE, $permitted, TRUE)) {
+//        unset($transitions[$transition->id()]);
+//      }
+//    }
 
     return $transitions;
   }
@@ -484,7 +485,7 @@ class WorkflowState extends ConfigEntityBase {
    * @param object $entity
    *   The entity at hand. May be NULL (E.g., on a Field settings page).
    * @param string $field_name
-   * @param \Drupal\Core\Session\AccountInterface|NULL $user
+   * @param \Drupal\Core\Session\AccountInterface|NULL $account
    * @param bool $force
    *
    * @return array
@@ -493,7 +494,7 @@ class WorkflowState extends ConfigEntityBase {
    *   If $this->id() is 0 or FALSE, then labels of ALL states of the State's
    *   Workflow are returned.
    */
-  public function getOptions($entity, $field_name, AccountInterface $user = NULL, $force = FALSE) {
+  public function getOptions($entity, $field_name, AccountInterface $account = NULL, $force = FALSE) {
     $options = array();
 
     // Define an Entity-specific cache per page load.
@@ -524,7 +525,7 @@ class WorkflowState extends ConfigEntityBase {
       }
     }
     else {
-      $transitions = $this->getTransitions($entity, $field_name, $user, $force);
+      $transitions = $this->getTransitions($entity, $field_name, $account, $force);
       foreach ($transitions as $transition) {
         // Get the label of the transition, and if empty of the target state.
         // Beware: the target state may not exist, since it can be invented

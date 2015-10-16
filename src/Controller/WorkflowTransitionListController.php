@@ -170,8 +170,7 @@ class WorkflowTransitionListController extends EntityListController implements C
   public function historyAccess(AccountInterface $account) {
     static $access = array();
 
-    $user = $account;
-    $uid = ($user) ? $user->id() : -1;
+    $uid = ($account) ? $account->id() : -1;
 
     // TODO D8-port: make Workflow History tab happen for every entity_type.
     // @see workflow.routing.yml, workflow.links.task.yml, WorkflowTransitionListController.
@@ -200,8 +199,9 @@ class WorkflowTransitionListController extends EntityListController implements C
     }
     else {
 
+      // @todo: Keep below code aligned between WorkflowState, ~Transition, ~TransitionListController
       // Determine if user is owner of the entity.
-      $uid = ($user) ? $user->id() : -1;
+      $uid = ($account) ? $account->id() : -1;
       // Get the entity's ID and Author ID.
       $entity_id = ($entity) ? $entity->id() : '';
       // Some entities (e.g., taxonomy_term) do not have a uid.
@@ -214,7 +214,8 @@ class WorkflowTransitionListController extends EntityListController implements C
         $is_owner = TRUE;
       }
       elseif (($entity_uid > 0) && ($uid > 0) && ($entity_uid == $uid)) {
-        // This is an existing entity. User is author. Add 'author' role to user.
+        // This is an existing entity. User is author.
+        // D8: use "access own" permission. D7: Add 'author' role to user.
         // N.B.: If 'anonymous' is the author, don't allow access to History Tab,
         // since anyone can access it, and it will be published in Search engines.
         $is_owner = TRUE;
@@ -237,10 +238,10 @@ class WorkflowTransitionListController extends EntityListController implements C
         if ($account->hasPermission("access any $type_id workflow_transion overview")) {
           $access[$uid][$entity_type][$entity_id] = AccessResult::allowed();
         }
-        elseif ( $is_owner && $account->hasPermission("access own $type_id workflow_transion overview")) {
+        elseif ($is_owner && $account->hasPermission("access own $type_id workflow_transion overview")) {
           $access[$uid][$entity_type][$entity_id] = AccessResult::allowed();
         }
-        elseif ($user->hasPermission('administer nodes')) {
+        elseif ($account->hasPermission('administer nodes')) {
           $access[$uid][$entity_type][$entity_id] = AccessResult::allowed();
         }
       }

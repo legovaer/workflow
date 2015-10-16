@@ -9,7 +9,7 @@ namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
-use Drupal\Core\Session\AccountInterface;
+use Drupal\user\UserInterface;
 
 /**
  * Workflow configuration entity to persistently store configuration.
@@ -210,7 +210,8 @@ class WorkflowConfigTransition extends ConfigEntityBase implements WorkflowConfi
   /**
    * {@inheritdoc}
    */
-  public function isAllowed(array $user_roles, AccountInterface $user, $force = FALSE) {
+  public function isAllowed(UserInterface $user, $force = FALSE) {
+    $result = FALSE;
 
     $type_id = $this->getWorkflowId();
     if ($user->hasPermission("bypass $type_id workflow_transition access")) {
@@ -225,10 +226,7 @@ class WorkflowConfigTransition extends ConfigEntityBase implements WorkflowConfi
       // Anyone may save an entity without changing state.
       return TRUE;
     }
-    if ($user_roles) {
-      return array_intersect($user_roles, $this->roles) == TRUE;
-    }
-    return TRUE;
+    return TRUE == array_intersect($user->getRoles(), $this->roles);
   }
 
 }

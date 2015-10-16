@@ -10,12 +10,11 @@
 namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
-use Drupal\Core\Entity\Entity;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Language\Language;
-use Drupal\Core\Session\AccountInterface;
+use Drupal\user\UserInterface;
 
 /**
  * Implements an actual, executed, Transition.
@@ -292,7 +291,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     /* @var $entity \Drupal\Core\Entity\EntityInterface */
     $entity = $this->getEntity();
     $entity_type = ($entity) ? $entity->getEntityTypeId() : '';
-    /* @var $user \Drupal\Core\Session\AccountInterface */
+    /* @var $user \Drupal\user\UserInterface */
     $user = $this->getOwner();
     $from_sid = $this->getFromSid();
     $to_sid = $this->getToSid();
@@ -330,28 +329,23 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /**
    * {@inheritdoc}
    */
-  public function isAllowed(array $roles, AccountInterface $user, $force = FALSE) {
-
-    // Get user's ID and Role IDs, to get the proper permissions.
-    $uid = ($user) ? $user->id() : -1;
-    $user_roles = $roles;
+  public function isAllowed(UserInterface $user, $force = FALSE) {
 
     /**
-     * Get permissions of user, adding a Role to user, depending on situation.
+     * Get early permissions of user, and bail out to avoid extra hook-calls.
      */
-    // @todo: Keep below code aligned between WorkflowState, ~Transition, ~TransitionListController
     // Check allow-ability of state change if user is not superuser (might be cron).
     $type_id = $this->getWorkflowId();
     if ($user->hasPermission("bypass $type_id workflow_transition access")) {
       // Superuser is special. And $force allows Rules to cause transition.
       return TRUE;
     }
-
     if ($force) {
       // $force allows Rules to cause transition.
       return TRUE;
     }
 
+    // @todo: Keep below code aligned between WorkflowState, ~Transition, ~TransitionListController
     /**
      * Get the object and its permissions.
      */
@@ -362,7 +356,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
      */
     $result = FALSE;
     foreach ($config_transitions as $config_transition) {
-      $result = $result || $config_transition->isAllowed($user_roles, $user, $force);
+      $result = $result || $config_transition->isAllowed($user, $force);
     }
 
     if ($result == FALSE) {
@@ -402,7 +396,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     /* @var $entity \Drupal\Core\Entity\EntityInterface */
     $entity = $this->getEntity();
     $entity_type = ($entity) ? $entity->getEntityTypeId() : '';
-    /* @var $user \Drupal\Core\Session\AccountInterface */
+    // Load explicit User object (not via $transition) for adding Role later.
+    /* @var $user \Drupal\user\UserInterface */
     $user = $this->getOwner();
     $from_sid = $this->getFromSid();
     $to_sid = $this->getToSid();
@@ -453,7 +448,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     // @todo: move below code to $this->isAllowed().
     // Prepare an array of arguments for error messages.
     $args = array(
-      '%user' => ($user) ? $user->getUsername() : '',
+      '%user' => $user->getUsername(),
       '%old' => $from_sid,
       '%new' => $to_sid,
       '%label' => $entity->label(),
@@ -467,9 +462,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 
       if (!$force) {
         // Make sure this transition is allowed by workflow module Admin UI.
-        $roles = $user->getRoles();
-        $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
-        if (!$this->isAllowed($roles, $user, $force)) {
+        $user->addRole(WORKFLOW_ROLE_AUTHOR_RID);
+        if (!$this->isAllowed($user, $force)) {
           $message = 'User %user not allowed to go from state %old to %new';
           \Drupal::logger('workflow')->error($message, $args);
           // If incorrect, quit.
@@ -480,27 +474,27 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
         // OK. All state changes allowed.
       }
 
-      if (!$force) {
-        // Make sure this transition is allowed by custom module.
-        // @todo D8: remove, or replace by 'transition pre'. See WorkflowState::getOptions().
-        // @todo D8: replace all parameters that are included in $transition.
-        // @todo: in case of error, there is a log, but no UI error.
-        $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition permitted', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this, $user]);
-        // Stop if a module says so.
-        if (in_array(FALSE, $permitted, TRUE)) {
-          \Drupal::logger('workflow')->notice('Transition vetoed by module.', $args);
-          return FALSE;  // <-- exit !!!
-        }
-      }
-      else {
-        // OK. All state changes allowed.
-      }
+      // As of 8.x-1.x, below hook() is removed, in favour of below hook 'transition pre'.
+//      if (!$force) {
+//        // Make sure this transition is allowed by custom module.
+//        // @todo D8: replace all parameters that are included in $transition.
+//        // @todo: in case of error, there is a log, but no UI error.
+//        $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition permitted', $this, $user]);
+//        // Stop if a module says so.
+//        if (in_array(FALSE, $permitted, TRUE)) {
+//          \Drupal::logger('workflow')->notice('Transition vetoed by module.', $args);
+//          return FALSE;  // <-- exit !!!
+//        }
+//      }
+//      else {
+//        // OK. All state changes allowed.
+//      }
 
       // Make sure this transition is valid and allowed for the current user.
       // Invoke a callback indicating a transition is about to occur.
       // Modules may veto the transition by returning FALSE.
       // (Even if $force is TRUE, but they shouldn't do that.)
-      $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition pre', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this]);
+      $permitted = \Drupal::moduleHandler()->invokeAll('workflow', ['transition pre', $this, $user]);
       // Stop if a module says so.
       if (in_array(FALSE, $permitted, TRUE)) {
         \Drupal::logger('workflow')->notice('Transition vetoed by module.', $args);
@@ -569,7 +563,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
         // Notify modules that transition has occurred.
         // Action triggers should take place in response to this callback, not the 'transaction pre'.
 
-        // module_invoke_all('workflow', 'transition post', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this);
+        //\Drupal::moduleHandler()->invokeAll('workflow', ['transition post', $this, $user]);
         // We have a problem here with Rules, Trigger, etc. when invoking
         // 'transition post': the entity has not been saved, yet. we are still
         // IN the transition, not AFTER. Alternatives:
@@ -594,16 +588,10 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   public function post_execute($force = FALSE) {
     workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
-    $from_sid = $this->getFromSid();
-    $to_sid = $this->getToSid();
-    $entity = $this->getEntity(); // Entity may not be loaded, yet.
-    $entity_type = $entity->getEntityTypeId();
-    // $entity_id = $this->entity_id;
-    $field_name = $this->getFieldName();
-
     $state_changed = ($from_sid != $to_sid);
     if ($state_changed || $this->getComment()) {
-      \Drupal::moduleHandler()->invokeAll('workflow', ['transition post', $from_sid, $to_sid, $entity, $force, $entity_type, $field_name, $this]);
+      $user = $this->getOwner();
+      \Drupal::moduleHandler()->invokeAll('workflow', ['transition post', $this, $user]);
     }
   }
 
@@ -733,7 +721,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /**
    * {@inheritdoc}
    */
-  public function setOwner(AccountInterface $account) {
+  public function setOwner(\Drupal\Core\Session\AccountInterface $account) {
     $this->set('uid', $account->id());
     return $this;
   }
