@@ -76,6 +76,7 @@ class NextNodeWorkflowStateAction extends WorkflowStateActionBase {
     $transition->to_sid = $to_sid;
 //    $transition->setValues($entity, $field_name, $current_sid, $to_sid, $user->id(), REQUEST_TIME, $comment, TRUE);
 
+    $force = FALSE;
 //    $force = $this->configuration['workflow']['workflow_force'];
 //    $transition->force();
 
