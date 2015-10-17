@@ -416,14 +416,19 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $field_name = $this->getFieldName();
     $comment = $this->getComment();
 
+    static $static_last_eid = -1;
     static $static_last_tid = -1;
     static $static_last_sid = '';
-    if ($this->id() !== $static_last_tid) {
+    if ($this->id() !== $static_last_tid
+      || $entity->id() !== $static_last_eid) {
       // OK. Prepare for next round. Do not set last_sid!!
       $static_last_tid = $this->id();
+      $static_last_eid = $entity->id();
     }
     else {
-//      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, '2e keer');  // @todo D8-port: still test this snippet.
+      // workflow_debug( __FILE__ , __FUNCTION__, __LINE__, '2nd time');  // @todo D8-port: still test this snippet.
+      // workflow_debug( $this->id(), $entity->id(), '','', $static_last_sid);  // @todo D8-port: still test this snippet.
+
       // Error: this Transition is already executed.
       // On the development machine, execute() is called twice, when
       // on an Edit Page, the entity has a scheduled transition, and
@@ -433,8 +438,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       // - search root cause of second call.
       // - try adapting code of transition->save() to avoid second record.
       // - avoid executing twice.
-      $message = 'Transition is executed twice in a call. The second call is
-        not executed.';
+      $message = 'Transition is executed twice in a call. The second call for ' .
+       $static_last_eid . ' is not executed.';
       \Drupal::logger('workflow')->error($message, []);
       // Return the result of the last call.
       return ($static_last_sid) ? $static_last_sid : $from_sid;  // <-- exit !!!
