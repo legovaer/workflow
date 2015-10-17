@@ -97,6 +97,7 @@ class WorkflowTransitionElement extends FormElement {
    *  @example $element += WorkflowTransitionElement::transitionElement($element, $form_state, $form);
    */
   public static function transitionElement(&$element, FormStateInterface $form_state, &$complete_form) {
+    // $element = [];
 
     /*
      * Input.
@@ -111,6 +112,8 @@ class WorkflowTransitionElement extends FormElement {
     /*
      * Derived input.
      */
+    $workflow = $transition->getWorkflow();
+    $wid = ($workflow) ? $workflow->id() : '';
     $entity = $transition->getEntity();
     $entity_type = ($entity) ? $transition->getEntity()->getEntityTypeId() : '';
     $entity_id = ($entity) ? $transition->getEntity()->id() : '';
@@ -153,21 +156,22 @@ class WorkflowTransitionElement extends FormElement {
       $default_value = $transition->isScheduled() ? $transition->getToSid() : $default_value;
     }
     elseif (!$entity) {
-      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
       // Sometimes, no entity is given. We encountered the following cases:
-      // - the Field settings page,
-      // - the VBO action form;
-      // - the Advance Action form on admin/config/system/actions;
+      // - D7: the Field settings page,
+      // - D7: the VBO action form;
+      // - D7/D8: the Advance Action form on admin/config/system/actions;
       // If so, show all options for the given workflow(s).
-      // TODO D8-port: deprecate ..._get_names().
-      $options = workflow_get_workflow_state_names($wid, $grouped, $all = FALSE);
+      if(!$temp_state = $transition->getFromState()) {
+        $temp_state = $transition->getToState();
+      }
+      $options = ($temp_state)
+        ? $temp_state->getOptions($entity, $field_name, $user, $force)
+        : workflow_get_workflow_state_names($wid, $grouped = TRUE, $all = FALSE);
       $show_widget = TRUE;
-      $default_value = $current_sid = isset($items[$delta]->value) ? $items[$delta]->value : '0';
+      $current_sid = $transition->getToSid(); // TODO
+      $default_value = $transition->getToSid();
     }
     else {
-      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
       // We are in trouble! A message is already set in workflow_node_current_state().
       $options = array();
       $show_widget = FALSE;
@@ -202,10 +206,23 @@ class WorkflowTransitionElement extends FormElement {
     /*
      * Output: generate the element.
      */
-    // Get settings from workflow.
-    $workflow = $transition->getWorkflow();
-    $workflow_settings = $workflow->options;
-    $workflow_label = ($workflow) ? SafeMarkup::checkPlain(t($workflow->label())) : '';
+    // Get settings from workflow. @todo : implement default_settings.
+    if ($workflow) {
+      $workflow_settings = $workflow->options;
+      $workflow_label = ($workflow) ? SafeMarkup::checkPlain(t($workflow->label())) : '';
+    }
+    else {
+      // @TODO D8-port: now only tested with Action.
+      $workflow_settings = [
+        'name_as_title' => 0,
+        'options' => "radios",
+        'schedule' => 1,
+        'schedule_timezone' => 1,
+        'comment_log_node' => "1",
+        'comment_log_tab' => "1",
+        'watchdog_log' => TRUE,
+      ];
+    }
     // Current sid and default value may differ in a scheduled transition.
     // Set 'grouped' option. Only valid for select list and undefined/multiple workflows.
     $settings_options_type = $workflow_settings['options'];
@@ -305,7 +322,7 @@ class WorkflowTransitionElement extends FormElement {
 
       // The 'options' widget. May be removed later if 'Action buttons' are chosen.
       $element['workflow']['workflow_to_sid'] = array(
-        '#type' => $settings_options_type,
+        '#type' => ($wid) ? $settings_options_type : 'select', // Avoid error with grouped options.
         '#title' => ($settings_title_as_name && !$transition->isExecuted()) ? t('Change !name state', array('!name' => $workflow_label)) : t('Target state'),
         '#options' => $options,
         // '#name' => $workflow_label,
@@ -317,7 +334,7 @@ class WorkflowTransitionElement extends FormElement {
     // Display scheduling form, but only if new entity is being edited and user
     // has permission. State change cannot be scheduled at entity creation
     // because that leaves the entity in the (creation) state.
-    $type_id = $workflow->id();
+    $type_id = ($workflow) ? $workflow->id() : ''; // Might be empty on Action configuration.
     if ($settings_schedule == TRUE && !$transition->isExecuted() && $user->hasPermission("schedule $type_id workflow_transition")) {
       $timezone = $user->getTimeZone();
 

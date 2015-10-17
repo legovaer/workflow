@@ -301,16 +301,24 @@ function workflow_get_workflow_state_names($wid = '', $grouped = FALSE, $all = F
 }
 
 /**
- * Get an options list for workflows.
+ * Get an options list for workflows. Include an initial empty value
+ * if requested. Validate each workflow, and generate a message if not complete.
  *
+ * @param bool $required
+ *   Indicates if the resulting list contains a options value.
  * @return array $options
  *   An array of $wid => workflow->label().
  */
-function workflow_get_workflow_names() {
+function workflow_get_workflow_names($required = TRUE) {
   $options = array();
 
+  if (!$required) {
+    $options[''] = t('- Select a value -');
+  }
   foreach (Workflow::LoadMultiple() as $wid => $workflow) {
-    $options[$wid] = $workflow->label();
+    if ($workflow->isValid()) {
+      $options[$wid] = $workflow->label();
+    }
   }
 
   return $options;
@@ -557,6 +565,19 @@ function _workflow_info_fields($entity = NULL, $entity_type = '', $entity_bundle
     }
   }
   return $field_info;
+}
+
+
+/**
+ * Gets a list of field names, to be used in Options lists.
+ *
+ */
+function _workflow_info_field_names($entity = NULL, $entity_type = '', $entity_bundle = '', $field_name = '') {
+  $result = [];
+  foreach($fields = _workflow_info_fields($entity, $entity_type, $entity_bundle, $field_name) as $key => $definition) {
+    $result[$key] = $definition->getName();
+  }
+  return $result;
 }
 
 /**

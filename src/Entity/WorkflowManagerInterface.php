@@ -151,6 +151,6 @@ interface WorkflowManagerInterface {
    *
    * @return bool
    */
-  public static function isOwner(AccountInterface $account, EntityInterface $entity);
+  public static function isOwner(AccountInterface $account, EntityInterface $entity = NULL);
 
   }

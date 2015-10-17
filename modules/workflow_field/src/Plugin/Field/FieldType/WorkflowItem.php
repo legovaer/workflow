@@ -198,14 +198,7 @@ class WorkflowItem extends ListItemBase {
 
     // Create list of all Workflow types. Include an initial empty value.
     // Validate each workflow, and generate a message if not complete.
-    $workflows = array();
-    // $workflows = workflow_get_workflow_names();
-    $workflows[''] = t('- Select a value -');
-    foreach (Workflow::LoadMultiple() as $wid => $workflow) {
-      if ($workflow->isValid()) {
-        $workflows[$wid] = SafeMarkup::checkPlain($workflow->label()); // No t() on settings page.
-      }
-    }
+    $workflows = workflow_get_workflow_names(FALSE);
 
     // Set message, if no 'validated' workflows exist.
     if (count($workflows) == 1) {

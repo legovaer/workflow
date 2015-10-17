@@ -121,7 +121,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /**
    * {@inheritdoc}
    */
-  public function setValues(EntityInterface $entity, $field_name, $from_sid, $to_sid, $uid = NULL, $timestamp = REQUEST_TIME, $comment = '') {
+  public function setValues(EntityInterface $entity = NULL, $field_name, $from_sid, $to_sid, $uid = NULL, $timestamp = REQUEST_TIME, $comment = '', $force_create = FALSE) {
     // Normally, the values are passed in an array, and set in parent::__construct, but we do it ourselves.
 
     $user = \Drupal::currentUser();
@@ -134,7 +134,9 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $this->setEntity($entity);
 
     if (!$entity && !$from_sid && !$to_sid) {
-      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      $this->setOwnerId($uid);
+      $this->setTimestamp($timestamp);
+      $this->setComment($comment);
       // If constructor is called without arguments, e.g., loading from db.
     }
     elseif ($entity && $from_sid) {
@@ -142,18 +144,26 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       // If constructor is called with new() and arguments.
       $this->set('from_sid', $from_sid);
       $this->set('to_sid', $to_sid);
-
       $this->setOwnerId($uid);
       $this->setTimestamp($timestamp);
       $this->setComment($comment);
     }
     elseif (!$from_sid) {
-      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
       // Not all parameters are passed programmatically.
-      drupal_set_message(
-        t('Wrong call to constructor Workflow*Transition(@from_sid to @to_sid)',
-          array('@from_sid' => $from_sid, '@to_sid' => $to_sid)),
-        'error');
+      if ($force_create) {
+        //
+        $this->set('from_sid', $from_sid);
+        $this->set('to_sid', $to_sid);
+        $this->setOwnerId($uid);
+        $this->setTimestamp($timestamp);
+        $this->setComment($comment);
+      }
+      else {
+        drupal_set_message(
+          t('Wrong call to constructor Workflow*Transition(@from_sid to @to_sid)',
+            array('@from_sid' => $from_sid, '@to_sid' => $to_sid)),
+          'error');
+      }
     }
 
     // Initialize wid property.
@@ -631,7 +641,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     if (!$this->entity) {
       $entity_type = $this->get('entity_type')->target_id;
       $entity_id = $this->get('entity_id')->value;
-      $this->entity = \Drupal::entityManager()->getStorage($entity_type)->load($entity_id);
+      $this->entity = ($entity_type) ? \Drupal::entityManager()->getStorage($entity_type)->load($entity_id) : NULL;
     }
     return $this->entity;
   }
@@ -679,14 +689,16 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function getFromState() {
-    return WorkflowState::load($this->getFromSid());
+    $sid = $this->getFromSid();
+    return ($sid) ? WorkflowState::load($sid) : NULL;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getToState() {
-    return WorkflowState::load($this->getToSid());
+    $sid = $this->getToSid();
+    return ($sid) ? WorkflowState::load($sid) : NULL;
   }
 
   /**
@@ -977,12 +989,14 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $transition = $this;
     $entity = $transition->getEntity();
     $time = \Drupal::service('date.formatter')->format($transition->getTimestamp());
-
+    // Do this extensive $user_name lines, for some troubles with Action.
+    $user = $transition->getOwner();
+    $user_name = ($user) ? $user->getUsername() : 'unknown username';
     $t_string = $this->getEntityTypeId() . ' ' . $this->id();
-    $output[] = 'Entity  = ' . $entity->getEntityTypeId().'/'.$entity->bundle().'/'.$entity->id();
+    $output[] = 'Entity  = ' . ((!$entity) ? 'NULL' : ($entity->getEntityTypeId() . '/' . $entity->bundle() . '/' . $entity->id()));
     $output[] = 'Field   = ' . $transition->getFieldName();
     $output[] = 'From/To = ' . $transition->getFromSid() . ' > ' . $transition->getToSid() . ' @ ' . $time;
-    $output[] = 'Comment = ' . $transition->getOwner()->getUsername() . ' says: ' . $transition->getComment();
+    $output[] = 'Comment = ' . $user_name . ' says: ' . $transition->getComment();
     $output[] = 'Forced  = ' . ($transition->isForced() ? 'yes' : 'no');
     if (function_exists('dpm')) { dpm($output, $t_string); }
   }

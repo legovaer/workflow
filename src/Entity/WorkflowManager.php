@@ -180,7 +180,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
    * {@inheritdoc}
    */
   public function getCurrentStateId(EntityInterface $entity, $field_name = '') {
-    $sid = FALSE;
+    $sid = '';
 
     if (!$entity) {
       return $sid;
@@ -210,7 +210,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
    * {@inheritdoc}
    */
   public function getPreviousStateId(EntityInterface $entity, $field_name = '') {
-    $sid = FALSE;
+    $sid = '';
 
     if (!$entity) {
       return $sid;
@@ -288,7 +288,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  public static function isOwner(AccountInterface $account, EntityInterface $entity) {
+  public static function isOwner(AccountInterface $account, EntityInterface $entity = NULL) {
     $is_owner = FALSE;
 
     // @todo: Keep below code aligned between WorkflowState, ~Transition, ~TransitionListController
