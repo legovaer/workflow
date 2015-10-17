@@ -12,6 +12,7 @@ namespace Drupal\workflow\Plugin\Action;
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Action\ConfigurableActionBase;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -96,55 +97,16 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
 // - $context['node'] = (Object) stdClass
 // - $context['entity_type'] = 'node'
 
-    $user = workflow_current_user();
-
     /* @var $entity \Drupal\Core\Entity\EntityInterface */
     $entity = $object;
 
-    if (!$entity) {
-      \Drupal::logger('workflow_action')->notice('Unable to get current entity - entity is not defined.', []);
-      return;
-    }
-
-    // Get the entity type and numeric ID.
-    $entity_id = $entity->id();
-    if (!$entity_id) {
-      \Drupal::logger('workflow_action')->notice('Unable to get current entity ID - entity is not yet saved.', []);
-      return;
-    }
-
-    // In 'after saving new content', the node is already saved. Avoid second insert.
-    // Todo: clone?
-    $entity->enforceIsNew(FALSE);
-
-    // Get a default Transtion from configuration.
-    $transition = $this->getTransitionfromConfiguration();
-
-    $field_name = $transition->getFieldName();
-    $current_sid = workflow_node_current_state($entity, $field_name);
-    if (!$current_sid) {
-      \Drupal::logger('workflow_action')->notice('Unable to get current workflow state of entity %id.', array('%id' => $entity_id));
-      return;
-    }
-
-    // Get the Comment. Parse the $comment variables.
-    $comment_string = $this->configuration['workflow']['workflow_comment'];
-    $comment = t($comment_string, array(
-      '%title' => $entity->label(),
-      // "@" and "%" will automatically run check_plain().
-      '%state' => workflow_get_sid_name($transition->getToSid()),
-      '%user' => $user->getUsername(),
-    ));
-
     // Add actual data.
-    $transition->setValues($entity, $field_name, $current_sid, $transition->getToSid(), $user->id(), REQUEST_TIME, $comment);
+    $transition = $this->getTransitionForExecution($entity);
 
     $force = $this->configuration['workflow']['workflow_force'];
     $transition->force();
 
     // Fire the transition.
-    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-    $transition->dpm();
     workflow_execute_transition($transition, $force);
   }
 
@@ -164,7 +126,7 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
   /**
    * @return WorkflowTransitionInterface
    */
-  protected function getTransitionfromConfiguration() {
+  protected function getTransitionForConfiguration() {
     // Build a transition from the values.
     $config = $this->configuration['workflow'];
     $entity = NULL;
@@ -179,8 +141,60 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     $transition = WorkflowTransition::create();
     $transition->setValues($entity, $field_name, $current_sid, $new_sid, $user->id(), REQUEST_TIME, $comment, TRUE);
     return $transition;
-
   }
+
+  /**
+   * @return WorkflowTransitionInterface
+   */
+  protected function getTransitionForExecution(EntityInterface $entity) {
+    $user = workflow_current_user();
+
+    if (!$entity) {
+      \Drupal::logger('workflow_action')->notice('Unable to get current entity - entity is not defined.', []);
+      return NULL;
+    }
+
+    // Get the entity type and numeric ID.
+    $entity_id = $entity->id();
+    if (!$entity_id) {
+      \Drupal::logger('workflow_action')->notice('Unable to get current entity ID - entity is not yet saved.', []);
+      return NULL;
+    }
+
+    // In 'after saving new content', the node is already saved. Avoid second insert.
+    // Todo: clone?
+    $entity->enforceIsNew(FALSE);
+
+    // Get a default Transition from configuration.
+    $transition = $this->getTransitionforConfiguration();
+    $field_name = $transition->getFieldName();
+    $current_sid = workflow_node_current_state($entity, $field_name);
+    if (!$current_sid) {
+      \Drupal::logger('workflow_action')->notice('Unable to get current workflow state of entity %id.', array('%id' => $entity_id));
+      return NULL;
+    }
+
+    // Get the Comment. Parse the $comment variables.
+    $comment_string = $this->configuration['workflow']['workflow_comment'];
+    $comment = t($comment_string, array(
+      '%title' => $entity->label(),
+      // "@" and "%" will automatically run check_plain().
+      '%state' => workflow_get_sid_name($transition->getToSid()),
+      '%user' => $user->getUsername(),
+    ));
+
+    $to_sid = $transition->getToSid();
+
+    // Add actual data.
+    $transition->setValues($entity, $field_name, $current_sid, $to_sid, $user->id(), REQUEST_TIME, $comment);
+
+    // // Leave Force to subclass.
+    // $force = $this->configuration['workflow']['workflow_force'];
+    // $transition->force();
+
+    return $transition;
+  }
+
 
   /**
    * {@inheritdoc}
@@ -234,7 +248,7 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     ));
 */
 
-    $transition = $this->getTransitionfromConfiguration();
+    $transition = $this->getTransitionForConfiguration();
 
     $element = []; // Just to be explicit.
     $element['#default_value'] = $transition;
