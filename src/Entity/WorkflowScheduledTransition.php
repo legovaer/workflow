@@ -21,6 +21,9 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *   label = @Translation("Workflow scheduled transition"),
  *   bundle_label = @Translation("Workflow type"),
  *   module = "workflow",
+ *   handlers = {
+ *     "views_data" = "Drupal\workflow\WorkflowScheduledTransitionViewsData",
+ *   },
  *   base_table = "workflow_transition_schedule",
  *   translatable = FALSE,
  *   entity_keys = {

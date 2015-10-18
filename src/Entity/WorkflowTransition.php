@@ -35,7 +35,8 @@ use Drupal\user\UserInterface;
  *        "edit" = "Drupal\workflow\Form\WorkflowTransitionForm",
  *        "revert" = "Drupal\workflow_operations\Form\WorkflowTransitionRevertForm",
  *        "delete" = "Drupal\Core\Entity\EntityDeleteForm",
- *      }
+ *      },
+ *     "views_data" = "Drupal\workflow\WorkflowTransitionViewsData",
  *   },
  *   base_table = "workflow_transition_history",
  *   translatable = FALSE,
@@ -865,7 +866,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 //      ->setReadOnly(TRUE);
 
     $fields['entity_type'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Type'))
+      ->setLabel(t('Entity type'))
       ->setDescription(t('The Entity type this transition belongs to.'))
       ->setSetting('target_type', 'node_type')
       ->setReadOnly(TRUE);
@@ -920,19 +921,19 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       ->setSetting('unsigned', TRUE);
 
     $fields['from_sid'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Type'))
+      ->setLabel(t('From state'))
       ->setDescription(t('The {workflow_states}.sid this transition started as.'))
 //      ->setSetting('target_type', 'workflow_transition')
       ->setReadOnly(TRUE);
 
     $fields['to_sid'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Type'))
+      ->setLabel(t('To state'))
       ->setDescription(t('The {workflow_states}.sid this transition transitioned to.'))
 //      ->setSetting('target_type', 'workflow_transition')
       ->setReadOnly(TRUE);
 
     $fields['uid'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Transition user ID'))
+      ->setLabel(t('User'))
       ->setDescription(t('The user ID of the author of this transition.'))
       ->setSetting('target_type', 'user')
       ->setQueryable(FALSE)
