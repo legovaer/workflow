@@ -79,7 +79,7 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler implements
         break;
     }
 
-    $result = parent::access($entity, $operation, $langcode, $account, TRUE)->cachePerPermissions();
+    $result = parent::access($entity, $operation, $account, TRUE)->cachePerPermissions();
     return $return_as_object ? $result : $result->isAllowed();
   }
 
@@ -95,8 +95,8 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler implements
   /**
    * {@inheritdoc}
    */
-  protected function checkAccess(EntityInterface $transition, $operation, $langcode, AccountInterface $account) {
-    return parent::checkAccess($transition, $operation, $langcode, $account);
+  protected function checkAccess(EntityInterface $transition, $operation, AccountInterface $account) {
+    return parent::checkAccess($transition, $operation, $account);
   }
 
   /**
