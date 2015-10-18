@@ -64,8 +64,8 @@ function workflowfield_form_field_config_edit_form_alter(&$form, FormStateInterf
  * The module reuses the formatters defined in list.module.
  */
 function workflowfield_field_formatter_info_alter(&$info) {
+  $info['list_key']['field_types'][] = 'workflow';
   $info['list_default']['field_types'][] = 'workflow';
-  $info['basic_string']['field_types'][] = 'workflow';
 }
 
 /**

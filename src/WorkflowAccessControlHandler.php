@@ -39,7 +39,7 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler implements
   /**
    * {@inheritdoc}
    */
-  public function access(EntityInterface $entity, $operation, $langcode = LanguageInterface::LANGCODE_DEFAULT, AccountInterface $account = NULL, $return_as_object = FALSE) {
+  public function access(EntityInterface $entity, $operation, AccountInterface $account = NULL, $return_as_object = FALSE) {
     $account = $this->prepareUser($account);
     // $account = workflow_current_user($account);
 
