@@ -10,9 +10,6 @@ namespace Drupal\workflow_operations;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\EntityHandlerInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
-//use Drupal\Core\Field\FieldDefinitionInterface;
-//use Drupal\Core\Field\FieldItemListInterface;
-use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Entity\EntityAccessControlHandler;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -61,7 +58,7 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler { // imple
    * @return \Drupal\Core\Access\AccessResult
    */
   public function revertAccess(WorkflowTransitionInterface $transition = NULL, AccountInterface $account = NULL, $return_as_object = TRUE) {
-    //public function access(EntityInterface $entity, $operation, $langcode = LanguageInterface::LANGCODE_DEFAULT, AccountInterface $account = NULL, $return_as_object = FALSE) {
+//public function access(EntityInterface $entity, $operation, AccountInterface $account = NULL, $return_as_object = FALSE) {
     if ($transition) {
       // Called from hook_entity_operation
     }
@@ -71,13 +68,13 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler { // imple
       $route_match = \Drupal::routeMatch();
       $transition = $route_match->getParameter('workflow_transition');
     }
-    return $this->access($transition, 'revert', LanguageInterface::LANGCODE_DEFAULT, $account, $return_as_object);
+    return $this->access($transition, 'revert', $account, $return_as_object);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function access(EntityInterface $entity, $operation, $langcode = LanguageInterface::LANGCODE_DEFAULT, AccountInterface $account = NULL, $return_as_object = FALSE) {
+  public function access(EntityInterface $entity, $operation, AccountInterface $account = NULL, $return_as_object = FALSE) {
     $result = AccessResult::neutral();
 
     $user = workflow_current_user($account);
@@ -131,7 +128,7 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler { // imple
       default:
         $result = AccessResult::forbidden();
     }
-    // $result = parent::access($entity, $operation, $langcode, $account, TRUE)->cachePerPermissions();
+    // $result = parent::access($entity, $operation, $account, TRUE)->cachePerPermissions();
     return $return_as_object ? $result : $result->isAllowed();
   }
 
@@ -147,9 +144,9 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler { // imple
   /**
    * {@inheritdoc}
    */
-  protected function checkAccess(EntityInterface $transition, $operation, $langcode, AccountInterface $account) {
+  protected function checkAccess(EntityInterface $transition, $operation, AccountInterface $account) {
     workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-    return parent::checkAccess($transition, $operation, $langcode, $account);
+    return parent::checkAccess($transition, $operation, $account);
   }
 
   /**
