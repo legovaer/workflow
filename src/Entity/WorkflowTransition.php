@@ -286,9 +286,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     return $transitions;
   }
 
-
   /**
-   * Property functions.
+   * Implementing interface WorkflowTransitionInterface - properties.
    */
 
   /**
@@ -726,39 +725,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /**
    * {@inheritdoc}
    */
-  public function setOwnerId($uid) {
-    $this->set('uid', $uid);
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getOwnerId() {
-    $uid = $this->{'uid'}->target_id;
-    return $uid;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setOwner(\Drupal\Core\Session\AccountInterface $account) {
-    $this->set('uid', $account->id());
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getOwner() {
-    $uid = $this->{'uid'}->target_id;
-    $user = \Drupal::entityManager()->getStorage('user')->load($uid);
-    return $user;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getComment() {
     return $this->get('comment')->value;
   }
@@ -831,6 +797,50 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   }
 
   /**
+   * Implementing interface EntityOwnerInterface. Copied from Comment.php.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getOwner() {
+    $user = $this->get('uid')->entity;
+    if (!$user || $user->isAnonymous()) {
+      $user = User::getAnonymousUser();
+      $user->name = $this->getAuthorName();
+      $user->homepage = $this->getHomepage();
+    }
+    return $user;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getOwnerId() {
+    return $this->get('uid')->target_id;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOwnerId($uid) {
+    $this->set('uid', $uid);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOwner(UserInterface $account) {
+    $this->set('uid', $account->id());
+    return $this;
+  }
+
+  /**
+   * Implementing interface FieldableEntityInterface extends EntityInterface.
+   */
+
+  /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
@@ -859,11 +869,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
         'weight' => -5,
       ))
       ->setDisplayConfigurable('form', TRUE);
-
-//    $fields['uuid'] = BaseFieldDefinition::create('uuid')
-//      ->setLabel(t('UUID'))
-//      ->setDescription(t('The transition UUID.'))
-//      ->setReadOnly(TRUE);
 
     $fields['entity_type'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Entity type'))
@@ -974,7 +979,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 //      ->setDisplayConfigurable('form', TRUE);
       ->setRevisionable(TRUE);
 
-//D8-port    $fields['revision_log'] = BaseFieldDefinition::create('string_long')
     $fields['comment'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Log message'))
       ->setDescription(t('The comment explaining this transition.'))

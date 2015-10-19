@@ -8,6 +8,7 @@
 namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\user\EntityOwnerInterface;
 
 /**
  * Defines a common interface for Workflow*Transition* objects.
@@ -16,7 +17,7 @@ use Drupal\Core\Entity\EntityInterface;
  * @see \Drupal\workflow\Entity\WorkflowTransition
  * @see \Drupal\workflow\Entity\WorkflowScheduledTransition
  */
-interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface, EntityInterface {
+interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface, EntityInterface, EntityOwnerInterface {
 
   /**
    * Helper function for __construct. Used for all children of WorkflowTransition (aka WorkflowScheduledTransition)
@@ -141,39 +142,6 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface,
    * @return string $langcode
    */
   public function getLangcode();
-
-  /**
-   * Set the Owner Id. (Using Node::Owner pattern.)
-   *
-   * @param int $uid
-   *
-   * @return WorkflowTransitionInterface
-   */
-  public function setOwnerId($uid);
-
-  /**
-   * Get the Owner Id.
-   *
-   * @return int
-   */
-  public function getOwnerId();
-
-  /**
-   * Set the Owner.
-   *
-   * @param \Drupal\Core\Session\AccountInterface $account
-   *
-   * @return WorkflowTransitionInterface
-   */
-  public function setOwner(\Drupal\Core\Session\AccountInterface $account);
-
-  /**
-   * Get the Owner.
-   *
-   * @return \Drupal\user\UserInterface $user
-   *   The entity, that is added to the Transition.
-   */
-  public function getOwner();
 
   /**
    * Get the comment of the Transition.
