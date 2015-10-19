@@ -95,6 +95,17 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler { // imple
           $result = AccessResult::forbidden();
         }
 
+        if ($operation == 'update') {
+          if ($account->hasPermission("edit any $type_id workflow_transition")) {
+            $result = AccessResult::allowed()->cachePerPermissions();
+            return $return_as_object ? $result : $result->isAllowed();
+          }
+          if ($account->id() == $transition->getOwnerId() && $account->hasPermission("edit own $type_id workflow_transition")) {
+            $result = AccessResult::allowed()->cachePerPermissions();
+            return $return_as_object ? $result : $result->isAllowed();
+          }
+        }
+
         if ($operation == 'revert') {
           $is_owner = WorkflowManager::isOwner($user, $transition);
           $type_id = $transition->getWorkflowId();

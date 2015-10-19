@@ -1,5 +1,5 @@
 name: 'Workflow operations'
-description: "Adds Transition permissions (edit, revert, delete permissions), which can be seen in Views and the rows of the Workflow history tab."
+description: "Adds lesser-used Transition permissions (edit, revert, delete permissions)."
 package: Workflow
 type: module
 core: 8.x

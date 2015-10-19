@@ -50,27 +50,12 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler implements
     switch($entity->getEntityTypeId()) {
       case 'workflow_transition':
       case 'workflow_scheduled_transition':
-        // The delete operation is not defined for Transitions.
-        if ($operation == 'delete') {
-          $result = AccessResult::forbidden()->cachePerPermissions();
-          return $return_as_object ? $result : $result->isAllowed();
-        }
 
         $type_id = $transition->getWorkflow()->id();
         if ($account->hasPermission("bypass $type_id workflow_transition access")) {
           // This is not a task a super user should need.
           // $result = AccessResult::allowed()->cachePerPermissions();
           // return $return_as_object ? $result : $result->isAllowed();
-        }
-        if ($account->hasPermission( "edit any $type_id workflow_transition")) {
-          $result = AccessResult::allowed()->cachePerPermissions();
-          return $return_as_object ? $result : $result->isAllowed();
-        }
-
-        if ( $account->id() == $transition->getOwnerId()
-          && $account->hasPermission( "edit own $type_id workflow_transition")) {
-          $result = AccessResult::allowed()->cachePerPermissions();
-          return $return_as_object ? $result : $result->isAllowed();
         }
         break;
 

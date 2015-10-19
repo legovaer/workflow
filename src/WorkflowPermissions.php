@@ -67,11 +67,11 @@ class WorkflowPermissions {
       ),
       // D7->D8-Conversion of 'workflow history' permission on Workflow settings to "access $type_id overview" (@see NodePermissions::access content overview).
       "access own $type_id workflow_transion overview" => array(
-        'title' => $this->t('%type_name: Access own Workflow state transition history overview page', $type_params),
+        'title' => $this->t('%type_name: Access Workflow history tab of own content', $type_params),
         'description' => t('Role is enabled to view the "Workflow state transition history" tab on own entity.'),
       ),
       "access any $type_id workflow_transion overview" => array(
-        'title' => $this->t('%type_name: Access any Workflow state transition history overview page', $type_params),
+        'title' => $this->t('%type_name: Access Workflow history tab of any content', $type_params),
         'description' => t('Role is enabled to view the "Workflow state transition history" tab on any entity.'),
       ),
       // D7->D8-Conversion of 'show workflow transition form' permission. @see #1893724
@@ -79,25 +79,6 @@ class WorkflowPermissions {
         'title' => $this->t('%type_name: Access the Workflow state transition form on entity view page', $type_params),
         'description' => t('Role is enabled to view a "Workflow state transition" block/widget and add a state transition on the entity page.'),
       ),
-      // D7->D8-Conversion of 'edit workflow comment' permission to "edit own $type_id transition" (@see NodePermissions::edit any/own content).
-      // D7->D8-Conversion of 'edit workflow comment' permission to "edit any $type_id transition" (@see NodePermissions::edit any/own content).
-      "edit own $type_id workflow_transition" => array(
-        'title' => $this->t('%type_name: Edit own state transition', $type_params),
-        'description' => t('Role is enabled to edit the comment of own executed state transitions.'),
-        'restrict access' => TRUE,
-      ),
-      "edit any $type_id workflow_transition" => array(
-        'title' => $this->t('%type_name: Edit any state transition', $type_params),
-        'description' => t('Role is enabled to edit the comment of any executed state transitions.'),
-        'restrict access' => TRUE,
-      ),
-      // Workflow has no 'delete' permissions.
-//      "delete own $type_id workflow_transition" => array(
-//        'title' => $this->t('%type_name: Delete own content', $type_params),
-//      ),
-//      "delete any $type_id workflow_transition" => array(
-//        'title' => $this->t('%type_name: Delete any content', $type_params),
-//      ),
     );
   }
 
