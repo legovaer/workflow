@@ -184,14 +184,9 @@ class WorkflowDefaultWidget extends WidgetBase {
         /* @var $transition \Drupal\workflow\Entity\WorkflowTransitionInterface */
         $transition = WorkflowTransitionElement::copyFormItemValuesToEntity($transition, $form, $item);
 
-        $force = FALSE; // @TODO D8-port: add to form for usage in VBO.
-
-        // Now, save/execute the transition.
-        $from_sid = $transition->getFromSid();
-        $force = $force || $transition->isForced();
-
         // Try to execute the transition. Return $from_sid when error.
         if (!$transition) {
+          // This should not be possible.
           workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
           // This should only happen when testing/developing.
@@ -199,21 +194,20 @@ class WorkflowDefaultWidget extends WidgetBase {
           // The current value is still the previous state.
           $to_sid = $from_sid;
         }
-//        elseif ($transition->isScheduled()) {
-//          /*
-//           * A scheduled transition must only be saved to the database.
-//           * The entity is not changed.
-//           */
-//          $transition->save();
-//
-//          // The current value is still the previous state.
-//          $to_sid = $from_sid;
-//        }
         else {
-          // It's an immediate change. Do the transition.
+          // The transition may be scheduled or not. Save the result, and
+          // rely upon hook workflow_entity_insert/update($entity) in
+          // file workflow.module to save/execute the transition.
+
           // - validate option; add hook to let other modules change comment.
           // - add to history; add to watchdog
           // Return the new State ID. (Execution may fail and return the old Sid.)
+
+          $force = FALSE; // @TODO D8-port: add to form for usage in VBO.
+
+          // Now, save/execute the transition.
+          $from_sid = $transition->getFromSid();
+          $force = $force || $transition->isForced();
 
           if (!$transition->isAllowed($user, $force)) {
             // Transition is not allowed.
