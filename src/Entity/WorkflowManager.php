@@ -179,6 +179,17 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
+  public function participateUserRoles(Workflow $workflow) {
+    $type_id = $workflow->id();
+    foreach (user_roles() as $rid => $role) {
+      $perms = array("create $type_id workflow_transition" => 1);
+      user_role_change_permissions($rid, $perms);  // <=== Enable Roles.
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getCurrentStateId(EntityInterface $entity, $field_name = '') {
     $sid = '';
 

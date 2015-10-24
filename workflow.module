@@ -153,6 +153,16 @@ function workflow_user_role_insert($role) {
 }
 
 /**
+ * Implements hook_ENTITY_TYPE_insert().
+ *
+ * Is called when adding a new Workflow type.
+ * The technical name for the Workflow entity is 'workflow_workflow'.
+ */
+function workflow_workflow_workflow_insert(EntityInterface $entity) {
+  Workflow::workflowManager()->participateUserRoles($entity);
+}
+
+/**
  * Implements hook_entity_insert().
  */
 function workflow_entity_insert(EntityInterface $entity) {
@@ -245,11 +255,13 @@ function workflow_execute_transition(WorkflowTransitionInterface $transition, $f
  *   (optional) A string containing a permission. If set, only roles
  *    containing that permission are returned. Defaults to NULL, which
  *    returns all roles.
+ *    Normal usage for filtering roles that are enabled in a workflow_type
+ *    would be: $permission = 'create $type_id transition'.
  *
  * @return array
  *   Array of role names keyed by role ID, including the 'author' role.
  */
-function workflow_get_user_role_names($permission = 'participate in workflow') {
+function workflow_get_user_role_names($permission = NULL) {
   static $roles = NULL;
 
   if (!$roles[$permission]) {

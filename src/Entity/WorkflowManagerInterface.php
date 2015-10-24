@@ -84,6 +84,13 @@ interface WorkflowManagerInterface {
   public function insertUserRole(Role $role);
 
   /**
+   * Implements hook_WORKFLOW_insert().
+   *
+   * Make sure some roles are allowed to participate in a Workflow by default.
+   */
+  public function participateUserRoles(Workflow $workflow);
+
+  /**
    * Implements hook_user_delete().
    *
    * @param \Drupal\Core\Session\AccountInterface $account
