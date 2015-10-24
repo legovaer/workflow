@@ -172,13 +172,6 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  public function insertUserRole(Role $role) {
-    user_role_change_permissions($role->id(), array('participate in workflow' => 1));
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function participateUserRoles(Workflow $workflow) {
     $type_id = $workflow->id();
     foreach (user_roles() as $rid => $role) {

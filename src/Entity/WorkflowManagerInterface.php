@@ -75,15 +75,6 @@ interface WorkflowManagerInterface {
    */
 
   /**
-   * Implements hook_user_role_insert().
-   *
-   * Make sure new roles are allowed to participate in workflows by default.
-   *
-   * @param \Drupal\user\Entity\Role $role
-   */
-  public function insertUserRole(Role $role);
-
-  /**
    * Implements hook_WORKFLOW_insert().
    *
    * Make sure some roles are allowed to participate in a Workflow by default.

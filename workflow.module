@@ -144,15 +144,6 @@ function workflow_user_delete($account) {
 }
 
 /**
- * Implements hook_user_role_insert().
- *
- * Make sure new roles are allowed to participate in workflows by default.
- */
-function workflow_user_role_insert($role) {
-  Workflow::workflowManager()->insertUserRole($role);
-}
-
-/**
  * Implements hook_ENTITY_TYPE_insert().
  *
  * Is called when adding a new Workflow type.
