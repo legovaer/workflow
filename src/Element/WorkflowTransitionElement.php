@@ -321,6 +321,9 @@ class WorkflowTransitionElement extends FormElement {
 //      $element['workflow']['#open'] = TRUE; // Controls the HTML5 'open' attribute. Defaults to FALSE.
 
       // The 'options' widget. May be removed later if 'Action buttons' are chosen.
+      // The help text is not available for container. Let's add it to the
+      // State box.
+      $help_text = $element['#description'];
       $element['workflow']['workflow_to_sid'] = array(
         '#type' => ($wid) ? $settings_options_type : 'select', // Avoid error with grouped options.
         '#title' => ($settings_title_as_name && !$transition->isExecuted()) ? t('Change !name state', array('!name' => $workflow_label)) : t('Target state'),
@@ -328,6 +331,7 @@ class WorkflowTransitionElement extends FormElement {
         // '#name' => $workflow_label,
         // '#parents' => array('workflow'),
         '#default_value' => $default_value,
+        '#description' => $help_text,
       );
     }
 
