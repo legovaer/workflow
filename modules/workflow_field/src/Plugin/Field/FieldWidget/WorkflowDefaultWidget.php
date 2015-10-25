@@ -37,6 +37,7 @@ class WorkflowDefaultWidget extends WidgetBase {
 //        'label' => t('Workflow'),
 //        'field types' => array('workflow'),
 //        'settings' => array(
+//          'fieldset' => 0,
 //          'name_as_title' => 1,
 //          'comment' => 1,
 //        ),

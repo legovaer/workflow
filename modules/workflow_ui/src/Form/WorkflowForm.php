@@ -20,6 +20,7 @@ class WorkflowForm extends EntityForm {
    */
   public function form(array $form, FormStateInterface $form_state) {
     $noyes = array(0 => t('No'), 1 => t('Yes'));
+    $fieldset_options = array(0 => t('No fieldset'), 1 => t('Collapsible fieldset'), 2 => t('Collapsed fieldset'));
     $workflow = $this->entity;
 
     $form['label'] = [
@@ -77,6 +78,12 @@ class WorkflowForm extends EntityForm {
       '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
      );
 
+    $form['basic']['fieldset'] = array(
+      '#type' => 'select',
+      '#options' => $fieldset_options,
+      '#title' => t('Show the form in a fieldset?'),
+      '#default_value' => isset($workflow->options['fieldset']) ? $workflow->options['fieldset'] : 0,
+    );
     $form['basic']['options'] = array(
       '#type' => 'select',
       '#title' => t('How to show the available states'),
@@ -235,6 +242,7 @@ class WorkflowForm extends EntityForm {
 
     $entity->set('options', array(
         'name_as_title' => $form_state->getValue('name_as_title'),
+        'fieldset' => $form_state->getValue('fieldset'),
         'options' => $form_state->getValue('options'),
         'schedule' => $form_state->getValue('schedule'),
         'schedule_timezone' => $form_state->getValue('schedule_timezone'),

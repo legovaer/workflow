@@ -248,6 +248,7 @@ class WorkflowTransitionElement extends FormElement {
 
     // Capture settings to format the form/widget.
     $settings_title_as_name = !empty($workflow_settings['name_as_title']);
+    $settings_fieldset = isset($workflow_settings['fieldset']) ? $workflow_settings['fieldset'] : 0;
     $settings_options_type = $workflow_settings['options'];
     // The schedule can be hidden via field settings, ...
     $settings_schedule = !empty($workflow_settings['schedule']);
@@ -315,15 +316,26 @@ class WorkflowTransitionElement extends FormElement {
     else {
       // TODO: repair the usage of $settings_title_as_name: no container if no details (schedule/comment).
       // Prepare a UI wrapper. This might be a fieldset.
-      $element['workflow']['#type'] = 'container'; // 'details';
-//      $element['workflow']['#type'] = 'details';
-//      $element['workflow']['#description'] = $settings_title_as_name ? t('Change !name state', array('!name' => $workflow_label)) : t('Target state');
-//      $element['workflow']['#open'] = TRUE; // Controls the HTML5 'open' attribute. Defaults to FALSE.
+      if ($settings_fieldset == 0) { // Use 'container'.
+        $element['workflow'] += array(
+          '#type' => 'container',
+          '#attributes' => array('class' => array('workflow-form-container')),
+        );
+      }
+      else {
+        $element['workflow'] += array(
+          '#type' => 'details',
+          '#title' => t($workflow_label->__tostring()), // HtmlEscapedText
+          '#collapsible' => TRUE,
+          '#open' => ($settings_fieldset == 2) ? FALSE : TRUE,
+          '#attributes' => array('class' => array('workflow-form-container')),
+        );
+      }
 
       // The 'options' widget. May be removed later if 'Action buttons' are chosen.
       // The help text is not available for container. Let's add it to the
-      // State box.
-      $help_text = $element['#description'];
+      // State box. N.B. it is emptyu on Workflow Tab, Node View page.
+      $help_text = isset($element['#description']) ? $element['#description'] : '';
       $element['workflow']['workflow_to_sid'] = array(
         '#type' => ($wid) ? $settings_options_type : 'select', // Avoid error with grouped options.
         '#title' => ($settings_title_as_name && !$transition->isExecuted()) ? t('Change !name state', array('!name' => $workflow_label)) : t('Target state'),

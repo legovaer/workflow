@@ -180,6 +180,7 @@ class WorkflowItem extends ListItemBase {
             'widget' => array(
               'options' => 'select',
               'name_as_title' => 1,
+              'fieldset' => 0,
               'hide' => 0,
               'schedule' => 1,
               'schedule_timezone' => 1,
