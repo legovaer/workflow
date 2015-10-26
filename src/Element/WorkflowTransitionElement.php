@@ -357,7 +357,12 @@ class WorkflowTransitionElement extends FormElement {
       $timezone_options = array_combine(timezone_identifiers_list(), timezone_identifiers_list());
       $timestamp = $transition ? $transition->getTimestamp() : REQUEST_TIME;
       $hours = (!$transition_is_scheduled) ? '00:00' : format_date($timestamp, 'custom', 'H:i', $timezone);
-      $element['workflow']['workflow_scheduled'] = array(
+      // Add a container, so checkbox and time stay together in extra fields.
+      $element['workflow']['workflow_scheduling'] = array(
+        '#type' => 'container',
+        '#tree' => TRUE,
+      );
+      $element['workflow']['workflow_scheduling']['scheduled'] = array(
         '#type' => 'radios',
         '#title' => t('Schedule'),
         '#options' => array(
@@ -369,7 +374,7 @@ class WorkflowTransitionElement extends FormElement {
           'id' => 'scheduled_' . $form_id,
         ),
       );
-      $element['workflow']['workflow_scheduled_date_time'] = array(
+      $element['workflow']['workflow_scheduling']['date_time'] = array(
         '#type' => 'details', // 'container',
         '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
         '#attributes' => array('class' => array('container-inline')),
@@ -379,7 +384,7 @@ class WorkflowTransitionElement extends FormElement {
           'visible' => array(':input[id="' . 'scheduled_' . $form_id . '"]' => array('value' => '1')),
         ),
       );
-      $element['workflow']['workflow_scheduled_date_time']['workflow_scheduled_date'] = array(
+      $element['workflow']['workflow_scheduling']['date_time']['workflow_scheduled_date'] = array(
         '#type' => 'date',
         '#prefix' => t('At'),
         '#default_value' => implode( '-', array(
@@ -389,7 +394,7 @@ class WorkflowTransitionElement extends FormElement {
           )
         )
       );
-      $element['workflow']['workflow_scheduled_date_time']['workflow_scheduled_hour'] = array(
+      $element['workflow']['workflow_scheduling']['date_time']['workflow_scheduled_hour'] = array(
         '#type' => 'textfield',
         '#title' => t('Time'),
         '#maxlength' => 7,
@@ -397,13 +402,13 @@ class WorkflowTransitionElement extends FormElement {
         '#default_value' => $hours,
         '#element_validate' => array('_workflow_transition_form_element_validate_time'), // @todo D8-port: this is not called.
       );
-      $element['workflow']['workflow_scheduled_date_time']['workflow_scheduled_timezone'] = array(
+      $element['workflow']['workflow_scheduling']['date_time']['workflow_scheduled_timezone'] = array(
         '#type' => $settings_schedule_timezone ? 'select' : 'hidden',
         '#title' => t('Time zone'),
         '#options' => $timezone_options,
         '#default_value' => array($timezone => $timezone),
       );
-      $element['workflow']['workflow_scheduled_date_time']['workflow_scheduled_help'] = array(
+      $element['workflow']['workflow_scheduling']['date_time']['workflow_scheduled_help'] = array(
         '#type' => 'item',
         '#prefix' => '<br />',
         '#description' => t('Please enter a time.
@@ -512,8 +517,8 @@ class WorkflowTransitionElement extends FormElement {
       // In WorkflowTransitionForm, we receive the complete $form_state.
       $transition_values = $item['workflow'];
       // Remember, the workflow_scheduled element is not set on 'add' page.
-      if ($scheduled = !empty($transition_values['workflow_scheduled'])) {
-        $schedule_values = $item['workflow']['workflow_scheduled_date_time'];
+      if ($scheduled = !empty($transition_values['workflow_scheduling']['scheduled'])) {
+        $schedule_values = $item['workflow']['workflow_scheduling']['date_time'];
       }
     }
     else {
