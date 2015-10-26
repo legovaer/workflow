@@ -125,10 +125,12 @@ class WorkflowTransitionElement extends FormElement {
       // You may not schedule an existing Transition.
       $scheduled = FALSE;
 
-      $current_sid = $from_sid = $transition->getFromSid();
+      $current_sid = $transition->getToSid();
+      $current_state = $transition->getToState();
+      $from_sid = $transition->getFromSid();
       $from_state = $transition->getFromState();
       // The states may not be changed anymore.
-      $options = array($transition->getToSid() => $transition->getToState()->label());
+      $options = array($current_sid => $current_state->label());
       // We do need to see the comment section of the widget.
       $show_widget = TRUE;
       $default_value = $transition->getToSid();
@@ -146,10 +148,18 @@ class WorkflowTransitionElement extends FormElement {
         $transition = $scheduled_transition;
       }
 
-      $current_sid = $from_sid = $transition->getFromSid();
       $from_state = $transition->getFromState();
-      // The states may not be changed anymore.
-      $options = (!$transition->isExecuted() && $from_state) ? $from_state->getOptions($entity, $field_name, $user, $force) : [];
+      if ($transition->isExecuted()) {
+        $current_sid = $transition->getToSid();
+        $current_state = $transition->getToState();
+        // The states may not be changed anymore.
+        $options = array($current_state->id() => $current_state->label());
+      }
+      else {
+        $current_sid = $from_sid = $transition->getFromSid();
+        $current_state = $transition->getFromState();
+        $options = ($current_state) ? $current_state->getOptions($entity, $field_name, $user, $force) : [];
+      }
       $show_widget = ($from_state) ? $from_state->showWidget($entity, $field_name, $user, $force) : [];
       // Determine the default value. If we are in CreationState, use a fast alternative for $workflow->getFirstSid().
       $default_value = ($from_state && $from_state->isCreationState()) ? key($options) : $current_sid;
