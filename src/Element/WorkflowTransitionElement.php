@@ -260,10 +260,16 @@ class WorkflowTransitionElement extends FormElement {
     $settings_title_as_name = !empty($workflow_settings['name_as_title']);
     $settings_fieldset = isset($workflow_settings['fieldset']) ? $workflow_settings['fieldset'] : 0;
     $settings_options_type = $workflow_settings['options'];
-    // The schedule can be hidden via field settings, ...
-    $settings_schedule = !empty($workflow_settings['schedule']);
+
+    // Display scheduling form if user has permission.
+    // Not shown on new entity (not supported by workflow module, because that
+    // leaves the entity in the (creation) state until scheduling time.)
+    // Not shown when editing existing transition.
+    $type_id = ($workflow) ? $workflow->id() : ''; // Might be empty on Action configuration.
+    $settings_schedule = !$entity->isNew() && !$transition->isExecuted() && $user->hasPermission("schedule $type_id workflow_transition");
     if ($settings_schedule) {
       // TODO D8-port: check below code: form on VBO.
+      // workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
       $step = $form_state->getValue('step');
       if (isset($step) && ($form_state->getValue('step') == 'views_bulk_operations_config_form')) {
         // On VBO 'modify entity values' form, leave field settings.
@@ -357,11 +363,8 @@ class WorkflowTransitionElement extends FormElement {
       );
     }
 
-    // Display scheduling form, but only if new entity is being edited and user
-    // has permission. State change cannot be scheduled at entity creation
-    // because that leaves the entity in the (creation) state.
-    $type_id = ($workflow) ? $workflow->id() : ''; // Might be empty on Action configuration.
-    if ($settings_schedule == TRUE && !$transition->isExecuted() && $user->hasPermission("schedule $type_id workflow_transition")) {
+    // Display scheduling form under certain conditions.
+    if ($settings_schedule == TRUE) {
       $timezone = $user->getTimeZone();
 
       $timezone_options = array_combine(timezone_identifiers_list(), timezone_identifiers_list());

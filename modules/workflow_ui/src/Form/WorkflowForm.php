@@ -50,20 +50,27 @@ class WorkflowForm extends EntityForm {
       '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
       '#description' => t("To enable further Workflow functionality, go to the
         /admin/people/permissions page and select any roles that should have
-        access to below and other functionalities.
-        "),
+        access to below and other functionalities."),
     );
     $form['permissions']['transition_execute'] = array(
       '#type' => 'item',
-      '#title' => t('Transition execute permissions'),
-      '#markup' => t("You can determine which roles are enabled on the 'Workflow
-        Transitions & roles' configuration page.
-        Use this to enable only the relevant roles. Some sites have too many roles
-        to show on the configuration page."),
+      '#title' => t('Participate in workflow (create, execute transitions)'),
+      '#markup' => t("You can determine which roles are enabled on the
+        'Workflow Transitions & roles' configuration page. Use this to enable
+        only the relevant roles. Some sites have too many roles to show on
+        the configuration page."),
+    );
+    $form['permissions']['transition_schedule'] = array(
+      '#type' => 'item',
+      '#title' => t('Schedule state transition'),
+      '#markup' => t("Workflow transitions may be scheduled to a moment in the
+        future. Soon after the desired moment, the transition is executed by
+        Cron. This may be hidden by settings in widgets, formatters or permissions."
+      ),
     );
     $form['permissions']['history_tab'] = array(
       '#type' => 'item',
-      '#title' => t('Workflow history permissions'),
+      '#title' => t('Access Workflow history tab'),
       '#markup' => t("You can determine if a tab 'Workflow history' is
          shown on the entity view page, which gives access to the History of
          the workflow.
@@ -114,25 +121,7 @@ class WorkflowForm extends EntityForm {
       ),
     );
 
-    $form['schedule'] = array(
-      '#type' => 'details',
-      '#title' => t('Scheduling'),
-      '#description' => t('Workflow transitions may be scheduled to a moment in the future.
-        Soon after the desired moment, the transition is executed by Cron.'),
-      '#open' => TRUE, // Controls the HTML5 'open' attribute. Defaults to FALSE.
-    );
-    $form['schedule']['schedule'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Allow scheduling of workflow transitions.'),
-      '#required' => FALSE,
-      '#default_value' => isset($workflow->options['schedule']) ? $workflow->options['schedule'] : 1,
-      '#description' => t(
-        'Workflow transitions may be scheduled to a moment in the future.
-             Soon after the desired moment, the transition is executed by Cron.
-             This may be hidden by settings in widgets, formatters or permissions.'
-      ),
-    );
-    $form['schedule']['schedule_timezone'] = array(
+    $form['basic']['schedule_timezone'] = array(
       '#type' => 'checkbox',
       '#title' => t('Show a timezone when scheduling a transition.'),
       '#required' => FALSE,
@@ -244,7 +233,6 @@ class WorkflowForm extends EntityForm {
         'name_as_title' => $form_state->getValue('name_as_title'),
         'fieldset' => $form_state->getValue('fieldset'),
         'options' => $form_state->getValue('options'),
-        'schedule' => $form_state->getValue('schedule'),
         'schedule_timezone' => $form_state->getValue('schedule_timezone'),
         'comment_log_node' => $form_state->getValue('comment_log_node'),
         'comment_log_tab' => $form_state->getValue('comment_log_tab'),
