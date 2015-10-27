@@ -8,14 +8,15 @@
 namespace Drupal\workflow;
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityAccessControlHandler;
 use Drupal\Core\Entity\EntityHandlerInterface;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Language\LanguageInterface;
-use Drupal\Core\Entity\EntityAccessControlHandler;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\workflow\Entity\WorkflowManager;
 use Drupal\workflow\Entity\WorkflowTransitionInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -40,6 +41,8 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler implements
    * {@inheritdoc}
    */
   public function access(EntityInterface $entity, $operation, AccountInterface $account = NULL, $return_as_object = FALSE) {
+    $result = AccessResult::neutral();
+
     $account = $this->prepareUser($account);
     // $account = workflow_current_user($account);
 
@@ -51,12 +54,38 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler implements
       case 'workflow_transition':
       case 'workflow_scheduled_transition':
 
-        $type_id = $transition->getWorkflow()->id();
-        if ($account->hasPermission("bypass $type_id workflow_transition access")) {
-          // This is not a task a super user should need.
-          // $result = AccessResult::allowed()->cachePerPermissions();
-          // return $return_as_object ? $result : $result->isAllowed();
-        }
+        switch ($operation) {
+          case 'update':
+            $is_owner = WorkflowManager::isOwner($account, $transition);
+            $type_id = $transition->getWorkflowId();
+            if ($account->hasPermission("bypass $type_id workflow_transition access")) {
+              $result = AccessResult::allowed()->cachePerPermissions();
+            }
+            elseif ($account->hasPermission("edit any $type_id workflow_transition")) {
+              $result = AccessResult::allowed()->cachePerPermissions();
+            }
+            elseif ($is_owner && $account->hasPermission("edit own $type_id workflow_transition")) {
+              $result = AccessResult::allowed()->cachePerPermissions();
+            }
+            return $return_as_object ? $result : $result->isAllowed();
+            break;
+
+          case 'delete':
+            // The delete operation is not defined for Transitions.
+            $result = AccessResult::forbidden();
+            break;
+
+          case 'revert':
+            // @see workflow_operations.
+          default:
+            $type_id = $transition->getWorkflowId();
+            $result = parent::access($entity, $account, $return_as_object);
+            //if ($account->hasPermission("bypass $type_id workflow_transition access")) {
+            //  $result = AccessResult::allowed()->cachePerPermissions();
+            //}
+            break;
+        } // End of switch ($operation).
+
         break;
 
       case 'workflow_config_transition':

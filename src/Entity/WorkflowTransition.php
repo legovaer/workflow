@@ -928,13 +928,13 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $fields['from_sid'] = BaseFieldDefinition::create('string')
       ->setLabel(t('From state'))
       ->setDescription(t('The {workflow_states}.sid this transition started as.'))
-//      ->setSetting('target_type', 'workflow_transition')
+      ->setSetting('target_type', 'workflow_state')
       ->setReadOnly(TRUE);
 
     $fields['to_sid'] = BaseFieldDefinition::create('string')
       ->setLabel(t('To state'))
       ->setDescription(t('The {workflow_states}.sid this transition transitioned to.'))
-//      ->setSetting('target_type', 'workflow_transition')
+      ->setSetting('target_type', 'workflow_state')
       ->setReadOnly(TRUE);
 
     $fields['uid'] = BaseFieldDefinition::create('entity_reference')

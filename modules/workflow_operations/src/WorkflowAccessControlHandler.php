@@ -8,15 +8,15 @@
 namespace Drupal\workflow_operations;
 
 use Drupal\Core\Access\AccessResult;
-use Drupal\Core\Entity\EntityHandlerInterface;
-use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityAccessControlHandler;
+use Drupal\Core\Entity\EntityHandlerInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\user\UserInterface;
+use Drupal\workflow\Entity\WorkflowManager;
 use Drupal\workflow\Entity\WorkflowTransitionInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\workflow\Entity\WorkflowManager;
 
 /**
  * Defines the access control handler for the workflow entity type.
@@ -24,7 +24,8 @@ use Drupal\workflow\Entity\WorkflowManager;
  * @see \Drupal\workflow\Entity\Workflow
  * @ingroup workflow_access
  */
-class WorkflowAccessControlHandler extends EntityAccessControlHandler { // implements EntityHandlerInterface {
+class WorkflowAccessControlHandler extends \Drupal\workflow\WorkflowAccessControlHandler { // EntityAccessControlHandler { // implements EntityHandlerInterface {
+//class WorkflowAccessControlHandler extends EntityAccessControlHandler { // implements EntityHandlerInterface {
 
   /**
    * This is a hack.
@@ -77,7 +78,7 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler { // imple
   public function access(EntityInterface $entity, $operation, AccountInterface $account = NULL, $return_as_object = FALSE) {
     $result = AccessResult::neutral();
 
-    $user = workflow_current_user($account);
+    $account = $user = workflow_current_user($account);
 
     // This is only for Edit/Delete transtion. For Add/create, use createAccess.
     switch($entity->getEntityTypeId()) {
@@ -87,23 +88,8 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler { // imple
         /* @var $transition WorkflowTransitionInterface */
         $transition = $entity;
 
-        // The delete operation is not defined for Transitions.
-        if ($operation == 'delete') {
-          $result = AccessResult::forbidden();
-        }
-
-        if ($operation == 'update') {
-          if ($account->hasPermission("edit any $type_id workflow_transition")) {
-            $result = AccessResult::allowed()->cachePerPermissions();
-            return $return_as_object ? $result : $result->isAllowed();
-          }
-          if ($account->id() == $transition->getOwnerId() && $account->hasPermission("edit own $type_id workflow_transition")) {
-            $result = AccessResult::allowed()->cachePerPermissions();
-            return $return_as_object ? $result : $result->isAllowed();
-          }
-        }
-
-        if ($operation == 'revert') {
+      switch ($operation) {
+        case 'revert':
           $is_owner = WorkflowManager::isOwner($user, $transition);
           $type_id = $transition->getWorkflowId();
           if ($transition->getFromSid() == $transition->getToSid()) {
@@ -122,13 +108,19 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler { // imple
             // No access.
             $result = AccessResult::forbidden();
           }
-        }
-        break;
+          break;
 
-      default:
+        default:
+          $result = parent::access($entity, $operation, $account, $return_as_object)->cachePerPermissions();
+          break;
+      } // End of switch ($operation).
+
+        break; // case
+
+      default: // $entity_type
         $result = AccessResult::forbidden();
-    }
-    // $result = parent::access($entity, $operation, $account, TRUE)->cachePerPermissions();
+    } // End of  switch($entity->getEntityTypeId()).
+
     return $return_as_object ? $result : $result->isAllowed();
   }
 
