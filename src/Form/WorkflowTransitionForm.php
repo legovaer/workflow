@@ -12,6 +12,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\workflow\Element\WorkflowTransitionElement;
 use Drupal\workflow\Entity\Workflow;
+use Drupal\workflow\Entity\WorkflowTransitionInterface;
 
 /**
  * Provides a Transition Form to be used in the Workflow Widget.
@@ -32,14 +33,15 @@ class WorkflowTransitionForm extends ContentEntityForm {
     /* @var $transition WorkflowTransitionInterface */
     $transition = $this->entity;
     /* @var $entity EntityInterface */
+    // Entity may be empty on VBO bulk form.
     $entity = $transition->getEntity();
 
     // Compose Form Id from string + Entity Id + Field name.
     // Field ID contains entity_type, bundle, field_name.
     // The Form Id is unique, to allow for multiple forms per page.
-    $entity_type = $entity->getEntityTypeId();
-    $entity_bundle = $entity->bundle();
-    $entity_id = $entity->id();
+    $entity_type = ($entity) ? $entity->getEntityTypeId() : '';
+    $entity_bundle = ($entity) ? $entity->bundle() : '';
+    $entity_id = ($entity) ? $entity->id() : '';
     $field_name = $transition->getFieldName();
 
     $form_id = implode('_', array('workflow_transition_form', $entity_type, $entity_bundle, $field_name, $entity_id));
