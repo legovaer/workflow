@@ -122,16 +122,11 @@ class WorkflowTransitionElement extends FormElement {
       // We are editing an existing/executed/not-scheduled transition.
       // Only the comments may be changed!
 
-      // You may not schedule an existing Transition.
-      $scheduled = FALSE;
-
-      $current_sid = $transition->getToSid();
-      $current_state = $transition->getToState();
-      $from_sid = $transition->getFromSid();
-      $from_state = $transition->getFromState();
+      $current_sid = $transition->getFromSid();
       // The states may not be changed anymore.
-      $options = array($current_sid => $current_state->label());
-      // We do need to see the comment section of the widget.
+      $to_state = $transition->getToState();
+      $options = array($to_state->id() => $to_state->label());
+      // We need the widget to edit the comment.
       $show_widget = TRUE;
       $default_value = $transition->getToSid();
     }
@@ -149,17 +144,9 @@ class WorkflowTransitionElement extends FormElement {
       }
 
       $from_state = $transition->getFromState();
-      if ($transition->isExecuted()) {
-        $current_sid = $transition->getToSid();
-        $current_state = $transition->getToState();
-        // The states may not be changed anymore.
-        $options = array($current_state->id() => $current_state->label());
-      }
-      else {
-        $current_sid = $from_sid = $transition->getFromSid();
-        $current_state = $transition->getFromState();
-        $options = ($current_state) ? $current_state->getOptions($entity, $field_name, $user, $force) : [];
-      }
+      $current_sid = $from_sid = $transition->getFromSid();
+      $current_state = $transition->getFromState();
+      $options = ($current_state) ? $current_state->getOptions($entity, $field_name, $user, $force) : [];
       $show_widget = ($from_state) ? $from_state->showWidget($entity, $field_name, $user, $force) : [];
       // Determine the default value. If we are in CreationState, use a fast alternative for $workflow->getFirstSid().
       $default_value = ($from_state && $from_state->isCreationState()) ? key($options) : $current_sid;
@@ -226,7 +213,6 @@ class WorkflowTransitionElement extends FormElement {
       $workflow_settings = [
         'name_as_title' => 0,
         'options' => "radios",
-        'schedule' => 1,
         'schedule_timezone' => 1,
         'comment_log_node' => "1",
         'comment_log_tab' => "1",
@@ -266,7 +252,7 @@ class WorkflowTransitionElement extends FormElement {
     // leaves the entity in the (creation) state until scheduling time.)
     // Not shown when editing existing transition.
     $type_id = ($workflow) ? $workflow->id() : ''; // Might be empty on Action configuration.
-    $settings_schedule = !$entity->isNew() && !$transition->isExecuted() && $user->hasPermission("schedule $type_id workflow_transition");
+    $settings_schedule = !$transition->isExecuted() && $user->hasPermission("schedule $type_id workflow_transition");
     if ($settings_schedule) {
       // TODO D8-port: check below code: form on VBO.
       // workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.

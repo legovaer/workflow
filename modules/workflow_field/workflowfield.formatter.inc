@@ -31,31 +31,23 @@ function workflow_state_formatter($entity, $field_name, $current_sid = '') {
   $element = array();
 
   if (!$current_sid) {
-    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     $current_sid = workflow_node_current_state($entity, $field_name);
- }
+  }
+  // Add the 'current value' formatter for this field.
+  // $list_display = $instance['display']['default'];
+  $list_display['type'] = 'list_default';
+  // Clone the entity and restore old value, in case you want to show an
+  // executed transition.
+  if ($entity->$field_name->value != $current_sid) {
+    $entity = clone $entity;
+    $entity->$field_name->value = $current_sid;
+  }
+  // Generate a renderable array for the field. Use default language determination ($langcode = NULL).
+  $element = $entity->$field_name->view($list_display);
 
-    // Add the 'current value' formatter for this field.
-    // $list_display = $instance['display']['default'];
-    $list_display['type'] = 'list_default';
-    // Generate a renderable array for the field. Use default language determination ($langcode = NULL).
-   $element = $entity->$field_name->view($list_display);
-
-  // Below: the old-school formatter, just for reference.
-/*
-    $current_state = WorkflowState::load($current_sid);
-    $element = array(
-      '#type' => 'item',
-      '#title' => t('Current state'),
-      '#markup' => $current_state ? $current_state->label() : 'unknown state',
-      '#value' => $current_sid,
-      '#default_value' => $current_sid,
-    );
-*/
-
-  // TODO D8: make weight better
-    // Make sure the current value is before the form. (which has weight = 0.005)
-//    $element['#weight'] = 0;
+  // TODO D8: make weight better (even better: hook_field_extra_fields).
+  // Make sure the current value is before the form. (which has weight = 0.005)
+  // $element['#weight'] = 0;
 
   return $element;
 }
