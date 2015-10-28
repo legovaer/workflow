@@ -275,10 +275,6 @@ class WorkflowTransitionElement extends FormElement {
     $transition_is_scheduled = $transition->isScheduled();
     // Save the current value of the entity in the form, for later Workflow-module specific references.
     // We add prefix, since #tree == FALSE.
-    $element['workflow']['workflow_field_name'] = array(
-      '#type' => 'value',
-      '#value' => $field_name,
-    );
     $element['workflow']['workflow_transition'] = array(
       '#type' => 'value',
       '#value' => $transition,
@@ -305,7 +301,10 @@ class WorkflowTransitionElement extends FormElement {
     }
 
     $element['workflow']['#tree'] = TRUE;
-    $element['workflow']['#attributes'] = array('class' => array('workflow-form-container'));
+    // Add class following node-form pattern (both on form and container).
+    $workflow_type_id = $workflow->id();
+    $element['workflow']['#attributes']['class'][] = 'workflow-transition-' . $workflow_type_id . '-container';
+    $element['workflow']['#attributes']['class'][] = 'workflow-transition-container';
     if (!$show_widget) {
       // Show no widget.
       $element['workflow']['workflow_to_sid']['#type'] = 'value';
@@ -321,7 +320,6 @@ class WorkflowTransitionElement extends FormElement {
       if ($settings_fieldset == 0) { // Use 'container'.
         $element['workflow'] += array(
           '#type' => 'container',
-          '#attributes' => array('class' => array('workflow-form-container')),
         );
       }
       else {
@@ -330,7 +328,6 @@ class WorkflowTransitionElement extends FormElement {
           '#title' => t($workflow_label->__tostring()), // HtmlEscapedText
           '#collapsible' => TRUE,
           '#open' => ($settings_fieldset == 2) ? FALSE : TRUE,
-          '#attributes' => array('class' => array('workflow-form-container')),
         );
       }
 
@@ -369,9 +366,7 @@ class WorkflowTransitionElement extends FormElement {
           '1' => t('Schedule for state change'),
         ),
         '#default_value' => $transition_is_scheduled ? '1' : '0',
-        '#attributes' => array(
-          'id' => 'scheduled_' . $form_id,
-        ),
+        '#attributes' => array('id' => 'scheduled_' . $form_id),
       );
       $element['workflow']['workflow_scheduling']['date_time'] = array(
         '#type' => 'details', // 'container',

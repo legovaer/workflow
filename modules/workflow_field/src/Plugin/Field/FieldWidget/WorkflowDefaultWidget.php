@@ -176,9 +176,9 @@ class WorkflowDefaultWidget extends WidgetBase {
         // The following can NOT be retrieved from the WorkflowTransition.
         /* @var $entity EntityInterface */
         $entity = $form_state->getFormObject()->getEntity();
-        $field_name = $item['workflow']['workflow_field_name'];
         /* @var $transition \Drupal\workflow\Entity\WorkflowTransitionInterface */
         $transition = $item['workflow']['workflow_transition'];
+        $field_name = $transition->getFieldName();
         // N.B. Use a proprietary version of copyFormValuesToEntity,
         // where $entity/$transition is passed by reference.
         // $this->copyFormValuesToEntity($entity, $form, $form_state);

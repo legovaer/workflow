@@ -12,6 +12,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\workflow\Element\WorkflowTransitionElement;
 use Drupal\workflow\Entity\Workflow;
+use Drupal\workflow\Entity\WorkflowConfigTransitionInterface;
 use Drupal\workflow\Entity\WorkflowTransitionInterface;
 
 /**
@@ -32,21 +33,28 @@ class WorkflowTransitionForm extends ContentEntityForm {
 
     /* @var $transition WorkflowTransitionInterface */
     $transition = $this->entity;
+    $field_name = $transition->getFieldName();
+
     /* @var $entity EntityInterface */
     // Entity may be empty on VBO bulk form.
-    $entity = $transition->getEntity();
-
+    // $entity = $transition->getEntity();
     // Compose Form Id from string + Entity Id + Field name.
     // Field ID contains entity_type, bundle, field_name.
     // The Form Id is unique, to allow for multiple forms per page.
-    $entity_type = ($entity) ? $entity->getEntityTypeId() : '';
-    $entity_bundle = ($entity) ? $entity->bundle() : '';
-    $entity_id = ($entity) ? $entity->id() : '';
-    $field_name = $transition->getFieldName();
+    // $workflow_type_id = $transition->getWorkflowId();
+    // Field name contains implicit entity_type & bundle (since 1 field per entity)
+    // $entity_type = ($entity) ? $entity->getEntityTypeId() : '';
+    // $entity_bundle = ($entity) ? $entity->bundle() : '';
+    // $entity_id = ($entity) ? $entity->id() : '';
 
-    $form_id = implode('_', array('workflow_transition_form', $entity_type, $entity_bundle, $field_name, $entity_id));
-
-//    workflow_debug(__FILE__, __FUNCTION__, __LINE__, $form_id);  // @todo D8-port: still test this snippet.
+    // Emulate nodeForm convention.
+    if ($transition->id()) {
+      $suffix = 'edit_form';
+    }
+    else {
+      $suffix = 'form';
+    }
+    $form_id = implode('_', array('workflow_transition', $field_name, $suffix));
 
     return $form_id;
   }
@@ -158,6 +166,10 @@ class WorkflowTransitionForm extends ContentEntityForm {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
+    // Add class following node-form pattern (both on form and container).
+    // D8-port: This is apparently already magically set in parent.
+    // $form['#attributes']['class'][] = 'workflow-transition-' . $workflow_type_id . '-form';
+    // $form['#attributes']['class'][] = 'workflow-transition-form';
     return $form;
   }
 
