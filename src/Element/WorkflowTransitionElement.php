@@ -7,6 +7,7 @@
 
 namespace Drupal\workflow\Element;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -366,7 +367,10 @@ class WorkflowTransitionElement extends FormElement {
           '1' => t('Schedule for state change'),
         ),
         '#default_value' => $transition_is_scheduled ? '1' : '0',
-        '#attributes' => array('id' => 'scheduled_' . $form_id),
+        '#attributes' => array(
+          // 'id' => 'scheduled_' . $form_id,
+          'class' => array(Html::getClass('scheduled_' .  $form_id)),
+        ),
       );
       $element['workflow']['workflow_scheduling']['date_time'] = array(
         '#type' => 'details', // 'container',
@@ -375,7 +379,8 @@ class WorkflowTransitionElement extends FormElement {
         '#prefix' => '<div style="margin-left: 1em;">',
         '#suffix' => '</div>',
         '#states' => array(
-          'visible' => array(':input[id="' . 'scheduled_' . $form_id . '"]' => array('value' => '1')),
+          //'visible' => array(':input[id="' . 'scheduled_' . $form_id . '"]' => array('value' => '1')),
+          'visible' => array('input.' . Html::getClass('scheduled_' .  $form_id) => array('value' => '1')),
         ),
       );
       $element['workflow']['workflow_scheduling']['date_time']['workflow_scheduled_date'] = array(
