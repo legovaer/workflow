@@ -177,10 +177,11 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
 
 //     'class' => array('workflow_history_row'), // TODO D8-port
     $row['timestamp']['data'] = $transition->getTimestampFormatted(); // 'class' => array('timestamp')
-    $row['from_state']['data'] = $from_label; // 'class' => array('previous-state-name'))
-    $row['to_state']['data'] = $to_label; // 'class' => array('state-name'))
+    // html_entity_decode() transforms chars like '&' correctly.
+    $row['from_state']['data'] = html_entity_decode($from_label); // 'class' => array('previous-state-name'))
+    $row['to_state']['data'] = html_entity_decode($to_label); // 'class' => array('state-name'))
     $row['user_name']['data'] = $owner->getUsername(); // 'class' => array('user-name')
-    $row['comment']['data'] = Html::escape($transition->getComment()); // 'class' => array('log-comment')
+    $row['comment']['data'] = html_entity_decode($transition->getComment()); // 'class' => array('log-comment')
 //    $row['comment'] = array(
 //      '#type' => 'textarea',
 //      '#default_value' => $transition->getComment(),
