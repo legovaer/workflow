@@ -99,13 +99,14 @@ function workflow_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_
     foreach ($workflow_form['workflow_sid']['#options'] as $sid => $option_name) {
       // Make the workflow button act exactly like the original submit button.
 
+      $same_state_button = ($sid == $current_sid);
       $workflow_submit_button = array(
         '#type' => 'submit',
-//        '#access' => TRUE,
+        '#access' => TRUE,
         '#value' => $option_name,
         // Keep option order. Put current state first.
-        '#weight' => ($sid == $current_sid) ? $min_weight : ++$option_weight,
-        '#attributes' => ($sid == $current_sid) ? array('class' => array('form-save-default-button')) : array(),
+        '#weight' => ($same_state_button) ? $min_weight : ++$option_weight,
+        '#attributes' => ($same_state_button) ? array('class' => array('form-save-default-button')) : array(),
         // Add target State ID and Field name, to set correct value in validate_buttons callback.
         '#workflow_sid' => $sid,
         '#workflow_field_name' => $field_name,
@@ -130,6 +131,24 @@ function workflow_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_
       }
       elseif (isset($form['#submit'])) {
         $workflow_submit_button['#submit'] = $form['#submit'];
+      }
+
+      // Hide the same-state button in some cases.
+      if ($same_state_button) {
+        if (substr( $form['#form_id'], 0, 24) == 'workflow_transition_form') {
+          // Hide same-state-button on the transtion-form (that is:
+          // view page or workflow history tab) if there is nothing to do.
+          // However, a Transition may be fieldable.
+          if ($form['workflow']['workflow_comment']['#access'] == FALSE) {
+            $workflow_submit_button['#access'] = FALSE;
+          }
+        }
+        elseif ($form['#id'] == 'comment-form') {
+          // On comment-form, the button must stay, since you can comment to same state.
+        }
+        else {
+          // On a entity edit page, the button must stay.
+        }
       }
 
       // Place the button with the other action buttons.

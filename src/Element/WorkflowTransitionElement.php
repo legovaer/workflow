@@ -413,8 +413,9 @@ class WorkflowTransitionElement extends FormElement {
     }
 
     $element['workflow']['workflow_comment'] = array(
-      '#type' => $settings_comment == '0' ? 'hidden' : 'textarea',
+      '#type' => 'textarea',
       '#required' => $settings_comment == '2',
+      '#access' => $settings_comment !='0', // Align with action buttons.
       '#title' => t('Workflow comment'),
       '#description' => t('A comment to put in the workflow log.'),
       '#default_value' => $transition ? $transition->getComment() : '',
