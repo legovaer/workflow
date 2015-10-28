@@ -33,7 +33,11 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
 
     // Save the (scheduled) transition.
     if ($to_sid == $transition->getToSid()) {
-      if (!$transition->isScheduled()) {
+      if ($transition->isScheduled()|| $transition->isExecuted()) {
+        // We create a new transtion, or update an existing one.
+        // Do not update the entity itself.
+      }
+      else {
         // Update the workflow field of the entity.
         $transition->updateEntity();
       }
