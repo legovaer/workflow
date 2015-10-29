@@ -114,6 +114,8 @@ function workflow_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_
         '#validate' => array('_workflow_transition_form_validate_buttons'),
         // '#executes_submit_callback' => TRUE,
       );
+      // Add class to workflow button.
+      $workflow_submit_button['#attributes']['class'][] = Html::getClass('workflow_button_' . $option_name);
 
       // Append the form's #validate function, or it won't be called upon submit,
       // because the workflow buttons have its own #validate.
