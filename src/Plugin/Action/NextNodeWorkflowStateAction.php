@@ -41,11 +41,8 @@ class NextNodeWorkflowStateAction extends WorkflowStateActionBase {
    * {@inheritdoc}
    */
   public function execute($object = NULL) {
-    /* @var $entity \Drupal\Core\Entity\EntityInterface */
-    $entity = $object;
-
     // Add actual data.
-    $transition = $this->getTransitionForExecution($entity);
+    $transition = $this->getTransitionForExecution($object);
 
     /*
      * Set the new next state.
@@ -56,29 +53,18 @@ class NextNodeWorkflowStateAction extends WorkflowStateActionBase {
     // $comment = $transition->getComment();
 
     $current_state = $transition->getFromState();
-    $current_sid = $current_state->id();
-
-    // Get the node's new State Id (which is the next available state).
-    $to_sid = $current_sid;
-    $options = $current_state->getOptions($entity, $field_name, $user, FALSE);
-    $flag = $current_state->isCreationState();
-    foreach ($options as $sid => $name) {
-      if ($flag) {
-        $to_sid = $sid;
-        break;
-      }
-      if ($sid == $current_sid) {
-        $flag = TRUE;
-      }
-    }
-
-    // Add actual data.
-    $transition->to_sid = $to_sid;
-//    $transition->setValues($entity, $field_name, $current_sid, $to_sid, $user->id(), REQUEST_TIME, $comment, TRUE);
 
     $force = FALSE;
 //    $force = $this->configuration['workflow']['workflow_force'];
-//    $transition->force();
+
+    // Get the node's new State Id (which is the next available state).
+    $to_sid = $current_state->getNextSid($entity, $field_name, $user, $force);
+
+    // Add actual data.
+    $transition->to_sid = $to_sid;
+//    $transition->setValues($entity, $field_name, $current_state->id(), $to_sid, $user->id(), REQUEST_TIME, $comment, TRUE);
+
+//    $transition->force($force);
 
     // Fire the transition.
     workflow_execute_transition($transition, $force);

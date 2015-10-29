@@ -263,7 +263,7 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     /* // @TODO D8-port
     if (!$entity) {
       // For the Advanced actions form on admin/config/system/actions,
-      // remove the Sumbit function.
+      // remove the Submit function.
       unset($form['#submit']);
     }
     */

@@ -542,10 +542,10 @@ class WorkflowState extends ConfigEntityBase {
    *   Workflow are returned.
    *
    */
-  public function getNextSid($entity_type, $entity, $field_name, $user, $force = FALSE) {
+  public function getNextSid($entity, $field_name, $user, $force = FALSE) {
     $new_sid = $this->id();
 
-    $options = $this->getOptions($entity_type, $entity, $field_name, $user, $force);
+    $options = $this->getOptions($entity, $field_name, $user, $force);
     // Loop over every option. To find the next one.
     $flag = $this->isCreationState();
     foreach ($options as $sid => $name) {
