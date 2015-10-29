@@ -599,10 +599,11 @@ function _workflow_info_field_names($entity = NULL, $entity_type = '', $entity_b
 }
 
 /**
- * Helper function for D8-port> Get some info on screen
+ * Helper function for D8-port: Get some info on screen.
+ * @see workflow_devel module
  *
  * Usage:
- *   workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+ *   workflow_debug( __FILE__ , __FUNCTION__, __LINE__, '', '');  // @todo D8-port: still test this snippet.
  *
  * @param string $class_name
  * @param string $function_name
@@ -613,19 +614,19 @@ function _workflow_info_field_names($entity = NULL, $entity_type = '', $entity_b
  */
 function workflow_debug($class_name, $function_name, $line = '', $value1 = '', $value2 = '') {
   $debug_switch = FALSE;
-//  $debug_switch = TRUE;
+  $debug_switch = TRUE;
 
-  if (!$debug_switch || !function_exists('dpm')) {
+  if (!$debug_switch) {
     return;
   }
 
   $class_name_elements = explode( "\\" , $class_name);
-  $output = 'TODO D8-port: test function ' . end($class_name_elements) . '::' . $function_name . '/' . $line;
+  $output = 'Testing... function ' . end($class_name_elements) . '::' . $function_name . '/' . $line;
   if ($value1) {
     $output .= ' = ' . $value1;
   }
   if ($value2) {
     $output .= ' > ' . $value2;
   }
-  if (function_exists('dpm')) { dpm($output); }
+  drupal_set_message($output, 'warning');
 }

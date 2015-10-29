@@ -34,6 +34,7 @@ use Drupal\workflow\Entity\WorkflowTransitionInterface;
  *   The new actions, to be added to the entity list.
  */
 function hook_workflow_operations($op, Workflow $workflow = NULL, WorkflowState $state = NULL, WorkflowTransitionInterface $transition = NULL) {
+
   $operations = array();
   switch ($op) {
     case 'top_actions':
@@ -105,14 +106,14 @@ function hook_workflow($op, WorkflowTransitionInterface $transition, UserInterfa
       return TRUE;
 
     case 'transition revert':
-      drupal_set_message(__FILE__ . '/'. __FUNCTION__ . '/' .  __LINE__ . ' ' . $op);
+//      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $op, '');
       // Hook is called when showing the Transition Revert form.
       // Implement this hook if you need to control this.
       // If you return FALSE here, you will veto the transition.
       break;
 
     case 'transition pre':
-      drupal_set_message(__FILE__ . '/'. __FUNCTION__ . '/' .  __LINE__ . ' ' . $op);
+//      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $op, '');
       // The workflow module does nothing during this operation.
       // Implement this hook if you need to change/do something BEFORE anything
       // is saved to the database.
@@ -120,7 +121,7 @@ function hook_workflow($op, WorkflowTransitionInterface $transition, UserInterfa
       break;
 
     case 'transition post':
-      drupal_set_message(__FILE__ . '/'. __FUNCTION__ . '/' .  __LINE__ . ' ' . $op);
+//      workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $op, '');
       // In D7, this is called by Workflow Node during update of the state, directly
       // after updating the Workflow. Workflow Field does not call this,
       // since you can call a hook_entity_* event after saving the entity.
@@ -158,10 +159,10 @@ function hook_workflow($op, WorkflowTransitionInterface $transition, UserInterfa
  *   'transition' - a WorkflowTransition object, containing all of the above.
  */
 function hook_workflow_history_alter(array &$variables) {
+//  workflow_debug( __FILE__ , __FUNCTION__, __LINE__, '', '');
+
   // The Workflow module does nothing with this hook.
   // For an example implementation, see the Workflow Revert add-on.
-
-  // drupal_set_message(__FILE__ . '/' . __FUNCTION__ . '/' . __LINE__);
 }
 
 /**
@@ -175,6 +176,8 @@ function hook_workflow_history_alter(array &$variables) {
  *   'transition' - The current transition itself.
  */
 function hook_workflow_comment_alter(&$comment, array &$context) {
+//  workflow_debug( __FILE__ , __FUNCTION__, __LINE__, '', '');
+
   /* @var $transition WorkflowTransitionInterface */
   $transition = $context['transition'];
   //$comment = $transition->getOwner()->getUsername() . ' says: ' . $comment;
@@ -200,7 +203,8 @@ function hook_workflow_comment_alter(&$comment, array &$context) {
  * It is invoked in WorkflowState::getOptions().
  */
 function hook_workflow_permitted_state_transitions_alter(array &$transitions, array $context) {
-//  drupal_set_message(__FILE__ . '/' . __FUNCTION__ . '/' . __LINE__);
+//  workflow_debug( __FILE__ , __FUNCTION__, __LINE__, '', '');
+
   $user = $context['user']; // user may have the custom role AUTHOR.
   // The following could be fetched from each transition.
   $workflow = $context['workflow'];
@@ -243,6 +247,7 @@ function hook_workflow_permitted_state_transitions_alter(array &$transitions, ar
  * hook_form_alter(). See below for more info.
  */
 function hook_form_workflow_transition_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+//  workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $form_id, '');
 
   // Get the Entity.
   /* @var $entity \Drupal\Core\Entity\EntityInterface */
@@ -285,6 +290,9 @@ function hook_form_workflow_transition_form_alter(&$form, FormStateInterface $fo
  * @see hook_form_workflow_transition_form_alter() for example code.
  */
 function hook_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  if (substr($form_id, 0, 8) == 'workflow') {
+//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__, $form_id, '');
+  }
 }
 
 
@@ -299,16 +307,24 @@ function hook_form_alter(&$form, FormStateInterface $form_state, $form_id) {
  * Instead of using hook_entity_OPERATION, better use hook_ENTITY_TYPE_OPERATION.
  */
 function hook_entity_predelete(EntityInterface $entity) {
+  if (substr($entity->getEntityTypeId(), 0, 8) == 'workflow') {
+//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__, 'pre-delete' , $entity->getEntityTypeId());
+  }
+
   switch ($entity->getEntityTypeId()) {
     case 'workflow_config_transition':
     case 'workflow_state':
     case 'workflow_workflow':
-      drupal_set_message(__FUNCTION__ .': '. $entity->getEntityTypeId() . ' is pre-deleted');
+      // Better use hook_ENTITY_TYPE_OPERATION.
+      // E.g., hook_workflow_workflow_predelete
       break;
   }
 }
+
 function hook_entity_delete(EntityInterface $entity) {
-  drupal_set_message(__FUNCTION__ .': '. $entity->getEntityTypeId() . ' is deleted');
+  if (substr($entity->getEntityTypeId(), 0, 8) == 'workflow') {
+//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__, 'delete' , $entity->getEntityTypeId());
+  }
 }
 
 /**********************************************************************
@@ -317,11 +333,11 @@ function hook_entity_delete(EntityInterface $entity) {
  *
  */
 function hook_workflow_workflow_delete(EntityInterface $entity) {
-  drupal_set_message(__FUNCTION__ .': '. $entity->getEntityTypeId() . ' is deleted');
+//  workflow_debug( __FILE__ , __FUNCTION__, __LINE__, 'delete' , $entity->getEntityTypeId());
 }
 function hook_workflow_config_transition_delete(EntityInterface $entity) {
-  drupal_set_message(__FUNCTION__ .': '. $entity->getEntityTypeId() . ' is deleted');
+//  workflow_debug( __FILE__ , __FUNCTION__, __LINE__, 'delete' , $entity->getEntityTypeId());
 }
 function hook_workflow_state_delete(EntityInterface $entity) {
-  drupal_set_message(__FUNCTION__ .': '. $entity->getEntityTypeId() . ' is deleted');
+//  workflow_debug( __FILE__ , __FUNCTION__, __LINE__, 'delete' , $entity->getEntityTypeId());
 }
