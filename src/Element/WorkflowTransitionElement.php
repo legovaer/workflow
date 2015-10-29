@@ -310,6 +310,7 @@ class WorkflowTransitionElement extends FormElement {
       // Show no widget.
       $element['workflow']['workflow_to_sid']['#type'] = 'value';
       $element['workflow']['workflow_to_sid']['#value'] = $default_value;
+      $element['workflow']['workflow_to_sid']['#options'] = $options; // In case action buttons need them.
       $element['workflow']['workflow_comment']['#type'] = 'value';
       $element['workflow']['workflow_comment']['#value'] = '';
 
@@ -339,6 +340,7 @@ class WorkflowTransitionElement extends FormElement {
       $element['workflow']['workflow_to_sid'] = array(
         '#type' => ($wid) ? $settings_options_type : 'select', // Avoid error with grouped options.
         '#title' => ($settings_title_as_name && !$transition->isExecuted()) ? t('Change !name state', array('!name' => $workflow_label)) : t('Target state'),
+        '#access' => TRUE,
         '#options' => $options,
         // '#name' => $workflow_label,
         // '#parents' => array('workflow'),
@@ -447,13 +449,19 @@ class WorkflowTransitionElement extends FormElement {
 
       // Performance: inform workflow_form_alter() to do its job.
       _workflow_use_action_buttons(TRUE);
+
+      // Hide the options box. It will be replaced by action buttons.
+      $element['workflow']['workflow_to_sid']['#type'] = 'select';
+      $element['workflow']['workflow_to_sid']['#access'] = FALSE;
     }
 
-    $submit_functions = empty($instance['widget']['settings']['submit_function']) ? array() : array($instance['widget']['settings']['submit_function']);
-    if ($settings_options_type == 'buttons' || $submit_functions) {
-      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-      $element['workflow']['actions']['#type'] = 'actions';
-      $element['workflow']['actions']['submit'] = array(
+    if ($form_state->getBuildInfo()['base_form_id'] == 'workflow_transition_form') {
+      // Workflow History tab.
+      // The WorkflowTransitionForm has its own handling.
+      // @todo D8-port: move the submit button to form, outside element.
+//      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      $element['actions']['#type'] = 'actions';
+      $element['actions']['submit'] = array(
         '#type' => 'submit',
 //        '#access' => TRUE,
         '#value' => t('Update workflow'),
@@ -462,18 +470,22 @@ class WorkflowTransitionElement extends FormElement {
         // '#executes_submit_callback' => TRUE,
         '#attributes' => array('class' => array('form-save-default-button')),
       );
-
       // The 'add submit' can explicitely set by workflowfield_field_formatter_view(),
       // to add the submit button on the Content view page and the Workflow history tab.
       // Add a submit button, but only on Entity View and History page.
       // Add the submit function only if one provided. Set the submit_callback accordingly.
-      if ($submit_functions) {
-        $element['workflow']['actions']['submit']['#submit'] = $submit_functions;
+      if (!empty($instance['widget']['settings']['submit_function'])) {
+        $element['workflow']['actions']['submit']['#submit'] = array($instance['widget']['settings']['submit_function']);
       }
       else {
         // '#submit' Must be empty, or else the submit function is not called.
-        // $element['workflow']['actions']['submit']['#submit'] = array();
+        // $element['actions']['submit']['#submit'] = array();
       }
+    }
+
+    /*
+    $submit_functions = empty($instance['widget']['settings']['submit_function']) ? array() : array($instance['widget']['settings']['submit_function']);
+    if ($settings_options_type == 'buttons' || $submit_functions) {
     }
     else {
       // In some cases, no submit callback function is specified. This is
@@ -481,6 +493,7 @@ class WorkflowTransitionElement extends FormElement {
       // is 'just a field'.
       // So, no Submit button is to be shown.
     }
+    */
 
     return $element;
   }
@@ -505,7 +518,7 @@ class WorkflowTransitionElement extends FormElement {
     /**
      * Input
      */
-    $user = \Drupal::currentUser(); // @todo #2287057: verify if submit() really is only used for UI. If not, $user must be passed.
+    $user = workflow_current_user(); // @todo #2287057: verify if submit() really is only used for UI. If not, $user must be passed.
     /* @var $transition WorkflowTransitionInterface */
     $transition = $entity;
 

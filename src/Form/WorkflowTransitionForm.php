@@ -120,9 +120,6 @@ class WorkflowTransitionForm extends ContentEntityForm {
       return $element;
     }
 
-    // Change the Form, to add action buttons, not select list/radios.
-    // @see EntityForm's parent::actionsElement($form, $form_state);
-    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     return $element;
   }
 
@@ -134,13 +131,39 @@ class WorkflowTransitionForm extends ContentEntityForm {
    * @return
    */
   protected function actions(array $form, FormStateInterface $form_state) {
+    // N.B. Keep code aligned: workflow_form_alter(), WorkflowTransitionForm::actions().
     $actions = parent::actions($form, $form_state);
 
     if (!_workflow_use_action_buttons()) {
       return $actions;
     }
 
-    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+    // Find the first workflow.
+    // (So this won't work with multiple workflows per entity.)
+    $workflow_form = &$form['workflow'];
+
+    // Quit if there is no Workflow on this page.
+    if (!$workflow_form ) {
+      return;
+    }
+
+    // Quit if there are no Workflow Action buttons.
+    // (If user has only 1 workflow option, there are no Action buttons.)
+    if (count($workflow_form['workflow_to_sid']['#options']) <= 1) {
+      return;
+    }
+
+    if (isset($form['actions']['submit'])) {
+      // Place the button with the other action buttons.
+      //$form['actions'] += $action_buttons;
+      $actions += _workflow_transition_form_get_action_buttons($form, $workflow_form);
+
+      // Remove the default submit button from the form.
+      // @TODO D8-port: REMOVE THIS WHEN ACTION BUTTON IS OUTSIDE ELEMENT.
+      unset($actions['submit']);
+
+    }
+
     return $actions;
   }
 
@@ -166,6 +189,7 @@ class WorkflowTransitionForm extends ContentEntityForm {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
+
     // Add class following node-form pattern (both on form and container).
     // D8-port: This is apparently already magically set in parent.
     // $form['#attributes']['class'][] = 'workflow-transition-' . $workflow_type_id . '-form';
