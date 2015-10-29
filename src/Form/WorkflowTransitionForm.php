@@ -86,14 +86,9 @@ class WorkflowTransitionForm extends ContentEntityForm {
   public function form(array $form, FormStateInterface $form_state) {
     // $form = parent::form($form, $form_state);
 
-    /*
-     * Input
-     */
     $transition = $this->entity;
 
     /*
-     * Output
-     *
      * @TODO D8-port: use a proper WorkflowTransitionElement call.
      */
     // $form = $this->element($form, $form_state, $transition);
@@ -113,15 +108,10 @@ class WorkflowTransitionForm extends ContentEntityForm {
    *
    * {@inheritdoc}
    */
-  protected function actionsElement(array $form, FormStateInterface $form_state) {
-    $element = parent::actionsElement($form, $form_state);
-
-    if (!_workflow_use_action_buttons()) {
-      return $element;
-    }
-
-    return $element;
-  }
+//  protected function actionsElement(array $form, FormStateInterface $form_state) {
+//    $element = parent::actionsElement($form, $form_state);
+//    return $element;
+//  }
 
   /**
    * Returns an array of supported actions for the current entity form.
@@ -134,68 +124,47 @@ class WorkflowTransitionForm extends ContentEntityForm {
     // N.B. Keep code aligned: workflow_form_alter(), WorkflowTransitionForm::actions().
     $actions = parent::actions($form, $form_state);
 
+    // A default button is provided by core.
+    $default_submit_button = $actions['submit'];
+
     if (!_workflow_use_action_buttons()) {
-      // Add the default submit button on the Workflow History tab.
+      // Change the default submit button on the Workflow History tab.
 
       // A default button is provided by core. Override it.
       $actions['submit'] = array(
-          '#type' => 'submit',
-//        '#access' => TRUE,
           '#value' => t('Update workflow'),
-//          '#weight' => -5,
-//        '#submit' => array( isset($instance['widget']['settings']['submit_function']) ? $instance['widget']['settings']['submit_function'] : NULL),
-          // '#executes_submit_callback' => TRUE,
           '#attributes' => array('class' => array('form-save-default-button')),
-        ) + $actions['submit'];
-      // The 'add submit' can explicitely set by workflowfield_field_formatter_view(),
-      // to add the submit button on the Content view page and the Workflow history tab.
-      // to add the submit button on the Content view page and the Workflow history tab.
-      // Add a submit button, but only on Entity View and History page.
-      // Add the submit function only if one provided. Set the submit_callback accordingly.
-      if (!empty($instance['widget']['settings']['submit_function'])) {
-//          $element['workflow']['actions']['submit']['#submit'] = array($instance['widget']['settings']['submit_function']);
-      }
-      else {
-        // '#submit' Must be empty, or else the submit function is not called.
-        // $element['actions']['submit']['#submit'] = array();
-      }
-
-      /*
-      $submit_functions = empty($instance['widget']['settings']['submit_function']) ? array() : array($instance['widget']['settings']['submit_function']);
-      if ($settings_options_type == 'buttons' || $submit_functions) {
-      }
-      else {
-        // In some cases, no submit callback function is specified. This is
-        // explicitly done on e.g., the entity edit form, because the workflow form
-        // is 'just a field'.
-        // So, no Submit button is to be shown.
-      }
-      */
+        ) + $default_submit_button;
 
       return $actions;
     }
+    else {
+      // Action buttons are activated.
 
-    // Find the first workflow.
-    // (So this won't work with multiple workflows per entity.)
-    $workflow_form = &$form['workflow'];
+      // Find the first workflow.
+      // (So this won't work with multiple workflows per entity.)
+      $workflow_form = &$form['workflow'];
 
-    // Quit if there is no Workflow on this page.
-    if (!$workflow_form ) {
-      return;
+      // Quit if there is no Workflow on this page.
+      if (!$workflow_form ) {
+        return;
+      }
+
+      // Quit if there are no Workflow Action buttons.
+      // (If user has only 1 workflow option, there are no Action buttons.)
+      if (count($workflow_form['workflow_to_sid']['#options']) <= 1) {
+        return;
+      }
+
+      // Place the buttons. Remove the default 'Save' button.
+      // $actions += _workflow_transition_form_get_action_buttons($form, $workflow_form);
+      // Remove the default submit button from the form.
+      // unset($actions['submit']);
+      $actions = _workflow_transition_form_get_action_buttons($form, $workflow_form);
+      foreach ($actions as $key => &$action) {
+        $action['#submit'] = $default_submit_button['#submit'];
+      }
     }
-
-    // Quit if there are no Workflow Action buttons.
-    // (If user has only 1 workflow option, there are no Action buttons.)
-    if (count($workflow_form['workflow_to_sid']['#options']) <= 1) {
-      return;
-    }
-
-    // Place the button with the other action buttons.
-    //$form['actions'] += $action_buttons;
-    $actions += _workflow_transition_form_get_action_buttons($form, $workflow_form);
-
-    // Remove the default submit button from the form.
-    unset($actions['submit']);
 
     return $actions;
   }
