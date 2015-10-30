@@ -86,14 +86,9 @@ class WorkflowTransitionForm extends ContentEntityForm {
   public function form(array $form, FormStateInterface $form_state) {
     // $form = parent::form($form, $form_state);
 
-    /*
-     * Input
-     */
     $transition = $this->entity;
 
     /*
-     * Output
-     *
      * @TODO D8-port: use a proper WorkflowTransitionElement call.
      */
     // $form = $this->element($form, $form_state, $transition);
@@ -113,18 +108,10 @@ class WorkflowTransitionForm extends ContentEntityForm {
    *
    * {@inheritdoc}
    */
-  protected function actionsElement(array $form, FormStateInterface $form_state) {
-    $element = parent::actionsElement($form, $form_state);
-
-    if (!_workflow_use_action_buttons()) {
-      return $element;
-    }
-
-    // Change the Form, to add action buttons, not select list/radios.
-    // @see EntityForm's parent::actionsElement($form, $form_state);
-    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-    return $element;
-  }
+//  protected function actionsElement(array $form, FormStateInterface $form_state) {
+//    $element = parent::actionsElement($form, $form_state);
+//    return $element;
+//  }
 
   /**
    * Returns an array of supported actions for the current entity form.
@@ -134,13 +121,51 @@ class WorkflowTransitionForm extends ContentEntityForm {
    * @return
    */
   protected function actions(array $form, FormStateInterface $form_state) {
+    // N.B. Keep code aligned: workflow_form_alter(), WorkflowTransitionForm::actions().
     $actions = parent::actions($form, $form_state);
 
+    // A default button is provided by core.
+    $default_submit_button = $actions['submit'];
+
     if (!_workflow_use_action_buttons()) {
+      // Change the default submit button on the Workflow History tab.
+
+      // A default button is provided by core. Override it.
+      $actions['submit'] = array(
+          '#value' => t('Update workflow'),
+          '#attributes' => array('class' => array('form-save-default-button')),
+        ) + $default_submit_button;
+
       return $actions;
     }
+    else {
+      // Action buttons are activated.
 
-    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      // Find the first workflow.
+      // (So this won't work with multiple workflows per entity.)
+      $workflow_form = &$form['workflow'];
+
+      // Quit if there is no Workflow on this page.
+      if (!$workflow_form ) {
+        return;
+      }
+
+      // Quit if there are no Workflow Action buttons.
+      // (If user has only 1 workflow option, there are no Action buttons.)
+      if (count($workflow_form['workflow_to_sid']['#options']) <= 1) {
+        return;
+      }
+
+      // Place the buttons. Remove the default 'Save' button.
+      // $actions += _workflow_transition_form_get_action_buttons($form, $workflow_form);
+      // Remove the default submit button from the form.
+      // unset($actions['submit']);
+      $actions = _workflow_transition_form_get_action_buttons($form, $workflow_form);
+      foreach ($actions as $key => &$action) {
+        $action['#submit'] = $default_submit_button['#submit'];
+      }
+    }
+
     return $actions;
   }
 
@@ -166,6 +191,7 @@ class WorkflowTransitionForm extends ContentEntityForm {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
+
     // Add class following node-form pattern (both on form and container).
     // D8-port: This is apparently already magically set in parent.
     // $form['#attributes']['class'][] = 'workflow-transition-' . $workflow_type_id . '-form';

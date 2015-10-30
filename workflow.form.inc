@@ -4,6 +4,9 @@
  * Contains helper functions for WorkflowTransitionForm.
  */
 
+use Drupal\Component\Utility\Html;
+use Drupal\workflow\Entity\WorkflowTransitionInterface;
+
 /**
  * Getter/Setter to tell if the action buttons are used.
  *
@@ -19,8 +22,6 @@
  * Used to save some expensive operations on every form.
  */
 function _workflow_use_action_buttons($new_value = NULL) {
-//  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
   global $_workflow_use_actions_buttons;
 
   $old_value = $_workflow_use_actions_buttons ? TRUE : FALSE;
@@ -44,170 +45,161 @@ function _workflow_use_action_buttons($new_value = NULL) {
  * @todo: move this to WorkflowTransitionForm::_addActionButtons();
  */
 function workflow_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  // N.B. Keep code aligned: workflow_form_alter(), WorkflowTransitionForm::actions().
+
   // Use a fast, custom way to check if we need to do this.
-  // @todo: Adapt to use with multiple workflows per entity.
+  // @todo: Make this work with multiple workflows per entity.
   if (!_workflow_use_action_buttons()) {
     return;
   }
 
-  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+  if ($form_state->getBuildInfo()['base_form_id'] == 'workflow_transition_form') {
+    // Workflow History tab.
+    // The WorkflowTransitionForm has its own handling.
+    return;
+  }
 
   // Find the first workflow.
   // (So this won't work with multiple workflows per entity.)
-  $workflow_form = array();
-
-  $field_name = '';
-  foreach (\Drupal\Core\Render\Element::children($form) as $key) {
-    if (isset($form[$key]['#language'])) {
-      $langcode = $form[$key]['#language'];
-      if (isset($form[$key][$langcode][0]['workflow'])) {
-        // Reference the Workflow Form, we'll remove the buttons later.
-        $field_name = $key;
-        $langcode = $form[$field_name]['#language'];
-        $workflow_form = &$form[$key][$langcode][0]['workflow'];
-        // Stop looping if found.
-        break;
-      }
-    }
-  }
+  $workflow_element = _workflow_transition_form_get_first_workflow_element($form);
 
   // Quit if there is no Workflow on this page.
-  if (!$workflow_form ) {
+  if (!$workflow_element ) {
     return;
   }
 
   // Quit if there are no Workflow Action buttons.
   // (If user has only 1 workflow option, there are no Action buttons.)
-  if (count($workflow_form['workflow_sid']['#options']) <= 1) {
+  if (count($workflow_element['workflow_to_sid']['#options']) <= 1) {
     return;
   }
 
   if (isset($form['actions']['submit'])) {
-    // Find the default submit button and add our action buttons before it.
-    // @todo: we may loose properties from 'submit' button.
-    $submit_action = $form['actions']['submit'];
 
-    $current_sid = $workflow_form['workflow_sid']['#default_value'];
+    // A default button is provided by core.
+    $default_submit_button = $form['actions']['submit'];
 
-    // The options widget is no longer valid, so hide it.
-    $element['workflow']['workflow_sid']['#type'] = 'hidden';
-
-    // Get the min weight for our buttons.
-    $option_weight = isset($submit_action['#weight']) ? $submit_action['#weight'] : 0;
-    $option_weight = $option_weight - count($workflow_form['workflow_sid']['#options']);
-    $min_weight = $option_weight;
-    foreach ($workflow_form['workflow_sid']['#options'] as $sid => $option_name) {
-      // Make the workflow button act exactly like the original submit button.
-
-      $same_state_button = ($sid == $current_sid);
-      $workflow_submit_button = array(
-        '#type' => 'submit',
-        '#access' => TRUE,
-        '#value' => $option_name,
-        // Keep option order. Put current state first.
-        '#weight' => ($same_state_button) ? $min_weight : ++$option_weight,
-        '#attributes' => ($same_state_button) ? array('class' => array('form-save-default-button')) : array(),
-        // Add target State ID and Field name, to set correct value in validate_buttons callback.
-        '#workflow_sid' => $sid,
-        '#workflow_field_name' => $field_name,
-        // Add validate and submit functions. The will be adapted a bit below.
-        '#validate' => array('_workflow_transition_form_validate_buttons'),
-        // '#executes_submit_callback' => TRUE,
-      );
-      // Add class to workflow button.
-      $workflow_submit_button['#attributes']['class'][] = Html::getClass('workflow_button_' . $option_name);
-
-      // Append the form's #validate function, or it won't be called upon submit,
-      // because the workflow buttons have its own #validate.
-      if (isset($submit_action['#validate'])) {
-        $workflow_submit_button['#validate'] = $submit_action['#validate'];
-      }
-      elseif (isset($form['#validate'])) {
-        $workflow_submit_button['#validate'] = $form['#validate'];
-      }
-      $workflow_submit_button['#validate'][] = '_workflow_transition_form_validate_buttons';
-
-      // Append the submit-buttons's #submit function, or it won't be called upon submit.
-      if (isset($submit_action['#submit'])) {
-        $workflow_submit_button['#submit'] = $submit_action['#submit'];
-      }
-      elseif (isset($form['#submit'])) {
-        $workflow_submit_button['#submit'] = $form['#submit'];
-      }
-
-      // Hide the same-state button in some cases.
-      if ($same_state_button) {
-        if (substr( $form['#form_id'], 0, 24) == 'workflow_transition_form') {
-          // Hide same-state-button on the transtion-form (that is:
-          // view page or workflow history tab) if there is nothing to do.
-          // However, a Transition may be fieldable.
-          if ($form['workflow']['workflow_comment']['#access'] == FALSE) {
-            $workflow_submit_button['#access'] = FALSE;
-          }
-        }
-        elseif ($form['#id'] == 'comment-form') {
-          // On comment-form, the button must stay, since you can comment to same state.
-        }
-        else {
-          // On a entity edit page, the button must stay.
-        }
-      }
-
-      // Place the button with the other action buttons.
-      $form['actions']['workflow_' . $sid] = $workflow_submit_button;
+    $actions = _workflow_transition_form_get_action_buttons($form, $workflow_element);
+    foreach ($actions as $key => &$action) {
+      $action['#submit'] = $default_submit_button['#submit'];
     }
+    // Place the button with the other action buttons.
+    $form['actions'] += $actions;
 
     // Remove the default submit button from the form.
+    // @todo D8-port: on Node-form, this is not sufficient.
     unset($form['actions']['submit']);
-    // Remove the submit button from the workflow form.
-    unset($workflow_form['actions']);
-    // Remove the options element.
-    unset($workflow_form['workflow_sid']);
   }
 }
 
 /**
- * Submit callback function for the Workflow Form / DefaultWidget.
+ * Fetches the first workflow_element from one fo the workflow_fields.
  *
- * Validate target state and either save a transition immediately or schedule
- * a transition to be executed later by cron.
+ * @param array $form
+ *
+ * @return array
  */
-function workflow_transition_form_validate($form, &$form_state) {
-  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+function _workflow_transition_form_get_first_workflow_element(&$form) {
+  $workflow_element = array();
 
-  // Empty. But required.
-  // $transition_form = WorkflowTransitionForm::create($field, $instance, $entity_type, $entity);
-  // return $transition_form->submitForm($form, $form_state, $items);
+  // Find the first workflow.
+  // (So this won't work with multiple workflows per entity.)
+  foreach (\Drupal\Core\Render\Element::children($form) as $key) {
+    if (isset($form[$key]['widget'][0]['#default_value'])) {
+      $transition = $form[$key]['widget'][0]['#default_value'];
+      if (is_object($transition) && $transition instanceof WorkflowTransitionInterface ) {
+        $workflow_element = $form[$key]['widget'][0]['workflow'];
+        break;
+      }
+    }
+  }
+  return $workflow_element;
 }
 
 /**
- * Submit callback function for the Workflow Form / DefaultWidget.
+ * Returns the action buttons from the options widget.
  *
- * Validate target state and either save a transition immediately or schedule
- * a transition to be executed later by cron.
+ * @param $form
+ * @param $workflow_element
+ *
+ * @return array
  */
-function workflow_transition_form_submit($form, &$form_state) {
-  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+function _workflow_transition_form_get_action_buttons($form, $workflow_element) {
+  $current_sid = $workflow_element['workflow_to_sid']['#default_value'];
+  /* @var $transition WorkflowTransitionInterface */
+  $transition = $workflow_element['workflow_transition']['#value'];
+  $field_name = $transition->getFieldName();
 
-  // Retrieve the data from the form.
-  if (isset($form_state['values']['workflow_field'])) {
-    // If $entity filled: We are on a Entity View page or Workflow History Tab page.
-    // If $entity empty: We are on an Advanced Action page.
-    $field = $form_state['values']['workflow_field'];
-    $instance = $form_state['values']['workflow_instance'];
-    $entity_type = $form_state['values']['workflow_entity_type'];
-    $entity = $form_state['values']['workflow_entity'];
 
-    $items = array();
-    $transition_form = WorkflowTransitionForm::create($field, $instance, $entity_type, $entity);
-    return $transition_form->submitForm($form, $form_state, $items);
+  // Find the default submit button and add our action buttons before it.
+  // @todo: we may loose properties from 'submit' button.
+  $submit_action = isset($form['actions']['submit']) ? $form['actions']['submit'] : array();
+  // Get the min weight for our buttons.
+  $option_weight = isset($submit_action['#weight']) ? $submit_action['#weight'] : 0;
+  $option_weight = $option_weight - count($workflow_element['workflow_to_sid']['#options']);
+  $min_weight = $option_weight;
+  foreach ($workflow_element['workflow_to_sid']['#options'] as $sid => $option_name) {
+    // Make the workflow button act exactly like the original submit button.
+
+    $same_state_button = ($sid == $current_sid);
+    $workflow_submit_button = array(
+      '#type' => 'submit',
+      '#access' => TRUE,
+      '#value' => $option_name,
+      // Keep option order. Put current state first.
+      '#weight' => ($same_state_button) ? $min_weight : ++$option_weight,
+      '#attributes' => ($same_state_button) ? array('class' => array('form-save-default-button')) : array(),
+      // Add target State ID and Field name, to set correct value in validate_buttons callback.
+      '#workflow_to_sid' => $sid,
+      '#workflow_field_name' => $field_name,
+      // Add validate and submit functions. The will be adapted a bit below.
+      '#validate' => array('_workflow_transition_form_validate_buttons'),
+      // '#executes_submit_callback' => TRUE,
+    );
+    // Add class to workflow button.
+    $workflow_submit_button['#attributes']['class'][] = Html::getClass('workflow_button_' . $option_name);
+
+    // Append the form's #validate function, or it won't be called upon submit,
+    // because the workflow buttons have its own #validate.
+    if (isset($submit_action['#validate'])) {
+      $workflow_submit_button['#validate'] = $submit_action['#validate'];
+    }
+    elseif (isset($form['#validate'])) {
+      $workflow_submit_button['#validate'] = $form['#validate'];
+    }
+    $workflow_submit_button['#validate'][] = '_workflow_transition_form_validate_buttons';
+
+    // Append the submit-buttons's #submit function, or it won't be called upon submit.
+    if (isset($submit_action['#submit'])) {
+      $workflow_submit_button['#submit'] = $submit_action['#submit'];
+    }
+    elseif (isset($form['#submit'])) {
+      $workflow_submit_button['#submit'] = $form['#submit'];
+    }
+
+    // Hide the same-state button in some cases.
+    if ($same_state_button) {
+      if (isset($form['#form_id']) && substr($form['#form_id'], 0, 24) == 'workflow_transition_form') {
+        // Hide same-state-button on the transition-form (that is:
+        // view page or workflow history tab) if there is nothing to do.
+        // However, a Transition may be fieldable.
+        if ($form['workflow']['workflow_comment']['#access'] == FALSE) {
+          $workflow_submit_button['#access'] = FALSE;
+        }
+      }
+      elseif (isset($form['#id']) && $form['#id'] == 'comment-form') {
+        // On comment-form, the button must stay, since you can comment to same state.
+      }
+      else {
+        // On a entity edit page, the button must stay.
+      }
+    }
+
+    // Place the button with the other action buttons.
+    $actions['workflow_' . $sid] = $workflow_submit_button;
   }
-  else {
-    \Drupal::logger('workflow')->notice('workflow_transition_form_submit() is called with error.', []);
-    // We are on an Entity/Comment Form page.
-    // We should not be here.
-  }
 
+  return $actions;
 }
 
 /**
@@ -215,17 +207,16 @@ function workflow_transition_form_submit($form, &$form_state) {
  *
  * Validate form data for 'time' element.
  */
-function _workflow_transition_form_element_validate_time($element, &$form_state, $form) {
-//  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+function _workflow_transition_form_element_validate_time($element, \Drupal\Core\Form\FormStateInterface &$form_state, $form) {
   if (!strtotime($element['#value'])) {
-    form_error($element, t('Please enter a valid value for time.'));
+    $form_state->setError($element, t('Please enter a valid value for time.'));
   }
 }
 
 /**
  * Submit callback function for the Workflow Form / DefaultWidget.
  *
- * This is only used when using action buttons in Workflow form.
+ * This is only used when using action buttons in the widget.
  * It sets the new state to proper
  * element and sets a submit function if needed, making sure the action is
  * executed, influencing function core/includes/form.inc/form_execute_handlers().
@@ -233,36 +224,34 @@ function _workflow_transition_form_element_validate_time($element, &$form_state,
  * buttons of the complete form. We try to correct this here, without adding
  * another hook_form_alter. We guess the first button is the Save button.
  */
-function _workflow_transition_form_validate_buttons($form, &$form_state) {
-  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+function _workflow_transition_form_validate_buttons($form, \Drupal\Core\Form\FormStateInterface &$form_state) {
 
-  $field_name = $form_state['triggering_element']['#workflow_field_name'];
-  $new_sid = $form_state['triggering_element']['#workflow_sid'];
+  $input = $form_state->getUserInput();
+  $values = $form_state->getValues();
 
-  $langcode = Language::LANGCODE_NOT_SPECIFIED;
+  $field_name = $form_state->getTriggeringElement()['#workflow_field_name'];
+  $new_sid = $form_state->getTriggeringElement()['#workflow_to_sid'];
+
   // Retrieve the data from the form.
-  if (isset($form_state['values']['workflow_field'])) {
-    // We are on a Entity View page or Workflow History Tab page.
-    $entity_type = $form_state['values']['workflow_entity_type'];
-    $entity = $form_state['values']['workflow_entity'];
-
-    $langcode = _workflow_metadata_workflow_get_properties($entity, array(), 'langcode', $entity_type, $field_name);
-  }
-
-  /*
-    if (isset($form_state['triggering_element']['#submit'])) {
-      // We are on a View page or History tab. Try to fix the form_state.
-    else {
-      // We are on a Entity/Comment form. Try to fix the form_state.
-    }
-   */
-
-  if ($field_name) {
-    $form_state['input']['workflow_sid'] = $new_sid;
-    $form_state['values'][$field_name][$langcode][0]['workflow']['workflow_sid'] = $new_sid;
+  /* @var $transition WorkflowTransitionInterface */
+  // On WorkflowTransitionForm :
+  $transition = $form_state->getValue('workflow')['workflow_transition'];
+  if ($transition) {
+    // On WorkflowTransitionForm :
+    // D7: $form_state['input']['workflow_to_sid'] = $new_sid;
+    // D7: $form_state['values'][$field_name][$langcode][0]['workflow']['workflow_to_sid'] = $new_sid;
+    $input['workflow']['workflow_to_sid'] = $new_sid;
+    $values['workflow']['workflow_to_sid'] = $new_sid;
   }
   else {
-    $form_state['input']['workflow_sid'] = $new_sid;
-    $form_state['values']['workflow_sid'] = $new_sid;
+    // On edit form :
+    $transition = $form_state->getValue($field_name)[0]['workflow']['workflow_transition'];
+    // Update th entity with the new value from the button.
+    $input[$field_name][0]['value'] = $new_sid;
+    $values[$field_name][0]['value'] = $new_sid;
   }
+
+  // Update the form_state.
+  $form_state->setUserInput($input);
+  $form_state->setValues($values);
 }
