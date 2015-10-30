@@ -494,48 +494,4 @@ class Workflow extends ConfigEntityBase {
     return $this->getTransitions(NULL, $conditions);
   }
 
-  /**
-   * Gets a setting from the state object.
-   */
-  public function getSetting($key, array $field = array()) {
-    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
-    switch ($key) {
-      case 'watchdog_log':
-        if (isset($this->options['watchdog_log'])) {
-          // This is set via Node API.
-          return $this->options['watchdog_log'];
-        }
-        elseif ($field) {
-          if (isset($field['settings']['watchdog_log'])) {
-            // This is set via Field API.
-            return $field['settings']['watchdog_log'];
-          }
-        }
-        drupal_set_message('Setting Workflow::getSetting(' . $key . ') does not exist', 'error');
-        break;
-
-      default:
-        drupal_set_message('Setting Workflow::getSetting(' . $key . ') does not exist', 'error');
-    }
-  }
 }
-
-function _workflow_rebuild_roles(array $roles, array $role_map) {
-  workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
-  // See also https://drupal.org/node/1702626 .
-  $new_roles = array();
-  foreach ($roles as $key => $rid) {
-    if ($rid == -1) {
-      $new_roles[$rid] = $rid;
-    }
-    else {
-      if ($role = user_role_load($role_map[$rid])) {
-        $new_roles[$role->id()] = $role->id();
-      }
-    }
-  }
-  return $new_roles;
-}
-
