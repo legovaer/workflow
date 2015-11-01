@@ -57,8 +57,9 @@ class NextNodeWorkflowStateAction extends WorkflowStateActionBase {
     $force = FALSE;
 //    $force = $this->configuration['workflow']['workflow_force'];
 
+    $workflow = $transition->getWorkflow();
     // Get the node's new State Id (which is the next available state).
-    $to_sid = $current_state->getNextSid($entity, $field_name, $user, $force);
+    $to_sid = $workflow->getNextSid($entity, $field_name, $user, $force);
 
     // Add actual data.
     $transition->to_sid = $to_sid;
