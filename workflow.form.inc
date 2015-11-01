@@ -150,8 +150,10 @@ function _workflow_transition_form_get_action_buttons($form, $workflow_element) 
       '#weight' => ($same_state_button) ? $min_weight : ++$option_weight,
       '#attributes' => ($same_state_button) ? array('class' => array('form-save-default-button')) : array(),
       // Add target State ID and Field name, to set correct value in validate_buttons callback.
-      '#workflow_to_sid' => $sid,
-      '#workflow_field_name' => $field_name,
+      '#workflow' => array(
+        'workflow_field_name' => $field_name,
+        'workflow_to_sid' => $sid,
+      ),
       // Add validate and submit functions. The will be adapted a bit below.
       '#validate' => array('_workflow_transition_form_validate_buttons'),
       // '#executes_submit_callback' => TRUE,
@@ -162,12 +164,11 @@ function _workflow_transition_form_get_action_buttons($form, $workflow_element) 
     // Append the form's #validate function, or it won't be called upon submit,
     // because the workflow buttons have its own #validate.
     if (isset($submit_action['#validate'])) {
-      $workflow_submit_button['#validate'] = $submit_action['#validate'];
+      $workflow_submit_button['#validate'] = $submit_action['#validate'] + $workflow_submit_button['#validate'];
     }
     elseif (isset($form['#validate'])) {
-      $workflow_submit_button['#validate'] = $form['#validate'];
+      $workflow_submit_button['#validate'] = $form['#validate'] + $workflow_submit_button['#validate'];
     }
-    $workflow_submit_button['#validate'][] = '_workflow_transition_form_validate_buttons';
 
     // Append the submit-buttons's #submit function, or it won't be called upon submit.
     if (isset($submit_action['#submit'])) {
@@ -203,6 +204,25 @@ function _workflow_transition_form_get_action_buttons($form, $workflow_element) 
 }
 
 /**
+ * Get the Workflow parameter from the button, pressed by the user.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *  The form state.
+ * @return array
+ *   A $field_name => $to_sid array.
+ */
+function _workflow_transition_form_get_triggering_button(\Drupal\Core\Form\FormStateInterface $form_state) {
+  $result = ['field_name' =>  '', 'to_sid' =>''];
+
+  $triggering_element = $form_state->getTriggeringElement();
+  if (isset($triggering_element['#workflow'])) {
+    $result['field_name'] = $triggering_element['#workflow']['workflow_field_name'];
+    $result['to_sid'] = $triggering_element['#workflow']['workflow_to_sid'];
+  }
+
+  return $result;
+}
+
+/**
  * Submit callback function for the Workflow Form / DefaultWidget.
  *
  * Validate form data for 'time' element.
@@ -225,33 +245,23 @@ function _workflow_transition_form_element_validate_time($element, \Drupal\Core\
  * another hook_form_alter. We guess the first button is the Save button.
  */
 function _workflow_transition_form_validate_buttons($form, \Drupal\Core\Form\FormStateInterface &$form_state) {
-
-  $input = $form_state->getUserInput();
-  $values = $form_state->getValues();
-
-  $field_name = $form_state->getTriggeringElement()['#workflow_field_name'];
-  $new_sid = $form_state->getTriggeringElement()['#workflow_to_sid'];
-
   // Retrieve the data from the form.
-  /* @var $transition WorkflowTransitionInterface */
-  // On WorkflowTransitionForm :
   $transition = $form_state->getValue('workflow')['workflow_transition'];
   if ($transition) {
     // On WorkflowTransitionForm :
     // D7: $form_state['input']['workflow_to_sid'] = $new_sid;
     // D7: $form_state['values'][$field_name][$langcode][0]['workflow']['workflow_to_sid'] = $new_sid;
-    $input['workflow']['workflow_to_sid'] = $new_sid;
-    $values['workflow']['workflow_to_sid'] = $new_sid;
+
+    $values = $form_state->getValues();
+
+    $to_sid = $form_state->getTriggeringElement()['#workflow']['workflow_to_sid'];
+    $values['workflow']['workflow_to_sid'] = $to_sid;
+
+    // Update the form_state.
+    $form_state->setValues($values);
   }
   else {
-    // On edit form :
-    $transition = $form_state->getValue($field_name)[0]['workflow']['workflow_transition'];
-    // Update th entity with the new value from the button.
-    $input[$field_name][0]['value'] = $new_sid;
-    $values[$field_name][0]['value'] = $new_sid;
+    // On edit form : See $form_state->getTriggeringElement() in WorkflowDefaultWidget;
   }
 
-  // Update the form_state.
-  $form_state->setUserInput($input);
-  $form_state->setValues($values);
 }

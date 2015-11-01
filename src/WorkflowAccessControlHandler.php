@@ -49,7 +49,7 @@ class WorkflowAccessControlHandler extends EntityAccessControlHandler implements
     /* @var $transition WorkflowTransitionInterface */
     $transition = $entity;
 
-    // This is only for Edit/Delete transtion. For Add/create, use createAccess.
+    // This is only for Edit/Delete transition. For Add/create, use createAccess.
     switch($entity->getEntityTypeId()) {
       case 'workflow_transition':
       case 'workflow_scheduled_transition':

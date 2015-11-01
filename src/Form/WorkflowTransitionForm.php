@@ -66,10 +66,9 @@ class WorkflowTransitionForm extends ContentEntityForm {
    * - compare with the D7-version of WorkflowTransitionForm::submitForm()
    * - compare with the D8-version of WorkflowTransitionElement::copyFormValuesToEntity()
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-    parent::submitForm($form, $form_state);
-    return;
-  }
+//  public function submitForm(array &$form, FormStateInterface $form_state) {
+//    parent::submitForm($form, $form_state);
+//  }
 
   /*************************************************************************
    *
@@ -189,15 +188,15 @@ class WorkflowTransitionForm extends ContentEntityForm {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
-    $form = parent::buildForm($form, $form_state);
-
-    // Add class following node-form pattern (both on form and container).
-    // D8-port: This is apparently already magically set in parent.
-    // $form['#attributes']['class'][] = 'workflow-transition-' . $workflow_type_id . '-form';
-    // $form['#attributes']['class'][] = 'workflow-transition-form';
-    return $form;
-  }
+//  public function buildForm(array $form, FormStateInterface $form_state) {
+//    $form = parent::buildForm($form, $form_state);
+//
+//    // Add class following node-form pattern (both on form and container).
+//    // D8-port: This is apparently already magically set in parent.
+//    // $form['#attributes']['class'][] = 'workflow-transition-' . $workflow_type_id . '-form';
+//    // $form['#attributes']['class'][] = 'workflow-transition-form';
+//    return $form;
+//  }
 
   /**
    * {@inheritdoc}
@@ -205,13 +204,8 @@ class WorkflowTransitionForm extends ContentEntityForm {
    * This is called from submitForm().
    */
   public function save(array $form, FormStateInterface $form_state) {
-    // $result = parent::save($form, $form_state);
-
-    /*  @var $transition WorkflowTransitionInterface */
-    $transition = $this->entity;
-
     // Execute transition and update the attached entity.
-    return Workflow::workflowManager()->executeTransition($transition);
+    return Workflow::workflowManager()->executeTransition($this->entity);
   }
 
   /*************************************************************************
@@ -223,10 +217,10 @@ class WorkflowTransitionForm extends ContentEntityForm {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    // Workflow module does not add any validations. They are on element level.
-    //    parent::validateForm($form, $form_state);
-    return;
-  }
+//  public function validateForm(array &$form, FormStateInterface $form_state) {
+//    // Workflow module does not add any validations. They are on element level.
+//    //    parent::validateForm($form, $form_state);
+//    return;
+//  }
 
 }

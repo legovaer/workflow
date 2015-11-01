@@ -204,6 +204,12 @@ class WorkflowDefaultWidget extends WidgetBase {
           // - add to history; add to watchdog
           // Return the new State ID. (Execution may fail and return the old Sid.)
 
+          // Get the new value from an action button if set in the workflow settings.
+          $action_info = _workflow_transition_form_get_triggering_button($form_state);
+          if ($field_name == $action_info['field_name']) {
+            $transition->to_sid->value = $action_info['to_sid'];
+          }
+
           $force = FALSE; // @TODO D8-port: add to form for usage in VBO.
 
           // Now, save/execute the transition.

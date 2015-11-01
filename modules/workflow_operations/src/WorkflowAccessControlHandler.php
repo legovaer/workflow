@@ -80,7 +80,7 @@ class WorkflowAccessControlHandler extends \Drupal\workflow\WorkflowAccessContro
 
     $account = $user = workflow_current_user($account);
 
-    // This is only for Edit/Delete transtion. For Add/create, use createAccess.
+    // This is only for Edit/Delete transition. For Add/create, use createAccess.
     switch($entity->getEntityTypeId()) {
 
       case 'workflow_transition':

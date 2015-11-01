@@ -28,23 +28,25 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
    * {@inheritdoc}
    */
   public function executeTransition(WorkflowTransitionInterface $transition) {
+    $update_entity = (!$transition->isScheduled() && !$transition->isExecuted());
+
     // Validate transition, save in history table and delete from schedule table.
     $to_sid = $transition->execute();
 
-    // Save the (scheduled) transition.
-    if ($to_sid == $transition->getToSid()) {
-      if ($transition->isScheduled()|| $transition->isExecuted()) {
-        // We create a new transtion, or update an existing one.
-        // Do not update the entity itself.
-      }
-      else {
+      // Save the (scheduled) transition.
+    if ($update_entity) {
+      if ($to_sid == $transition->getToSid()) {
         // Update the workflow field of the entity.
         $transition->updateEntity();
       }
+      else {
+        // The transition was not allowed.
+        // @todo: validateForm().
+      }
     }
     else {
-      // The transition was not allowed.
-      // @todo: validateForm().
+      // We create a new transition, or update an existing one.
+      // Do not update the entity itself.
     }
 
     return $to_sid;
@@ -124,7 +126,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       }
       else {
         // We come from WorkflowTransitionForm, which explicitly save the entity.
-        // The transiition is executed by  the form.
+        // The transition is executed by the form.
       }
     }
   }

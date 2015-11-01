@@ -91,7 +91,7 @@ class WorkflowTransitionElement extends FormElement {
    *
    * This function is an internal function, to be reused in:
    * - TransitionElement
-   * - TranstitionDefaultWidget
+   * - TransitionDefaultWidget
    *
    * Usage:
    *  @example $element['#default_value'] = $transition;
