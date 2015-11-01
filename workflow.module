@@ -52,22 +52,6 @@ function workflow_help($route_name, RouteMatchInterface $route_match) {
 }
 
 /**
- * Implements hook_admin_paths_alter().
- *
- * If entity edits are done in admin mode, then workflow history tab will be too.
- *
- * @todo: add support for every $entity_type.
- */
-function workflow_admin_paths_alter(&$paths) {
-  if (isset($paths['node/*/edit'])) {
-    $paths['node/*/workflow'] = $paths['node/*/edit'];
-  }
-  if (isset($paths['user/*/edit'])) {
-    $paths['user/*/workflow'] = $paths['user/*/edit'];
-  }
-}
-
-/**
  * Implements hook_hook_info().
  *
  * Allow adopters to place their hook implementations in either
@@ -76,28 +60,6 @@ function workflow_admin_paths_alter(&$paths) {
 function workflow_hook_info() {
   $hooks['workflow'] = array('group' => 'workflow');
   return $hooks;
-}
-
-/**
- * Implements hook_forms().
- *
- * Allows the workflow tab form to be repeated multiple times on a page.
- * @see http://drupal.org/node/1970846
- * @see https://www.drupal.org/node/2188851
- */
-function workflow_forms($form_id, $args) {
-  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
-  $forms = array();
-  if (strpos($form_id, 'workflow_transition_form_') !== FALSE) {
-    $forms[$form_id] = array('callback' => 'workflow_transition_form');
-  }
-  // For the 'edit a comment' form.
-  if (strpos($form_id, 'WorkflowTransition_edit_') !== FALSE) {
-    $forms[$form_id] = array('callback' => 'workflow_transition_wrapper_form');
-  }
-
-  return $forms;
 }
 
 /**
