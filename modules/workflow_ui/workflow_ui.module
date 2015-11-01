@@ -62,11 +62,16 @@ function workflow_ui_url_get_workflow($url = '' ) {
   /* @var $workflows \Drupal\workflow\Entity\Workflow[] */
   static $workflows = array();
 
-  // For some reason, $_SERVER is not alowed as default.
+  $base_url = '/config/workflow/workflow/';
+
+  // For some reason, $_SERVER is not allowed as default.
   $url = ($url == '') ? $_SERVER['REQUEST_URI'] : $url;
 
-  $wid = explode('/', $url)[5];
-
+  // The URL may have prefixes: /
+  // ex.1: /en/admin/config/workflow/workflow/eerste/states
+  // ex.2: /admin/config/workflow/workflow/eerste/states
+  $string = substr($url, strpos($url, $base_url) + strlen($base_url));
+  $wid = explode('/', $string)[0];
   if (!isset($workflows[$wid])) {
     $workflows[$wid] = Workflow::load($wid);
   }
