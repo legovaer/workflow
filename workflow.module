@@ -59,8 +59,6 @@ function workflow_help($route_name, RouteMatchInterface $route_match) {
  * @todo: add support for every $entity_type.
  */
 function workflow_admin_paths_alter(&$paths) {
-  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
   if (isset($paths['node/*/edit'])) {
     $paths['node/*/workflow'] = $paths['node/*/edit'];
   }
@@ -76,8 +74,6 @@ function workflow_admin_paths_alter(&$paths) {
  * their main module or in a module.workflow.inc file.
  */
 function workflow_hook_info() {
-//  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
   $hooks['workflow'] = array('group' => 'workflow');
   return $hooks;
 }
@@ -518,26 +514,6 @@ function workflow_get_workflows_by_type($entity_bundle, $entity_type) {
     }
   }
   return $map[$entity_type][$entity_bundle];
-}
-
-/**
- * Get a single value from an Field API $items array.
- *
- * @param array $items
- *   Array with values, as passed in the hook_field_<op> functions.
- *   Although we are parsing an array,
- *   the Workflow Field settings ensure that the cardinality is set to 1.
- *
- * @return int $sid
- *   A State ID.
- */
-function _workflow_get_sid_by_items(array $items) {
-  workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-  // On a normal widget:
-  $sid = isset($items[0]['value']) ? $items[0]['value'] : 0;
-  // On a workflow form widget:
-  $sid = isset($items[0]['workflow']['workflow_sid']) ? $items[0]['workflow']['workflow_sid'] : $sid;
-  return $sid;
 }
 
 /**

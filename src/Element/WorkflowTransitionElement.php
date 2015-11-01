@@ -183,22 +183,18 @@ class WorkflowTransitionElement extends FormElement {
 // then change the form id, too.
     $form_id = 'workflow_transition_form'; // TODO D8-port: add $form_id for widget and History tab.
 //    $form_id = $this->getFormId();
-//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     /*
-        if (!isset($form_state->getValue('build_info')['base_form_id'])) {
-          // Strange: on node form, the base_form_id is node_form,
-          // but on term form, it is not set.
-          // In both cases, it is OK.
-        }
-        else {
-          workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-          if ($form_state['build_info']['base_form_id'] == 'workflow_transition_wrapper_form') {
-            $form_state['build_info']['base_form_id'] = 'workflow_transition_form';
-          }
-          if ($form_state['build_info']['base_form_id'] == 'workflow_transition_form') {
-            $form_state['build_info']['form_id'] = $form_id;
-          }
-        }
+    if (!isset($form_state->getValue('build_info')['base_form_id'])) {
+      // Strange: on node form, the base_form_id is node_form,
+      // but on term form, it is not set.
+      // In both cases, it is OK.
+    }
+    else {
+      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
+      if ($form_state['build_info']['base_form_id'] == 'workflow_transition_form') {
+        $form_state['build_info']['form_id'] = $form_id;
+      }
+    }
     */
 
     /*
@@ -225,9 +221,9 @@ class WorkflowTransitionElement extends FormElement {
     $settings_options_type = $workflow_settings['options'];
     $grouped = ($settings_options_type == 'select');
 
-//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     $workflow_settings['comment'] = $workflow_settings['comment_log_node']; // vs. ['comment_log_tab'];
 // TODO D8-port: remove following code.
+//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     /*
         // Change settings locally.
         if (!$field_name) {
@@ -280,18 +276,9 @@ class WorkflowTransitionElement extends FormElement {
       '#type' => 'value',
       '#value' => $transition,
     );
-//    // Save the form_id, so the form values can be retrieved in submit function.
-//    $element['workflow']['form_id'] = array(
-//      '#type' => 'value',
-//      '#value' => $form_id,
-//    );
 
-//    // Add the default value in the place where normal fields
-//    // have it. This is to cater for 'preview' of the entity.
-//    $element['#default_value'] = $default_value;
-
-// Decide if we show a widget or a formatter.
-// There is no need for a widget when the only option is the current sid.
+    // Decide if we show a widget or a formatter.
+    // There is no need for a widget when the only option is the current sid.
 
     // Add a state formatter before the rest of the form,
     // when transition is scheduled or widget is hidden.
@@ -515,32 +502,32 @@ class WorkflowTransitionElement extends FormElement {
 //    }
 
     // @todo D8-port: add below exception.
-/*
-    // Extract the data from $items, depending on the type of widget.
-    // @todo D8: use MassageFormValues($transition_values, $form, $form_state).
-    $old_sid = workflow_node_previous_state($entity, $entity_type, $field_name);
-    if (!$old_sid) {
-      // At this moment, $old_sid should have a value. If the content does not
-      // have a state yet, old_sid contains '(creation)' state. But if the
-      // content is not associated to a workflow, old_sid is now 0. This may
-      // happen in workflow_vbo, if you assign a state to non-relevant nodes.
-      $entity_id = entity_id($entity_type, $entity);
-      drupal_set_message(t('Error: content !id has no workflow attached. The data is not saved.', array('!id' => $entity_id)), 'error');
-      // The new state is still the previous state.
-      $new_sid = $old_sid;
-      return $new_sid;
-    }
-*/
+    /*
+        // Extract the data from $items, depending on the type of widget.
+        // @todo D8: use MassageFormValues($transition_values, $form, $form_state).
+        $old_sid = workflow_node_previous_state($entity, $entity_type, $field_name);
+        if (!$old_sid) {
+          // At this moment, $old_sid should have a value. If the content does not
+          // have a state yet, old_sid contains '(creation)' state. But if the
+          // content is not associated to a workflow, old_sid is now 0. This may
+          // happen in workflow_vbo, if you assign a state to non-relevant nodes.
+          $entity_id = entity_id($entity_type, $entity);
+          drupal_set_message(t('Error: content !id has no workflow attached. The data is not saved.', array('!id' => $entity_id)), 'error');
+          // The new state is still the previous state.
+          $new_sid = $old_sid;
+          return $new_sid;
+        }
+    */
 
     $timestamp = REQUEST_TIME;
     if ($scheduled) {
       // Fetch the (scheduled) timestamp to change the state.
       // Override $timestamp.
       $scheduled_date_time = implode(' ', array(
-          $schedule_values['workflow_scheduled_date'],
-          $schedule_values['workflow_scheduled_hour'],
-          // $schedule_values['workflow_scheduled_timezone'],
-        ));
+        $schedule_values['workflow_scheduled_date'],
+        $schedule_values['workflow_scheduled_hour'],
+        // $schedule_values['workflow_scheduled_timezone'],
+      ));
       $timezone = $schedule_values['workflow_scheduled_timezone'];
       $old_timezone = date_default_timezone_get();
       date_default_timezone_set($timezone);
