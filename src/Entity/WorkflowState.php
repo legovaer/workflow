@@ -155,7 +155,10 @@ class WorkflowState extends ConfigEntityBase {
   /**
    * Get all states in the system, with options to filter, only where a workflow exists.
    *
+   * @_deprecated WorkflowState::getStates() ==> WorkflowState::loadMultiple()
+   *
    * {@inheritdoc}
+   *
    * @param $wid
    *   The requested Workflow ID.
    * @param bool $reset
@@ -575,7 +578,8 @@ class WorkflowState extends ConfigEntityBase {
 
     foreach ($fields = _workflow_info_fields() as $field_name => $field_info) {
       $query = \Drupal::entityQuery($field_info->getTargetEntityTypeId());
-      $count += $query
+      // @see #2285983 for using SQLite on D7.
+        $count += $query
         ->condition($field_name, $sid, '=')
         ->count() // We only need the count.
         ->execute();
