@@ -9,7 +9,3 @@ configure: entity.workflow_workflow.collection
 
 dependencies:
   - workflow
-
-#stylesheets:
-#  all:
-#    - workflow_admin_ui.css

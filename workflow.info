@@ -1,4 +1,0 @@
-name = Workflow
-description = Defines a field type with Workflows, containing customizable state transitions.
-package = Workflow
-core = 7.x

@@ -1,8 +1,0 @@
-name = Workflow Field
-description = Defines a Workflow field, widget and formatter.
-package = Workflow
-core = 7.x
-
-dependencies[] = field
-dependencies[] = options
-dependencies[] = workflow
