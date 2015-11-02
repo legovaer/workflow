@@ -54,8 +54,13 @@ function workflow_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_
   }
 
   if ($form_state->getBuildInfo()['base_form_id'] == 'workflow_transition_form') {
-    // Workflow History tab.
-    // The WorkflowTransitionForm has its own handling.
+    // The WorkflowTransitionForm (E.g., Workflow History tab, Block) has its own handling.
+    return;
+  }
+
+  if ($form_id == 'field_config_edit_form') {
+    // Do not show the action buttons on field config.
+    // @see hook_form_FORM_ID_alter() : workflowfield_form_field_config_edit_form_alter().
     return;
   }
 

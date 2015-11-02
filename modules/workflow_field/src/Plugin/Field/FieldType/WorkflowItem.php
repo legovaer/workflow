@@ -236,7 +236,7 @@ class WorkflowItem extends ListItemBase {
       '#type' => ($wid) ? 'textarea' : 'hidden',
       '#title' => t('Allowed values for the selected Workflow type'),
       '#default_value' => $this->allowedValuesString($allowed_values),
-      '#rows' => 10,
+      '#rows' => count($allowed_values),
       '#access' => TRUE, // User can see the data,
       '#disabled' => TRUE, // .. but cannot change them.
       '#element_validate' => array(array(get_class($this), 'validateAllowedValues')),
