@@ -115,9 +115,10 @@ class WorkflowTransitionElement extends FormElement {
      */
     $workflow = $transition->getWorkflow();
     $wid = ($workflow) ? $workflow->id() : '';
-    $entity = $transition->getEntity();
-    $entity_type = ($entity) ? $transition->getEntity()->getEntityTypeId() : '';
-    $entity_id = ($entity) ? $transition->getEntity()->id() : '';
+    $entity = $transition->getTargetEntity();
+    $entity_type = $transition->getTargetEntityTypeId();
+    $entity_id = $transition->getTargetEntityId();
+
     $field_name = $transition->getFieldName();
     if ($transition->isExecuted()) {
       // We are editing an existing/executed/not-scheduled transition.
@@ -132,12 +133,12 @@ class WorkflowTransitionElement extends FormElement {
       $default_value = $transition->getToSid();
     }
     elseif ($entity) {
-      // E.g., on VBO-page, no entity may be given.
+      // The normal situation: adding a new transition on an entity.
 
-      // TODO D8-port: load Scheduled transitions, only for existing entities.
-      // Get the scheduling info. This may change the $default_value on the Form.
-      // Read scheduled information, only if an entity exists.
-      // Technically you could have more than one scheduled, but this will only add the soonest one.
+      // Get the scheduling info, only when updating an existing entity.
+      // This may change the $default_value on the Form.
+      // Technically you could have more than one scheduled transition, but
+      // this will only add the soonest one.
       // @todo?: Read the history with an explicit langcode.
       $langcode = ''; // $entity->language()->getId();
       if ($entity_id && $scheduled_transition = WorkflowScheduledTransition::loadByProperties($entity_type, $entity_id, [], $field_name, $langcode)) {
@@ -290,7 +291,7 @@ class WorkflowTransitionElement extends FormElement {
 
     $element['workflow']['#tree'] = TRUE;
     // Add class following node-form pattern (both on form and container).
-    $workflow_type_id = $workflow->id();
+    $workflow_type_id = ($workflow) ? $workflow->id() : '';
     $element['workflow']['#attributes']['class'][] = 'workflow-transition-' . $workflow_type_id . '-container';
     $element['workflow']['#attributes']['class'][] = 'workflow-transition-container';
     if (!$show_widget) {

@@ -190,7 +190,7 @@ class WorkflowTransitionListController extends EntityListController implements C
       // @todo: what to do with multiple workflow_fields per bundle? Use Views instead! Or introduce a setting.
       // @TODO D8-port: workflow_tab_access: use proper 'WORKFLOW_TYPE' permissions
       $access[$uid][$entity_type][$entity_id] = AccessResult::forbidden();
-      foreach ($fields = _workflow_info_fields($entity, $entity_type, $entity_bundle) as $field_name => $definition) {
+      foreach ($fields = _workflow_info_fields($entity, $entity_type, $entity_bundle) as $definition) {
         $type_id = $definition->getSetting('workflow_type');
         if ($account->hasPermission("access any $type_id workflow_transion overview")) {
           $access[$uid][$entity_type][$entity_id] = AccessResult::allowed();

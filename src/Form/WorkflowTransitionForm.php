@@ -37,15 +37,14 @@ class WorkflowTransitionForm extends ContentEntityForm {
 
     /* @var $entity EntityInterface */
     // Entity may be empty on VBO bulk form.
-    // $entity = $transition->getEntity();
+    // $entity = $transition->getTargetEntity();
     // Compose Form Id from string + Entity Id + Field name.
     // Field ID contains entity_type, bundle, field_name.
     // The Form Id is unique, to allow for multiple forms per page.
     // $workflow_type_id = $transition->getWorkflowId();
     // Field name contains implicit entity_type & bundle (since 1 field per entity)
-    // $entity_type = ($entity) ? $entity->getEntityTypeId() : '';
-    // $entity_bundle = ($entity) ? $entity->bundle() : '';
-    // $entity_id = ($entity) ? $entity->id() : '';
+    // $entity_type = $transition->getTargetEntityTypeId();
+    // $entity_id = $transition->getTargetEntityId();;
 
     // Emulate nodeForm convention.
     if ($transition->id()) {

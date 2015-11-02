@@ -42,7 +42,7 @@ function workflow_operations_entity_operation(\Drupal\Core\Entity\EntityInterfac
   $operations = array();
 
   // Check correct entity type.
-  if(!in_array($entity->getEntityTypeId(), ['workflow_transition'])) {
+  if (!in_array($entity->getEntityTypeId(), ['workflow_transition'])) {
     return $operations;
   }
 

@@ -109,7 +109,7 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     // Show the history table.
     $current_themed = FALSE;
     /* @var $transition WorkflowTransitionInterface */
-    $entity = $transition->getEntity();
+    $entity = $transition->getTargetEntity();
     $field_name = $transition->getFieldName();
     $current_sid = workflow_node_current_state($entity, $field_name);
 

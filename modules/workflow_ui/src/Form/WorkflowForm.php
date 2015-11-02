@@ -252,8 +252,8 @@ class WorkflowForm extends EntityForm {
     drupal_set_message($this->t('Workflow %label has been %action. Please maintain the permissions, states and transitions.', $args));
     $this->logger('workflow')->notice('Workflow %label has been %action.', $args);
 
-    if ($status == SAVED_NEW){
-      $form_state->setRedirect('entity.workflow_workflow.edit_form', ['workflow_workflow' => $entity->id()]);
+    if ($status == SAVED_NEW) {
+      $form_state->setRedirect('entity.workflow_type.edit_form', ['workflow_type' => $entity->id()]);
     }
 
   }

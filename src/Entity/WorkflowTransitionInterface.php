@@ -79,7 +79,7 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface,
    * @return int
    *   Either SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
    */
-  public function updateEntity();
+  public function updateTargetEntity();
 
   /**
    * Execute a transition (change state of an entity).
@@ -107,14 +107,6 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface,
   public function post_execute($force = FALSE);
 
   /**
-   * Get the Entity, that is added to the Transition.
-   *
-   * @return EntityInterface
-   *   The entity, that is added to the Transition.
-   */
-  public function getEntity();
-
-  /**
    * Set the Entity, that is added to the Transition.
    * Also set all dependent fields, that will be saved in tables {workflow_transition_*}
    *
@@ -124,7 +116,31 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface,
    * @return object $entity
    *   The Entity, that is added to the Transition.
    */
-  public function setEntity($entity);
+  public function setTargetEntity($entity);
+
+  /**
+   * Returns the entity to which the workflow is attached.
+   *
+   * @return EntityInterface
+   *   The entity to which the workflow is attached.
+   */
+  public function getTargetEntity();
+
+  /**
+   * Returns the ID of the entity to which the workflow is attached.
+   *
+   * @return int
+   *   The ID of the entity to which the workflow is attached.
+   */
+  public function getTargetEntityId();
+
+  /**
+   * Returns the type of the entity to which the workflow is attached.
+   *
+   * @return string
+   *   An entity type.
+   */
+  public function getTargetEntityTypeId();
 
   /**
    * Get the field_name for which the Transition is valid.
@@ -199,4 +215,11 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface,
    */
   public function isForced();
   public function force($force = TRUE);
+
+  /**
+   * Helper/debugging function. Shows simple contents of Transition.
+   *
+   * @param string $function
+   */
+  public function dpm($function = '');
 }

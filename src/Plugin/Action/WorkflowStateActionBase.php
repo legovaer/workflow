@@ -269,7 +269,7 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     */
 
     // Make adaptations for VBO-form:
-    $entity = $transition->getEntity();
+    $entity = $transition->getTargetEntity();
     $field_name = $transition->getFieldName();
     $force = $this->configuration['workflow']['workflow_force'];
 

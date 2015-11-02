@@ -37,7 +37,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
     if ($update_entity) {
       if ($to_sid == $transition->getToSid()) {
         // Update the workflow field of the entity.
-        $transition->updateEntity();
+        $transition->updateTargetEntity();
       }
       else {
         // The transition was not allowed.
@@ -61,7 +61,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
     // If the time now is greater than the time to execute a transition, do it.
     foreach (WorkflowScheduledTransition::loadBetween($start, $end) as $scheduled_transition) {
       $field_name = $scheduled_transition->getFieldName();
-      $entity = $scheduled_transition->getEntity();
+      $entity = $scheduled_transition->getTargetEntity();
 
       // If user didn't give a comment, create one.
       $comment = $scheduled_transition->getComment();
@@ -105,7 +105,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   public function executeTransitionsOfEntity(EntityInterface $entity) {
     // Avoid this hook on workflow objects.
     if (in_array($entity->getEntityTypeId(), [
-      'workflow_workflow',
+      'workflow_type',
       'workflow_state',
       'workflow_config_transition',
       'workflow_transition',
@@ -114,14 +114,16 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       return;
     }
 
-    foreach (_workflow_info_fields($entity) as $field_name => $field_info) {
+    foreach (_workflow_info_fields($entity) as $field_info) {
+      $field_name = $field_info->getName();
       /* @var $transition WorkflowTransitionInterface */
       $transition = $entity->$field_name->workflow['workflow_transition'];
       // Set the just-saved entity explicitly. Not necessary for update,
       // but upon insert, the old version didn't have an ID, yet.
       if ($transition) {
+//        workflow_debug( __FILE__ , __FUNCTION__, __LINE__, '', '');  // @todo D8-port: still test this snippet.
         // We come from Content edit page, from widget.
-        $transition->setEntity($entity);
+        $transition->setTargetEntity($entity);
         $transition->execute();
       }
       else {
@@ -233,8 +235,6 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       // Return the initial value.
     }
     else {
-      $entity_type = $entity->getEntityTypeId();
-
       if (isset($entity->original)) {
         // A changed node.
         workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
@@ -249,6 +249,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
         elseif (!$sid) {
           // @todo?: Read the history with an explicit langcode.
           $langcode = ''; // $entity->language()->getId();
+          $entity_type = $entity->getEntityTypeId();
           if ($last_transition = WorkflowTransition::loadByProperties($entity_type, $entity->id(), [], $field_name, $langcode, 'DESC')) {
             $sid = $last_transition->getFromSid();
           }

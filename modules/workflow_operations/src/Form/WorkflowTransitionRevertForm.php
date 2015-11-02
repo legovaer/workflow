@@ -60,7 +60,9 @@ class WorkflowTransitionRevertForm extends EntityConfirmFormBase {
   }
 
   public function getCancelUrl() {
-    return new Url('entity.node.workflow_history', array('node' => $this->entity->getEntity->id(), 'field_name' => $this->entity->getFieldname()));
+    /* @var $transition WorkflowTransitionInterface */
+    $transition = $this->entity;
+    return new Url('entity.node.workflow_history', array('node' => $transition->getTargetEntityId(), 'field_name' => $transition->getFieldname()));
   }
 
   /**
@@ -96,7 +98,9 @@ class WorkflowTransitionRevertForm extends EntityConfirmFormBase {
       rules_invoke_event('workflow_state_reverted', $this->entity);
     }
 
+    /* @var $transition WorkflowTransitionInterface */
     $transition = $this->prepareRevertedTransition($this->entity);
+
     // The entity will be updated when the transition is executed. Keep the
     // original one for the confirmation message.
     $previous_sid = $transition->getToSid();
@@ -109,8 +113,8 @@ class WorkflowTransitionRevertForm extends EntityConfirmFormBase {
     drupal_set_message(t($comment), 'warning');
 
     $form_state->setRedirect('entity.node.workflow_history', array(
-        'node' => $this->entity->getEntity()->id(),
-        'field_name' => $this->entity->getFieldname(),
+        'node' => $transition->getTargetEntityId(),
+        'field_name' => $transition->getFieldName(),
       )
     );
   }
@@ -127,7 +131,7 @@ class WorkflowTransitionRevertForm extends EntityConfirmFormBase {
   protected function prepareRevertedTransition(WorkflowTransitionInterface $transition) {
     $user = \Drupal::currentUser();
 
-    $entity = $transition->getEntity();
+    $entity = $transition->getTargetEntity();
     $field_name = $transition->getFieldName();
     $current_sid = workflow_node_current_state($entity, $field_name);
     $previous_sid = $transition->getFromSid();

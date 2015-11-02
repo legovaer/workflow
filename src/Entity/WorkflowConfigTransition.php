@@ -38,7 +38,7 @@ use Drupal\user\UserInterface;
  *     "roles",
  *   },
  *   links = {
- *     "collection" = "/admin/config/workflow/workflow/{workflow_workflow}/transitions",
+ *     "collection" = "/admin/config/workflow/workflow/{workflow_type}/transitions",
  *   }
  * )
  */

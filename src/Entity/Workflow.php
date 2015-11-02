@@ -14,7 +14,7 @@ use Drupal\Core\Session\AccountInterface;
  * Workflow configuration entity to persistently store configuration.
  *
  * @ConfigEntityType(
- *   id = "workflow_workflow",
+ *   id = "workflow_type",
  *   label = @Translation("Workflow"),
  *   module = "workflow",
  *   handlers = {
@@ -41,8 +41,8 @@ use Drupal\Core\Session\AccountInterface;
  *   },
  *   links = {
  *     "collection" = "/admin/config/workflow/workflow",
- *     "edit-form" = "/admin/config/workflow/workflow/{workflow_workflow}/edit",
- *     "delete-form" = "/admin/config/workflow/workflow/{workflow_workflow}/delete",
+ *     "edit-form" = "/admin/config/workflow/workflow/{workflow_type}/edit",
+ *     "delete-form" = "/admin/config/workflow/workflow/{workflow_type}/delete",
  *   }
  * )
  */

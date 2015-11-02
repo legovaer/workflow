@@ -45,7 +45,7 @@ use Drupal\user\UserInterface;
  *     "status",
  *   },
  *   links = {
- *     "collection" = "/admin/config/workflow/workflow/{workflow_workflow}/states",
+ *     "collection" = "/admin/config/workflow/workflow/{workflow_type}/states",
  *   }
  * )
  */
@@ -538,7 +538,8 @@ class WorkflowState extends ConfigEntityBase {
     $count = 0;
     $sid = $this->id();
 
-    foreach ($fields = _workflow_info_fields() as $field_name => $field_info) {
+    foreach ($fields = _workflow_info_fields() as $field_info) {
+      $field_name = $field_info->getName();
       $query = \Drupal::entityQuery($field_info->getTargetEntityTypeId());
       // @see #2285983 for using SQLite on D7.
         $count += $query

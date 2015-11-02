@@ -14,38 +14,38 @@ workflow.ui.settings:
 
 
 ### Workflows
-entity.workflow_workflow.collection:
+entity.workflow_type.collection:
   path: '/admin/config/workflow/workflow'
   defaults:
-    _entity_list: 'workflow_workflow'
+    _entity_list: 'workflow_type'
 #    _controller: '\workflow\EntityWorkflowUIController::adminOverview'
     _title: 'Workflows'
   requirements:
     _permission: 'administer workflow'
 
-entity.workflow_workflow.add_form:
+entity.workflow_type.add_form:
   path: '/admin/config/workflow/workflow/add'
   defaults:
-    _entity_form: 'workflow_workflow.add'
+    _entity_form: 'workflow_type.add'
     _title: 'Add Workflow'
   requirements:
     _permission: 'administer workflow'
 #   _entity_access: 'workflow.update'
 
-entity.workflow_workflow.edit_form:
-  path: '/admin/config/workflow/workflow/{workflow_workflow}/edit'
+entity.workflow_type.edit_form:
+  path: '/admin/config/workflow/workflow/{workflow_type}/edit'
   defaults:
-    _entity_form: 'workflow_workflow.edit'
+    _entity_form: 'workflow_type.edit'
     _title: 'Edit Workflow'
     _title_callback: 'workflow_ui_url_get_title'
   requirements:
     _permission: 'administer workflow'
 #   _entity_access: 'workflow.update'
 
-entity.workflow_workflow.delete_form:
-  path: '/admin/config/workflow/workflow/{workflow_workflow}/delete'
+entity.workflow_type.delete_form:
+  path: '/admin/config/workflow/workflow/{workflow_type}/delete'
   defaults:
-    _entity_form: 'workflow_workflow.delete'
+    _entity_form: 'workflow_type.delete'
     _title: 'Delete Workflow'
   requirements:
     _permission: 'administer workflow'
@@ -54,7 +54,7 @@ entity.workflow_workflow.delete_form:
 
 ### Workflow States
 entity.workflow_state.collection:
-  path: '/admin/config/workflow/workflow/{workflow_workflow}/states'
+  path: '/admin/config/workflow/workflow/{workflow_type}/states'
   defaults:
     _entity_list: 'workflow_state'
 #    _controller: '\workflow\EntityWorkflowUIController::adminOverview'
@@ -66,7 +66,7 @@ entity.workflow_state.collection:
 
 ### Workflow Transitions
 entity.workflow_transition.collection:
-  path: '/admin/config/workflow/workflow/{workflow_workflow}/transition_roles'
+  path: '/admin/config/workflow/workflow/{workflow_type}/transition_roles'
   defaults:
     _entity_list: 'workflow_config_transition'
 #     _form: '\Drupal\user\AccountSettingsForm'
@@ -77,7 +77,7 @@ entity.workflow_transition.collection:
 
 ### Workflow Labels
 entity.workflow_label.collection:
-  path: '/admin/config/workflow/workflow/{workflow_workflow}/transition_labels'
+  path: '/admin/config/workflow/workflow/{workflow_type}/transition_labels'
   defaults:
     _entity_list: 'workflow_config_transition'
     _title: 'Edit Workflow'

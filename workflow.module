@@ -105,9 +105,9 @@ function workflow_user_delete($account) {
  * Implements hook_ENTITY_TYPE_insert().
  *
  * Is called when adding a new Workflow type.
- * The technical name for the Workflow entity is 'workflow_workflow'.
+ * The technical name for the Workflow entity is 'workflow_type'.
  */
-function workflow_workflow_workflow_insert(EntityInterface $entity) {
+function workflow_workflow_type_insert(EntityInterface $entity) {
   Workflow::workflowManager()->participateUserRoles($entity);
 }
 
@@ -327,8 +327,9 @@ function workflow_get_field_name(EntityInterface $entity, $field_name = '') {
   elseif (!$field_name ) {
     $entity_type = $entity->getEntityTypeId();
     $fields = _workflow_info_fields($entity, $entity_type);
-    $field_names = array_keys($fields);
-    $field_name = reset($field_names);
+    $field = reset($fields);
+    /* @var $field \Drupal\field\Entity\FieldStorageConfig */
+    $field_name = $field->getName();
   }
 
   return $field_name;
@@ -463,7 +464,7 @@ function workflow_get_workflows_by_type($entity_bundle, $entity_type) {
     $wid = FALSE;
     $map[$entity_type][$entity_bundle] = FALSE;
     if (!$wid && isset($entity_type)) {
-      foreach (_workflow_info_fields(NULL, $entity_type, $entity_bundle) as $field_name => $field_info) {
+      foreach (_workflow_info_fields(NULL, $entity_type, $entity_bundle) as $field_info) {
         $wid = $field_info->getSetting('workflow_type');
       }
     }
@@ -511,10 +512,13 @@ function _workflow_info_fields($entity = NULL, $entity_type = '', $entity_bundle
   $field_list = Drupal::entityManager()->getFieldMapByFieldType('workflow');
   foreach ($field_list as $e_type => $data) {
     if (!$entity_type || ($entity_type == $e_type)) {
-      foreach($data as $f_name => $data) {
+      foreach ($data as $f_name => $data) {
         if (!$entity_bundle || isset($data['bundles'][$entity_bundle])) {
           if (!$field_name || ($field_name == $f_name)) {
-            $field_info[$f_name] = \Drupal\field\Entity\FieldStorageConfig::loadByName($e_type, $f_name);
+            // Do not use the field_name as ID, but the unique <entity_type>.<field_name>
+            // since you cannot share the same field on multiple entity_types (unlike D7).
+            $field_config = \Drupal\field\Entity\FieldStorageConfig::loadByName($e_type, $f_name);
+            $field_info[$field_config->id()] = $field_config;
           }
         }
       }
@@ -530,8 +534,9 @@ function _workflow_info_fields($entity = NULL, $entity_type = '', $entity_bundle
  */
 function _workflow_info_field_names($entity = NULL, $entity_type = '', $entity_bundle = '', $field_name = '') {
   $result = [];
-  foreach($fields = _workflow_info_fields($entity, $entity_type, $entity_bundle, $field_name) as $key => $definition) {
-    $result[$key] = $definition->getName();
+  foreach ($fields = _workflow_info_fields($entity, $entity_type, $entity_bundle, $field_name) as $definition) {
+    $field_name = $definition->getName();
+    $result[$field_name] = $definition->getName();
   }
   return $result;
 }

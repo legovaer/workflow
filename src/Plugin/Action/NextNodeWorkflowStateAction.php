@@ -47,7 +47,7 @@ class NextNodeWorkflowStateAction extends WorkflowStateActionBase {
     /*
      * Set the new next state.
      */
-    $entity = $transition->getEntity();
+    $entity = $transition->getTargetEntity();
     $field_name = $transition->getFieldName();
     $user = $transition->getOwner();
     // $comment = $transition->getComment();

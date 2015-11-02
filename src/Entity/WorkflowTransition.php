@@ -54,12 +54,12 @@ use Drupal\user\UserInterface;
 class WorkflowTransition extends ContentEntityBase implements WorkflowTransitionInterface {
 
   /*
-   * Entity data: Use WorkflowTransition->getEntity() to fetch this.
+   * Entity data: Use WorkflowTransition->getTargetEntity() to fetch this.
    */
 //  public $entity_type;
 //  public $bundle;
-//  private $entity_id; // Use WorkflowTransition->getEntity() to fetch this.
-//  private $revision_id; // Use WorkflowTransition->getEntity() to fetch this.
+//  private $entity_id; // Use WorkflowTransition->getTargetEntity() to fetch this.
+//  private $revision_id; // Use WorkflowTransition->getTargetEntity() to fetch this.
 //  public $field_name = '';
 //  private $langcode = Language::LANGCODE_NOT_SPECIFIED;
 //  public $delta = 0;
@@ -79,7 +79,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    */
 //  protected $wid; // Use WorkflowTransition->getWorkflowId() to fetch this.
   protected $workflow; // Use WorkflowTransition->getWorkflow() to fetch this.
-  protected $entity = NULL; // Use WorkflowTransition->getEntity() to fetch this.
+  protected $entity = NULL; // Use WorkflowTransition->getTargetEntity() to fetch this.
   protected $user = NULL; // Use WorkflowTransition->getOwner() to fetch this.
 
   /*
@@ -115,8 +115,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $this->is_scheduled = FALSE;
     // This transition is not executed, if it has no hid, yet, upon load.
     $this->is_executed = ($this->id() > 0);
-    // Initialize wid property.
-    $this->getWorkflowId();
   }
 
   /**
@@ -132,7 +130,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 
     // If constructor is called with new() and arguments.
     // Load the supplied entity.
-    $this->setEntity($entity);
+    $this->setTargetEntity($entity);
 
     if (!$entity && !$from_sid && !$to_sid) {
       $this->setOwnerId($uid);
@@ -167,8 +165,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       }
     }
 
-    // Initialize wid property.
-    $this->getWorkflowId();
   }
 
   /**
@@ -194,10 +190,10 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 
     $transition = $this;
     $field_name = $transition->getFieldName();
-    // getEntity() also sets properties.
-    $entity = $transition->getEntity();
-    $entity_type = $entity->getEntityTypeId();
-    $entity_id = $entity->id();
+    // getTargetEntity() also sets properties.
+    $entity = $transition->getTargetEntity();
+    $entity_type = $transition->getTargetEntityTypeId();
+    $entity_id = $transition->getTargetEntityId();
 
     // Remove any scheduled state transitions.
     foreach (WorkflowScheduledTransition::loadMultipleByProperties($entity_type, [$entity_id], [], $field_name) as $scheduled_transition) {
@@ -216,7 +212,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $hid = $this->id();
     if (!$hid) {
       // Insert the transition. Make sure it hasn't already been inserted.
-      $entity = $this->getEntity();
+      $entity = $this->getTargetEntity();
       // @todo: Allow a scheduled transition per revision.
       // @todo: Allow a state per language version (langcode).
       $found_transition = self::loadByProperties($entity->getEntityTypeId(), $entity->id(), [], $this->getFieldName());
@@ -301,8 +297,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     // Load the entity, if not already loaded.
     // This also sets the (empty) $revision_id in Scheduled Transitions.
     /* @var $entity \Drupal\Core\Entity\EntityInterface */
-    $entity = $this->getEntity();
-    $entity_type = ($entity) ? $entity->getEntityTypeId() : '';
+    $entity = $this->getTargetEntity();
     /* @var $user \Drupal\user\UserInterface */
     $user = $this->getOwner();
     $from_sid = $this->getFromSid();
@@ -316,7 +311,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       '%old' => $from_sid,
       '%new' => $to_sid,
       '%label' => $entity->label(),
-      'link' => ($this->getEntity()->id()) ? $this->getEntity()->link(t('View')) : '',
+      'link' => ($this->getTargetEntityId()) ? $this->getTargetEntity()->link(t('View')) : '',
     );
 
     if (!$entity) {
@@ -377,7 +372,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       $t_args = array(
         '%from_sid' => $this->getFromSid(),
         '%to_sid' => $this->getToSid(),
-        'link' => ($this->getEntity()->id()) ? $this->getEntity()->link(t('View')) : '',
+        'link' => ($this->getTargetEntityId()) ? $this->getTargetEntity()->link(t('View')) : '',
       );
       \Drupal::logger('workflow')->error($message, $t_args);
     }
@@ -388,10 +383,10 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /**
    * {@inheritdoc}
    */
-  public function updateEntity() {
+  public function updateTargetEntity() {
     $transition = $this;
     $field_name = $transition->getFieldName();
-    $entity = $transition->getEntity();
+    $entity = $transition->getTargetEntity();
 
     $to_sid = ( $transition->isScheduled() && !$transition->isExecuted() ) ? $transition->getFromSid() : $transition->getToSid();
     // @todo: Update Entity only if field is changed??
@@ -406,8 +401,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     // Load the entity, if not already loaded.
     // This also sets the (empty) $revision_id in Scheduled Transitions.
     /* @var $entity \Drupal\Core\Entity\EntityInterface */
-    $entity = $this->getEntity();
-    $entity_type = ($entity) ? $entity->getEntityTypeId() : '';
+    $entity = $this->getTargetEntity();
     // Load explicit User object (not via $transition) for adding Role later.
     /* @var $user \Drupal\user\UserInterface */
     $user = $this->getOwner();
@@ -470,7 +464,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       '%old' => $from_sid,
       '%new' => $to_sid,
       '%label' => $entity->label(),
-      'link' => ($this->getEntity()->id()) ? $this->getEntity()->link(t('View')) : '',
+      'link' => ($this->getTargetEntityId()) ? $this->getTargetEntity()->link(t('View')) : '',
     );
     // Check if the state has changed.
     // If so, check the permissions.
@@ -561,6 +555,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
         if ($state_changed) {
           $workflow = $this->getWorkflow();
           if (($new_state = $this->getToState()) && !empty($workflow->options['watchdog_log'])) {
+            $entity_type = $this->getTargetEntityTypeId();
             $entity_type_info = \Drupal::entityManager()->getDefinition($entity_type);
             if ($this->getEntityTypeId() == 'workflow_scheduled_transition') {
               $message = 'Scheduled state change of @type %label to %state_name executed';
@@ -572,7 +567,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
               '@type' => $entity_type_info->getLabel(),
               '%label' => $entity->label(),
               '%state_name' => t($new_state->label()), // @todo check_plain()?
-              'link' => ($this->getEntity()->id()) ? $this->getEntity()->link(t('View')) : '',
+              'link' => ($this->getTargetEntityId()) ? $this->getTargetEntity()->link(t('View')) : '',
             );
             \Drupal::logger('workflow')->notice($message, $args);
           }
@@ -628,33 +623,20 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    */
   public function getWorkflowId() {
 
-    if (!$this->wid->value && $from_sid = $this->getFromSid()) {
-      $state = WorkflowState::load($from_sid);
-      // Fallback
-      $to_sid = $this->getToSid();
-      $state = ($state) ? $state : WorkflowState::load($to_sid);
+    if (!$this->wid->target_id && $state = $this->getFromState()) {
+      // Fallback.
+      $state = ($state) ? $state : $this->getToState();
+      $wid = ($state) ? $state->getWorkflowId() : '';
 
-      $this->wid->value = ($state) ? $state->getWorkflowId() : '';
+      $this->set('wid', $wid);
     }
-    return $this->wid->value;
+    return $this->wid->target_id;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getEntity() {
-    if (!$this->entity) {
-      $entity_type = $this->get('entity_type')->target_id;
-      $entity_id = $this->get('entity_id')->value;
-      $this->entity = ($entity_type) ? \Drupal::entityManager()->getStorage($entity_type)->load($entity_id) : NULL;
-    }
-    return $this->entity;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setEntity($entity) {
+  public function setTargetEntity($entity) {
     $this->entity = $entity;
     if ($entity) {
       /* @var $entity \Drupal\Core\Entity\EntityInterface */
@@ -673,6 +655,27 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     }
 
     return $this->entity;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTargetEntity() {
+    return $this->get('entity_id')->entity;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTargetEntityId() {
+    return $this->get('entity_id')->target_id;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTargetEntityTypeId() {
+    return $this->get('entity_type')->value;
   }
 
   /**
@@ -710,7 +713,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function getFromSid() {
-    $sid = $this->{'from_sid'}->value;
+    $sid = $this->{'from_sid'}->target_id;
     return $sid;
   }
 
@@ -718,7 +721,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function getToSid() {
-    $sid = $this->{'to_sid'}->value;
+    $sid = $this->{'to_sid'}->target_id;
     return $sid;
   }
 
@@ -806,9 +809,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   public function getOwner() {
     $user = $this->get('uid')->entity;
     if (!$user || $user->isAnonymous()) {
-      $user = User::getAnonymousUser();
-      $user->name = $this->getAuthorName();
-      $user->homepage = $this->getHomepage();
+      $user = \Drupal\user\Entity\User::getAnonymousUser();
+      $user->name = \Drupal::config('user.settings')->get('anonymous');
     }
     return $user;
   }
@@ -852,33 +854,40 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       ->setReadOnly(TRUE)
       ->setSetting('unsigned', TRUE);
 
-    $fields['wid'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Workflow ID'))
-      ->setDescription(t('The name of the Workflow the transition relates to.'))
+//    $fields['wid'] = BaseFieldDefinition::create('string')
+    $fields['wid'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Workflow Type'))
+      ->setDescription(t('The workflow type the transition relates to.'))
+      ->setSetting('target_type', 'workflow_type')
       ->setRequired(TRUE)
       ->setTranslatable(FALSE)
       ->setRevisionable(FALSE)
-      ->setSetting('max_length', 32)
-      ->setDisplayOptions('view', array(
-        'label' => 'hidden',
-        'type' => 'string',
-        'weight' => -5,
-      ))
-      ->setDisplayOptions('form', array(
-        'type' => 'string_textfield',
-        'weight' => -5,
-      ))
-      ->setDisplayConfigurable('form', TRUE);
+//      ->setSetting('max_length', 32)
+//      ->setDisplayOptions('view', array(
+//        'label' => 'hidden',
+//        'type' => 'string',
+//        'weight' => -5,
+//      ))
+//      ->setDisplayOptions('form', array(
+//        'type' => 'string_textfield',
+//        'weight' => -5,
+//      ))
+//      ->setDisplayConfigurable('form', TRUE)
+      ;
 
-    $fields['entity_type'] = BaseFieldDefinition::create('entity_reference')
+//    $fields['entity_type'] = BaseFieldDefinition::create('entity_reference')
+    $fields['entity_type'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Entity type'))
       ->setDescription(t('The Entity type this transition belongs to.'))
-      ->setSetting('target_type', 'node_type')
+      ->setSetting('is_ascii', TRUE)
+      ->setSetting('max_length', EntityTypeInterface::ID_MAX_LENGTH)
+//      ->setSetting('target_type', 'node_type')
       ->setReadOnly(TRUE);
 
-    $fields['entity_id'] = BaseFieldDefinition::create('integer')
+    $fields['entity_id'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Entity ID'))
       ->setDescription(t('The Entity ID this record is for.'))
+      ->setRequired(TRUE)
       ->setReadOnly(TRUE)
       ->setSetting('unsigned', TRUE);
 
@@ -910,7 +919,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       ->setLabel(t('Language'))
       ->setDescription(t('The entity language code.'))
       ->setTranslatable(TRUE)
-      ->setRevisionable(TRUE)
       ->setDisplayOptions('view', array(
         'type' => 'hidden',
       ))
@@ -925,23 +933,25 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       ->setReadOnly(TRUE)
       ->setSetting('unsigned', TRUE);
 
-    $fields['from_sid'] = BaseFieldDefinition::create('string')
+    $fields['from_sid'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('From state'))
-      ->setDescription(t('The {workflow_states}.sid this transition started as.'))
+      ->setDescription(t('The {workflow_states}.sid the entity started as.'))
       ->setSetting('target_type', 'workflow_state')
       ->setReadOnly(TRUE);
 
-    $fields['to_sid'] = BaseFieldDefinition::create('string')
+    $fields['to_sid'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('To state'))
-      ->setDescription(t('The {workflow_states}.sid this transition transitioned to.'))
+      ->setDescription(t('The {workflow_states}.sid the entity transitioned to.'))
       ->setSetting('target_type', 'workflow_state')
       ->setReadOnly(TRUE);
 
     $fields['uid'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('User'))
-      ->setDescription(t('The user ID of the author of this transition.'))
+      ->setLabel(t('User ID'))
+      ->setDescription(t('The user ID of the transition author.'))
+      ->setTranslatable(TRUE)
       ->setSetting('target_type', 'user')
-      ->setQueryable(FALSE)
+      ->setDefaultValue(0)
+//      ->setQueryable(FALSE)
 //      ->setSetting('handler', 'default')
 //      ->setDefaultValueCallback('Drupal\node\Entity\Node::getCurrentUserId')
 //      ->setTranslatable(TRUE)
@@ -995,20 +1005,22 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     return $fields;
   }
 
-  public function dpm($function = '') {
+  /**
+   * {@inheritdoc}
+   */
+ public function dpm($function = '') {
     $transition = $this;
-    $entity = $transition->getEntity();
+    $entity = $transition->getTargetEntity();
     $time = \Drupal::service('date.formatter')->format($transition->getTimestamp());
     // Do this extensive $user_name lines, for some troubles with Action.
     $user = $transition->getOwner();
     $user_name = ($user) ? $user->getUsername() : 'unknown username';
-    $t_string = $this->getEntityTypeId() . ' ' . $this->id() . ' ' . ($function ? ("in function '$function'") : '');
-    $output[] = 'Entity  = ' . ((!$entity) ? 'NULL' : ($entity->getEntityTypeId() . '/' . $entity->bundle() . '/' . $entity->id()));
+    $t_string = $this->getEntityTypeId() . ' ' . $this->id() . 'for workflow_type <i>' . $this->getWorkflowId() . '</i> ' . ($function ? ("in function '$function'") : '');
+    $output[] = 'Entity  = ' . ((!$entity) ? 'NULL' : ($this->getTargetEntityTypeId() . '/' . $entity->bundle() . '/' . $this->getTargetEntityId()));
     $output[] = 'Field   = ' . $transition->getFieldName();
     $output[] = 'From/To = ' . $transition->getFromSid() . ' > ' . $transition->getToSid() . ' @ ' . $time;
     $output[] = 'Comment = ' . $user_name . ' says: ' . $transition->getComment();
     $output[] = 'Forced  = ' . ($transition->isForced() ? 'yes' : 'no');
     if (function_exists('dpm')) { dpm($output, $t_string); }
   }
-
 }

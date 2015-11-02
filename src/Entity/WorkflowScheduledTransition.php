@@ -76,7 +76,7 @@ class WorkflowScheduledTransition extends WorkflowTransition {
       // No fuzzling around, just copy the ScheduledTransition to a normal one.
       $executed_transition = WorkflowTransition::create();
       $executed_transition->setValues(
-        $this->getEntity(),
+        $this->getTargetEntity(),
         $this->getFieldName(),
         $this->getFromSid(),
         $this->getToSid(),
@@ -91,7 +91,7 @@ class WorkflowScheduledTransition extends WorkflowTransition {
     if (!$hid) {
       // Insert the transition. Make sure it hasn't already been inserted.
       // @todo: Allow a scheduled transition per revision.
-      $entity = $this->getEntity();
+      $entity = $this->getTargetEntity();
       $found_transition = self::loadByProperties($entity->getEntityTypeId(), $entity->id(), [], $this->getFieldName(), $this->getLangcode());
       if ($found_transition) {
         // Avoid duplicate entries.
@@ -110,13 +110,13 @@ class WorkflowScheduledTransition extends WorkflowTransition {
 
     // Create user message.
     if ($state = $this->getToState()) {
-      $entity = $this->getEntity();
+      $entity = $this->getTargetEntity();
       $message = '%entity_title scheduled for state change to %state_name on %scheduled_date';
       $args = array(
         '%entity_title' => $entity->label(),
         '%state_name' => $state->label(),
         '%scheduled_date' => $this->getTimestampFormatted(),
-        'link' => ($this->getEntity()->id()) ? $this->getEntity()->link(t('View')) : '',
+        'link' => ($this->getTargetEntityId()) ? $this->getTargetEntity()->link(t('View')) : '',
       );
       \Drupal::logger('workflow')->notice($message, $args);
       drupal_set_message(t($message, $args));

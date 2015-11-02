@@ -314,9 +314,9 @@ function hook_entity_predelete(EntityInterface $entity) {
   switch ($entity->getEntityTypeId()) {
     case 'workflow_config_transition':
     case 'workflow_state':
-    case 'workflow_workflow':
+    case 'workflow_type':
       // Better use hook_ENTITY_TYPE_OPERATION.
-      // E.g., hook_workflow_workflow_predelete
+      // E.g., hook_workflow_type_predelete
       break;
   }
 }
@@ -332,7 +332,7 @@ function hook_entity_delete(EntityInterface $entity) {
  * Implements hook_ENTITY_TYPE_CRUD.
  *
  */
-function hook_workflow_workflow_delete(EntityInterface $entity) {
+function hook_workflow_type_delete(EntityInterface $entity) {
 //  workflow_debug( __FILE__ , __FUNCTION__, __LINE__, 'delete' , $entity->getEntityTypeId());
 }
 function hook_workflow_config_transition_delete(EntityInterface $entity) {
