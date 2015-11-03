@@ -118,12 +118,13 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       $field_name = $field_info->getName();
       /* @var $transition WorkflowTransitionInterface */
       $transition = $entity->$field_name->workflow['workflow_transition'];
-      // Set the just-saved entity explicitly. Not necessary for update,
-      // but upon insert, the old version didn't have an ID, yet.
       if ($transition) {
-//        workflow_debug( __FILE__ , __FUNCTION__, __LINE__, '', '');  // @todo D8-port: still test this snippet.
-        // We come from Content edit page, from widget.
-        $transition->setTargetEntity($entity);
+        if ($entity->getEntityTypeId() !== 'comment') {
+          // We come from Content edit page, from widget.
+          // Set the just-saved entity explicitly. Not necessary for update,
+          // but upon insert, the old version didn't have an ID, yet.
+          $transition->setTargetEntity($entity);
+        }
         $transition->execute();
       }
       else {

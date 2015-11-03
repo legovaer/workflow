@@ -21,6 +21,7 @@ use Drupal\Core\Url;
 use Drupal\options\Plugin\Field\FieldType\ListItemBase;
 use Drupal\workflow\Entity\Workflow;
 use Drupal\workflow\Entity\WorkflowState;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 /**
  * Plugin implementation of the 'workflow' field type.
@@ -32,6 +33,9 @@ use Drupal\workflow\Entity\WorkflowState;
  *   category = @Translation("Workflow"),
  *   default_widget = "workflow_default",
  *   default_formatter = "list_default",
+ *   constraints = {
+ *     "WorkflowField" = {}
+ *   },
  * )
  */
 class WorkflowItem extends ListItemBase {
@@ -146,28 +150,6 @@ class WorkflowItem extends ListItemBase {
   /**
    * {@inheritdoc}
    */
-  public function getConstraints() {
-    $constraint_manager = \Drupal::typedDataManager()->getValidationConstraintManager();
-    $constraints = parent::getConstraints();
-
-//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-    /*
-    $max_length = 128;
-    $constraints[] = $constraint_manager->create('ComplexData', array(
-      'value' => array(
-        'Length' => array(
-          'max' => $max_length,
-          'maxMessage' => t('%name: the telephone number may not be longer than @max characters.', array('%name' => $this->getFieldDefinition()->getLabel(), '@max' => $max_length)),
-        )
-      ),
-    ));
-    */
-    return $constraints;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public static function defaultStorageSettings() {
 
     return array(
@@ -201,17 +183,49 @@ class WorkflowItem extends ListItemBase {
     // Validate each workflow, and generate a message if not complete.
     $workflows = workflow_get_workflow_names(FALSE);
 
+    // @todo D8: add this to WorkflowFieldConstraintValidator.
     // Set message, if no 'validated' workflows exist.
     if (count($workflows) == 1) {
       drupal_set_message(
         t('You must create at least one workflow before content can be
-          assigned to a workflow.')
+          assigned to a workflow.'), 'warning'
       );
+    }
+
+    // Validate via annotation WorkflowFieldConstraint. Show a message for each error.
+    $violation_list = $this->validate();
+    foreach ($violation_list->getIterator() as $violation){
+      switch ($violation->getPropertyPath()) {
+        case 'fieldnameOnComment':
+          // A 'comment' field name MUST be equal to content field name.
+          // @todo: Still not waterproof. You could have a field on a non-relevant entity_type.
+          drupal_set_message($violation->getMessage(), 'error');
+          $workflows = array();
+          break;
+
+        default:
+          break;
+      }
+    }
+
+    // Set the required workflow_type on 'comment' fields.
+    // N.B. the following must BELOW the (count($workflows) == 1) snippet.
+    $field_storage = $this->getFieldDefinition()->getFieldStorageDefinition();
+    if (!$this->getSetting('workflow_type') && $field_storage->getTargetEntityTypeId() == 'comment') {
+      $field_name = $field_storage->get('field_name');
+      $workflows = array();
+      foreach(_workflow_info_fields($entity = NULL, $entity_type = '', $entity_bundle = '', $field_name) as $key => $info) {
+        if ($info->getName() == $field_name && ($info->getTargetEntityTypeId() !== 'comment')) {
+          $wid = $info->getSetting('workflow_type');
+          $workflow = Workflow::load($wid);
+          $workflows[$wid] = $workflow->label();
+        }
+      }
     }
 
     // Let the user choose between the available workflow types.
     $wid = $this->getSetting('workflow_type');
-    $url = Url::fromRoute('entity.workflow_workflow.collection');
+    $url = Url::fromRoute('entity.workflow_type.collection');
     $element['workflow_type'] = array( // TODO D8-port: check this change-record.
       '#type' => 'select',
       '#title' => t('Workflow type'),
@@ -288,8 +302,7 @@ class WorkflowItem extends ListItemBase {
         // Show a Workflow name between Workflows, if more then 1 in the list.
         if ((!$wid) && ($previous_wid <> $state->getWorkflowId())) {
           $previous_wid = $state->getWorkflowId();
-          $workflow = Workflow::load($previous_wid);
-          $lines[] = $workflow->label() . "'s states: ";
+          $lines[] = $state->getWorkflow()->label() . "'s states: ";
         }
         $label = SafeMarkup::checkPlain(t($state->label()));
 
@@ -308,6 +321,32 @@ class WorkflowItem extends ListItemBase {
 //    return $values;
 //  }
 
+
+  /**
+   * Implementation of TypedDataInterface
+   *
+   * @see folder \workflow\modules\workflow_field\src\Plugin\Validation\Constraint
+   */
+
+  /**
+   * {@inheritdoc}
+   *
+   * @see folder \workflow\modules\workflow_field\src\Plugin\Validation\Constraint
+   */
+//  public function getConstraints() {
+//    $constraints = parent::getConstraints();
+//    return $constraints;
+//  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * @see folder \workflow\modules\workflow_field\src\Plugin\Validation\Constraint
+   */
+//  public function validate() {
+//    $result = parent::validate();
+//    return $result;
+//  }
 
   /**
    * Implementation of OptionsProviderInterface
@@ -335,12 +374,20 @@ class WorkflowItem extends ListItemBase {
   public function getPossibleOptions(AccountInterface $account = NULL) {
     $allowed_options = array();
 
-    $definition = $this->getFieldDefinition()->getFieldStorageDefinition();
-    $entity = $this->getEntity();
+    $field_storage = $this->getFieldDefinition()->getFieldStorageDefinition();
+    if ($field_storage->getTargetEntityTypeId() == 'comment') {
+      /* @var $comment \Drupal\comment\CommentInterface */
+      $comment = $this->getEntity();
+      $entity = $comment->getCommentedEntity();
+    }
+    else {
+      $entity = $this->getEntity();
+    }
+
     $cacheable = TRUE;
 
     // Use the 'allowed_values_function' to calculate the options.
-    $allowed_options = workflow_state_allowed_values($definition, $entity, $cacheable, $account);
+    $allowed_options = workflow_state_allowed_values($field_storage, $entity, $cacheable, $account);
 
     return $allowed_options;
   }
@@ -361,22 +408,20 @@ class WorkflowItem extends ListItemBase {
   public function getSettableOptions(AccountInterface $account = NULL) {
     $allowed_options = array();
 
-    // Do not show the TransitionForm in the 'Default value' of a Field on
-    //  page /admin/structure/types/manage/MY_CONTENT_TYPE/fields/MY_FIELD_NAME .
-    $url_components = explode('/', $_SERVER['REQUEST_URI']);
-    if (isset($url_components[6])
-      && ($url_components[1] == 'admin')
-      && ($url_components[2] == 'structure')
-      && ($url_components[6] == 'fields')) {
-      return $allowed_options = array();
-    };
+    $field_storage = $this->getFieldDefinition()->getFieldStorageDefinition();
+    if ($field_storage->getTargetEntityTypeId() == 'comment') {
+      /* @var $comment \Drupal\comment\CommentInterface */
+      $comment = $this->getEntity();
+      $entity = $comment->getCommentedEntity();
+    }
+    else {
+      $entity = $this->getEntity();
+    }
 
-    $definition = $this->getFieldDefinition()->getFieldStorageDefinition();
-    $entity = $this->getEntity();
     $cacheable = TRUE;
 
     // Use the 'allowed_values_function' to calculate the options.
-    $allowed_options = workflow_state_allowed_values($definition, $entity, $cacheable, $account);
+    $allowed_options = workflow_state_allowed_values($field_storage, $entity, $cacheable, $account);
 
     return $allowed_options;
   }

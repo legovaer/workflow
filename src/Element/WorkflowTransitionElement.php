@@ -13,6 +13,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Render\Element\FormElement;
+use Drupal\comment\CommentInterface;
 use Drupal\workflow\Entity\WorkflowScheduledTransition;
 use Drupal\workflow\Entity\WorkflowTransitionInterface;
 
@@ -113,18 +114,30 @@ class WorkflowTransitionElement extends FormElement {
     /*
      * Derived input.
      */
-    $workflow = $transition->getWorkflow();
-    $wid = ($workflow) ? $workflow->id() : '';
-    $entity = $transition->getTargetEntity();
-    $entity_type = $transition->getTargetEntityTypeId();
-    $entity_id = $transition->getTargetEntityId();
-
     $field_name = $transition->getFieldName();
+    $workflow = $transition->getWorkflow();
+    $wid = $transition->getWorkflowId();
+
+    if ($transition->getTargetEntityTypeId() == 'comment') {
+      workflow_debug( __FILE__, __FUNCTION__, __LINE__, '', '');  // @todo D8-port: still test this snippet.
+      /* @var $comment_entity CommentInterface */
+      $comment_entity = $transition->getTargetEntity();
+      $entity = ($comment_entity) ? $comment_entity->getCommentedEntity() : NULL;
+      $entity_type = ($comment_entity) ? $comment_entity->getCommentedEntityTypeId() : '';
+      $entity_id = ($comment_entity) ? $comment_entity->getCommentedEntityId() : '';
+      $transition->from_sid = $entity->$field_name->value;
+    }
+    else {
+      $entity = $transition->getTargetEntity();
+      $entity_type = $transition->getTargetEntityTypeId();
+      $entity_id = $transition->getTargetEntityId();
+    }
+
     if ($transition->isExecuted()) {
       // We are editing an existing/executed/not-scheduled transition.
       // Only the comments may be changed!
 
-      $current_sid = $transition->getFromSid();
+      $current_sid = $from_sid = $transition->getFromSid();
       // The states may not be changed anymore.
       $to_state = $transition->getToState();
       $options = array($to_state->id() => $to_state->label());
@@ -133,7 +146,7 @@ class WorkflowTransitionElement extends FormElement {
       $default_value = $transition->getToSid();
     }
     elseif ($entity) {
-      // The normal situation: adding a new transition on an entity.
+      // Normal situation: adding a new transition on an new/existing entity.
 
       // Get the scheduling info, only when updating an existing entity.
       // This may change the $default_value on the Form.
@@ -145,14 +158,13 @@ class WorkflowTransitionElement extends FormElement {
         $transition = $scheduled_transition;
       }
 
-      $from_state = $transition->getFromState();
       $current_sid = $from_sid = $transition->getFromSid();
-      $current_state = $transition->getFromState();
+      $current_state = $from_state = $transition->getFromState();
       $options = ($current_state) ? $current_state->getOptions($entity, $field_name, $user, $force) : [];
       $show_widget = ($from_state) ? $from_state->showWidget($entity, $field_name, $user, $force) : [];
-      // Determine the default value. If we are in CreationState, use a fast alternative for $workflow->getFirstSid().
-      $default_value = ($from_state && $from_state->isCreationState()) ? key($options) : $current_sid;
-      $default_value = $transition->isScheduled() ? $transition->getToSid() : $default_value;
+      $default_value = $from_sid;
+      $default_value = ($from_state && $from_state->isCreationState()) ? $workflow->getFirstSid($entity, $field_name, $user, $force) : $default_value;
+      $default_value = ($transition->isScheduled()) ? $transition->getToSid() : $default_value;
     }
     elseif (!$entity) {
       // Sometimes, no entity is given. We encountered the following cases:
@@ -168,13 +180,12 @@ class WorkflowTransitionElement extends FormElement {
         : workflow_get_workflow_state_names($wid, $grouped = TRUE, $all = FALSE);
       $show_widget = TRUE;
       $current_sid = $transition->getToSid(); // TODO
-      $default_value = $transition->getToSid();
+      $default_value = $from_sid = $transition->getToSid(); // TODO
     }
     else {
       // We are in trouble! A message is already set in workflow_node_current_state().
       $options = array();
       $show_widget = FALSE;
-      $default_value = $current_sid;
     }
 
 // Fetch the form ID. This is unique for each entity, to allow multiple form per page (Views, etc.).
@@ -478,12 +489,11 @@ class WorkflowTransitionElement extends FormElement {
       // In WorkflowTransitionForm, we receive the complete $form_state.
       $transition_values = $item['workflow'];
       // Remember, the workflow_scheduled element is not set on 'add' page.
-      if ($scheduled = !empty($transition_values['workflow_scheduling']['scheduled'])) {
-        $schedule_values = $item['workflow']['workflow_scheduling']['date_time'];
-      }
+      $scheduled = !empty($transition_values['workflow_scheduling']['scheduled']);
+      $schedule_values = $item['workflow']['workflow_scheduling']['date_time'];
     }
     else {
-      $entity_id = $transition->getEntity()->id();
+      $entity_id = $transition->getTargetEntityId();
       drupal_set_message(t('Error: content !id has no workflow attached. The data is not saved.', array('!id' => $entity_id)), 'error');
       // The new state is still the previous state.
       return $transition;
@@ -548,7 +558,7 @@ class WorkflowTransitionElement extends FormElement {
      * Create a new ScheduledTransition.
      */
     if ($scheduled) {
-      $transition_entity = $transition->getEntity();
+      $transition_entity = $transition->getTargetEntity();
       $field_name = $transition->getFieldName();
       $from_sid = $transition->getFromSid();
       /* @var $transition WorkflowTransitionInterface */
