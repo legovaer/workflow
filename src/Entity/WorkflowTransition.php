@@ -189,11 +189,9 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     }
 
     $transition = $this;
-    $field_name = $transition->getFieldName();
-    // getTargetEntity() also sets properties.
-    $entity = $transition->getTargetEntity();
     $entity_type = $transition->getTargetEntityTypeId();
     $entity_id = $transition->getTargetEntityId();
+    $field_name = $transition->getFieldName();
 
     // Remove any scheduled state transitions.
     foreach (WorkflowScheduledTransition::loadMultipleByProperties($entity_type, [$entity_id], [], $field_name) as $scheduled_transition) {
@@ -212,10 +210,9 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $hid = $this->id();
     if (!$hid) {
       // Insert the transition. Make sure it hasn't already been inserted.
-      $entity = $this->getTargetEntity();
       // @todo: Allow a scheduled transition per revision.
       // @todo: Allow a state per language version (langcode).
-      $found_transition = self::loadByProperties($entity->getEntityTypeId(), $entity->id(), [], $this->getFieldName());
+      $found_transition = self::loadByProperties($entity_type, $entity_id, [], $field_name);
       if ($found_transition &&
         $found_transition->getTimestamp() == REQUEST_TIME &&
         $found_transition->getToSid() == $this->getToSid()) {
@@ -661,7 +658,11 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function getTargetEntity() {
-    return $this->get('entity_id')->entity;
+    // Use an explicit property, in case of adding new entities.
+    if (isset($this->entity)) {
+       return $this->entity;
+    }
+    return $this->entity = $this->get('entity_id')->entity;
   }
 
   /**
@@ -689,7 +690,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function getLangcode() {
-    return $this->getEntity()->language()->getId();
+    return $this->getTargetEntity()->language()->getId();
 
   }
 
@@ -1008,7 +1009,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /**
    * {@inheritdoc}
    */
- public function dpm($function = '') {
+  public function dpm($function = '') {
     $transition = $this;
     $entity = $transition->getTargetEntity();
     $time = \Drupal::service('date.formatter')->format($transition->getTimestamp());
@@ -1016,11 +1017,11 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     $user = $transition->getOwner();
     $user_name = ($user) ? $user->getUsername() : 'unknown username';
     $t_string = $this->getEntityTypeId() . ' ' . $this->id() . 'for workflow_type <i>' . $this->getWorkflowId() . '</i> ' . ($function ? ("in function '$function'") : '');
-    $output[] = 'Entity  = ' . ((!$entity) ? 'NULL' : ($this->getTargetEntityTypeId() . '/' . $entity->bundle() . '/' . $this->getTargetEntityId()));
+    $output[] = 'Entity  = ' . $this->getTargetEntityTypeId() . '/' . (($entity) ? ($entity->bundle() . '/' . $entity->id()): '___/0') ;
     $output[] = 'Field   = ' . $transition->getFieldName();
     $output[] = 'From/To = ' . $transition->getFromSid() . ' > ' . $transition->getToSid() . ' @ ' . $time;
     $output[] = 'Comment = ' . $user_name . ' says: ' . $transition->getComment();
-    $output[] = 'Forced  = ' . ($transition->isForced() ? 'yes' : 'no');
+    $output[] = 'Forced  = ' . ($transition->isForced() ? 'yes' : 'no') .'; ' . 'Scheduled = ' . ($transition->isScheduled() ? 'yes' : 'no');
     if (function_exists('dpm')) { dpm($output, $t_string); }
   }
 }

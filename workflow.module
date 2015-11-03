@@ -124,7 +124,7 @@ function workflow_entity_insert(EntityInterface $entity) {
 function workflow_entity_update(EntityInterface $entity) {
   // Avoid this hook on workflow objects.
   if (!in_array($entity->getEntityTypeId(), [
-    'workflow_workflow',
+    'workflow_type',
     'workflow_state',
     'workflow_config_transition',
     'workflow_transition',
@@ -324,9 +324,8 @@ function workflow_get_field_name(EntityInterface $entity, $field_name = '') {
     // $entity may be empty on Entity Add page.
     $field_name = '';
   }
-  elseif (!$field_name ) {
-    $entity_type = $entity->getEntityTypeId();
-    $fields = _workflow_info_fields($entity, $entity_type);
+  elseif (!$field_name) {
+    $fields = _workflow_info_fields($entity);
     $field = reset($fields);
     /* @var $field \Drupal\field\Entity\FieldStorageConfig */
     $field_name = $field->getName();
@@ -546,7 +545,7 @@ function _workflow_info_field_names($entity = NULL, $entity_type = '', $entity_b
  * @see workflow_devel module
  *
  * Usage:
- *   workflow_debug( __FILE__ , __FUNCTION__, __LINE__, '', '');  // @todo D8-port: still test this snippet.
+ *   workflow_debug( __FILE__, __FUNCTION__, __LINE__, '', '');  // @todo D8-port: still test this snippet.
  *
  * @param string $class_name
  * @param string $function_name

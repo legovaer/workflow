@@ -106,22 +106,21 @@ class WorkflowDefaultWidget extends WidgetBase {
     $field_config = $items[$delta]->getFieldDefinition();
     /* @var $field_storage \Drupal\field\Entity\FieldStorageConfig */
     $field_storage = $field_config->getFieldStorageDefinition();
-    // $field = $field_storage->get('field');
-    $field_name = $field_storage->get('field_name');
-    $entity = $item->getEntity();
 
+    $field_name = $field_storage->get('field_name');
     /* @var \Drupal\Core\Session\AccountProxyInterface */
     $user = \Drupal::currentUser();
+    $entity = $item->getEntity();
+    $from_sid = workflow_node_current_state($entity, $field_name);
 
     /* @var $transition WorkflowTransition */
     $transition = NULL;
-
     // Prepare a new transition, if still not provided.
     if (!$transition) {
       $transition = WorkflowTransition::create();
       $transition->setValues($entity, $field_name,
-        $from_sid = workflow_node_current_state($entity, $field_name),
-        $to_sid = $default_value = '',
+        $from_sid,
+        $default_value = '',
         $user->id(),
         REQUEST_TIME,
         $comment = ''
