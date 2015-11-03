@@ -53,7 +53,7 @@ function workflow_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_
     return;
   }
 
-  if ($form_state->getBuildInfo()['base_form_id'] == 'workflow_transition_form') {
+  if (isset($form_state->getBuildInfo()['base_form_id']) && $form_state->getBuildInfo()['base_form_id'] == 'workflow_transition_form') {
     // The WorkflowTransitionForm (E.g., Workflow History tab, Block) has its own handling.
     return;
   }
