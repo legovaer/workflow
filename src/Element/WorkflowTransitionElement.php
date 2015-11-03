@@ -119,7 +119,6 @@ class WorkflowTransitionElement extends FormElement {
     $wid = $transition->getWorkflowId();
 
     if ($transition->getTargetEntityTypeId() == 'comment') {
-      workflow_debug( __FILE__, __FUNCTION__, __LINE__, '', '');  // @todo D8-port: still test this snippet.
       /* @var $comment_entity CommentInterface */
       $comment_entity = $transition->getTargetEntity();
       $entity = ($comment_entity) ? $comment_entity->getCommentedEntity() : NULL;
@@ -490,7 +489,7 @@ class WorkflowTransitionElement extends FormElement {
       $transition_values = $item['workflow'];
       // Remember, the workflow_scheduled element is not set on 'add' page.
       $scheduled = !empty($transition_values['workflow_scheduling']['scheduled']);
-      $schedule_values = $item['workflow']['workflow_scheduling']['date_time'];
+      $schedule_values = ($scheduled) ? $item['workflow']['workflow_scheduling']['date_time'] : [];
     }
     else {
       $entity_id = $transition->getTargetEntityId();

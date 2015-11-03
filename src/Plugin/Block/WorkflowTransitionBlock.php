@@ -40,6 +40,7 @@ class WorkflowTransitionBlock extends BlockBase  {
     /* @var $entity EntityInterface */
     $entity = workflow_url_get_entity();
 
+    // Only show block on entity view page (when default operation = '').
     if ($operation = workflow_url_get_operation()) {
       return AccessResult::forbidden();
     };
