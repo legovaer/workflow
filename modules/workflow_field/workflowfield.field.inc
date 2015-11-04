@@ -45,12 +45,8 @@ function workflowfield_form_field_config_edit_form_alter(&$form, FormStateInterf
     $form['required']['#default_value'] = 1;
     $form['required']['#disabled'] = TRUE;
 
-    // User may not set a default value (this is done by the Workflow module).
-    // @see WorkflowState::getOptions()
-    $form['default_value']['#description'] .= ' ' . t('It can\'t be set here, since it may be different per user.');
-    $form['default_value']['widget']['#default_value'] = '';
-    $form['default_value']['widget']['#disabled'] = TRUE;
-    unset($form['default_value']['widget']);
+    // There are alterations on the widget, too.
+    // @see WorkflowDefaultWidget::formElement();
   }
 }
 

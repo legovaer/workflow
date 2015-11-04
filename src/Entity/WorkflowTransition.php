@@ -165,6 +165,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       }
     }
 
+    return $this;
   }
 
   /**
@@ -651,7 +652,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       $this->langcode = Language::LANGCODE_NOT_SPECIFIED;
     }
 
-    return $this->entity;
+    return $this;
   }
 
   /**
@@ -776,14 +777,23 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 //    // all functions of another subclass are called.
 //    $this->entityTypeId = ($schedule) ? 'workflow_scheduled_transition' : 'workflow_transition';
 
-    return $this->is_scheduled = $schedule;
+    $this->is_scheduled = $schedule;
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setExecuted($is_executed = TRUE) {
+    $this->is_executed = $is_executed;
+    return $this;
   }
 
   /**
    * {@inheritdoc}
    */
   public function isExecuted() {
-    return $this->is_executed;
+    return (bool) $this->is_executed;
   }
 
   /**
@@ -797,7 +807,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * {@inheritdoc}
    */
   public function force($force = TRUE) {
-    return $this->is_forced = $force;
+    $this->is_forced = $force;
+    return $this;
   }
 
   /**

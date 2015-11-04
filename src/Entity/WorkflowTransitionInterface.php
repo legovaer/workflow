@@ -205,6 +205,21 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface,
    */
   public function isScheduled();
   public function schedule($schedule = TRUE);
+
+  /**
+   * Set the 'is_executed' property.
+   *
+   * @param bool $is_executed
+   *
+   * @return WorkflowTransitionInterface
+   */
+  public function setExecuted($is_executed = TRUE);
+
+  /**
+   * Returns if this is an Executed Transition.
+   *
+   * @return bool
+   */
   public function isExecuted();
 
   /**

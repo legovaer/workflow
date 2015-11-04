@@ -93,23 +93,19 @@ class WorkflowDefaultWidget extends WidgetBase {
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
 
     $wid = $this->getFieldSetting('workflow_type');
-    $workflow = Workflow::load($wid);
-    if (!$workflow){
+    if (!$workflow = Workflow::load($wid)){
       // @todo: add error message.
       return $element;
     }
 
-    /* @var $items \Drupal\workflowfield\Plugin\Field\FieldType\WorkflowItem[] */
     /* @var $item \Drupal\workflowfield\Plugin\Field\FieldType\WorkflowItem */
     $item = $items[$delta];
     /* @var $field_config \Drupal\field\Entity\FieldConfig */
-    $field_config = $items[$delta]->getFieldDefinition();
+    $field_config = $item->getFieldDefinition();
     /* @var $field_storage \Drupal\field\Entity\FieldStorageConfig */
     $field_storage = $field_config->getFieldStorageDefinition();
 
     $field_name = $field_storage->get('field_name');
-    /* @var \Drupal\Core\Session\AccountProxyInterface */
-    $user = \Drupal::currentUser();
     $entity = $item->getEntity();
     $from_sid = workflow_node_current_state($entity, $field_name);
 
@@ -121,15 +117,57 @@ class WorkflowDefaultWidget extends WidgetBase {
       $transition->setValues($entity, $field_name,
         $from_sid,
         $default_value = '',
-        $user->id(),
+        $uid = \Drupal::currentUser()->id(),
         REQUEST_TIME,
         $comment = ''
       );
     }
 
-    // @TODO D8-port: use a proper WorkflowTransitionElement call.
-    $element['#default_value'] = $transition;
-    $element += WorkflowTransitionElement::transitionElement($element, $form_state, $form);
+    if (!$this->isDefaultValueWidget($form_state)) {
+      // @TODO D8-port: use a proper WorkflowTransitionElement call.
+      $element['#default_value'] = $transition;
+      $element += WorkflowTransitionElement::transitionElement($element, $form_state, $form);
+    }
+    else {
+
+      // @todo D8: add a default value, so people can set a default comment.
+      // On the Field settings page, User may not set a default value
+      // (this is done by the Workflow module).
+      // @see WorkflowState::getOptions();
+      // @see WorkflowDefaultWidget::formElement();
+      $element = array();
+      return $element;
+
+      workflow_debug( __FILE__, __FUNCTION__, __LINE__, '', '');  // @todo D8-port: still test this snippet.
+
+      // @see workflowfield_form_field_config_edit_form_alter for other settings
+      // The Workflow field must have a value, so set to required.
+      // Unfortunately, we need hook_form_alter for this.
+      //$form['required']['#default_value'] = 1;
+      //$form['required']['#disabled'] = TRUE;
+
+      // Explicitly set default value to 'creation' and show element,
+      // so people can set a default comment.
+      $transition->to_sid = $workflow->getCreationSid();
+      $transition->setExecuted(TRUE);
+
+      // @TODO D8-port: use a proper WorkflowTransitionElement call.
+      $element['#default_value'] = $transition;
+      $element += WorkflowTransitionElement::transitionElement($element, $form_state, $form);
+
+      // No action buttons on default field settings page.
+      // This is evaluated in hook_form_alter.
+      _workflow_use_action_buttons(FALSE);
+
+      // Make sure the options box is not hidden (when action buttons active).
+      //$element['workflow']['workflow_to_sid']['#type'] = 'select';
+      $element['workflow']['workflow_to_sid']['#title'] = 'Initial state';
+      $element['workflow']['workflow_to_sid']['#access'] = TRUE;
+
+      unset($element['workflow_current_state']);
+
+      return $element;
+    };
 
     return $element;
   }

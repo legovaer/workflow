@@ -420,10 +420,10 @@ function workflow_current_user(\Drupal\Core\Session\AccountInterface $account = 
  *
  * @return string $current_sid
  *
- * @deprecated : use Workflow::workflowManager()->getCurrentStateID()
+ * @deprecated : use Workflow::workflowManager()->getCurrentStateId()
  */
 function workflow_node_current_state(EntityInterface $entity, $field_name = '') {
-  return Workflow::workflowManager()->getCurrentStateID($entity, $field_name);
+  return Workflow::workflowManager()->getCurrentStateId($entity, $field_name);
 }
 
 /**
@@ -434,7 +434,7 @@ function workflow_node_current_state(EntityInterface $entity, $field_name = '') 
  *
  * @return string $previous_sid
  *
- * @deprecated : use Workflow::workflowManager()->getPreviousStateID()
+ * @deprecated : use Workflow::workflowManager()->getPreviousStateId()
  */
 function workflow_node_previous_state($entity, $field_name = '') {
   return Workflow::workflowManager()->getPreviousStateId($entity, $field_name);

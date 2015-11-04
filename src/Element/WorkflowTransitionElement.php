@@ -449,7 +449,10 @@ class WorkflowTransitionElement extends FormElement {
       // Performance: inform workflow_form_alter() to do its job.
       _workflow_use_action_buttons(TRUE);
 
-      // Hide the options box. It will be replaced by action buttons.
+      // Make sure the '#type' is not set to the invalid 'buttons' value.
+      // It will be replaced by action buttons, but sometimes, the select box
+      // is still shown.
+      // @see workflowfield_form_alter().
       $element['workflow']['workflow_to_sid']['#type'] = 'select';
       $element['workflow']['workflow_to_sid']['#access'] = FALSE;
     }

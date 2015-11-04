@@ -71,7 +71,6 @@ class WorkflowScheduledTransition extends WorkflowTransition {
 
     // If executed, save in history.
     if ($this->is_executed) {
-      workflow_debug(__FILE__, __FUNCTION__, __LINE__ );  // @todo D8-port: still test this snippet.
       // Be careful, we are not a WorkflowScheduleTransition anymore!
       // No fuzzling around, just copy the ScheduledTransition to a normal one.
       $executed_transition = WorkflowTransition::create();

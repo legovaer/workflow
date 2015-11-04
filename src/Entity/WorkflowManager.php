@@ -63,17 +63,20 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       $field_name = $scheduled_transition->getFieldName();
       $entity = $scheduled_transition->getTargetEntity();
 
-      // If user didn't give a comment, create one.
-      $comment = $scheduled_transition->getComment();
-      if (empty($comment)) {
-        $scheduled_transition->addDefaultComment();
-      }
-
-
       // Make sure transition is still valid: the entity must still be in
       // the state it was in, when the transition was scheduled.
-      $current_sid = workflow_node_current_state($entity, $field_name);
-      if ($current_sid == $scheduled_transition->getFromSid()) {
+      // Scheduling on comments is a testing error, and leads to 'recoverable error'.
+      $current_sid = '';
+      if ($entity && ($entity->getEntityTypeId() !== 'comment')) {
+        $current_sid = workflow_node_current_state($entity, $field_name);
+      }
+      if ($current_sid && ($current_sid == $scheduled_transition->getFromSid())) {
+
+        // If user didn't give a comment, create one.
+        $comment = $scheduled_transition->getComment();
+        if (empty($comment)) {
+          $scheduled_transition->addDefaultComment();
+        }
 
         // Do transition. Force it because user who scheduled was checked.
         // The scheduled transition is not scheduled anymore, and is also deleted from DB.
@@ -200,7 +203,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
     }
 
     // If $field_name is not known, yet, determine it.
-    $field_name = workflow_get_field_name($entity);
+    $field_name = workflow_get_field_name($entity, $field_name);
     // If $field_name is found, get more details.
     if (!$field_name) {
       // Return the initial value.
