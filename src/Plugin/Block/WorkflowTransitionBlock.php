@@ -45,12 +45,14 @@ class WorkflowTransitionBlock extends BlockBase  {
       return AccessResult::forbidden();
     };
 
+    // Only show block if entity has workflow, and user has permission.
     foreach (_workflow_info_fields($entity) as $definition) {
       $type_id = $definition->getSetting('workflow_type');
       if ($account->hasPermission("access $type_id workflow_transition form")) {
         return AccessResult::allowed();
       }
     }
+
     return AccessResult::forbidden();
   }
 
