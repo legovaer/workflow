@@ -196,9 +196,21 @@ function workflow_execute_transition(WorkflowTransitionInterface $transition, $f
  */
 
 /**
+ * @deprecated D8: workflow_get_roles --> workflow_get_user_role_names
+ */
+function workflow_get_roles($permission) {
+  return [];
+}
+
+/**
  * Retrieves the names of roles matching specified conditions.
  *
  * deprecated D8: workflow_get_roles --> workflow_get_user_role_names
+ *
+ * Usage:
+ *   D7: $roles = workflow_get_user_role_names('participate in workflow');
+ *   D8: $type_id = $workflow->id();
+ *   D8: $roles = workflow_get_user_role_names("create $type_id workflow_transition");
  *
  * @param string $permission
  *   (optional) A string containing a permission. If set, only roles
@@ -210,7 +222,7 @@ function workflow_execute_transition(WorkflowTransitionInterface $transition, $f
  * @return array
  *   Array of role names keyed by role ID, including the 'author' role.
  */
-function workflow_get_user_role_names($permission = NULL) {
+function workflow_get_user_role_names($permission) {
   static $roles = NULL;
 
   if (!$roles[$permission]) {

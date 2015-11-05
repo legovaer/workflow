@@ -33,9 +33,9 @@ use Drupal\workflow\Entity\WorkflowTransitionInterface;
  * @return array
  *   The new actions, to be added to the entity list.
  */
-function hook_workflow_operations($op, Workflow $workflow = NULL, WorkflowState $state = NULL, WorkflowTransitionInterface $transition = NULL) {
-
+function hook_workflow_operations($op, EntityInterface $entity = NULL) {
   $operations = array();
+
   switch ($op) {
     case 'top_actions':
 //      workflow_debug(__FILE__, __FUNCTION__, __LINE__, $op);  // @todo D8-port: still test this snippet.
@@ -45,13 +45,41 @@ function hook_workflow_operations($op, Workflow $workflow = NULL, WorkflowState 
       return $operations;
 
     case 'operations':
+      break;
+
     case 'workflow':
+      // This example adds an operation to the 'operations column' of the Workflow List.
+      /* @var $workflow Workflow */
+      $workflow = $entity;
+
+      $alt = t('Control content access for @wf', array('@wf' => $workflow->label()));
+      $attributes = array('alt' => $alt, 'title' => $alt);
+      $operations['workflow_access_form'] = array(
+        'title' => t('Access'),
+        'weight' => 50,
+        // 'url' => $entity->urlInfo('access-form'),
+        // 'url' => \Drupal::url('access-form'),
+        'url' => \Drupal\Core\Url::fromRoute('entity.workflow_type.access_form', ['workflow_type' => $workflow->id()]),
+        // 'href' => "admin/config/workflow/workflow/manage/$workflow_type/access",
+        // 'attributes' => array('alt' => $alt, 'title' => $alt),
+        'query' => \Drupal::destination()->getAsArray(), // Add destination.
+      );
+      return $operations;
+
     case 'state':
+      /* @var $state WorkflowState */
+      $state = $entity;
+      break;
+
     case 'workflow_transition':
       // As of D8, below hook_workflow_operations is removed, in favour core hooks.
       // @see EntityListBuilder::getOperations, workflow_operations, workflow.api.php.
 
       // Your module may add operations to the Entity list.
+      /* @var $transition WorkflowTransitionInterface */
+      $transition = $entity;
+      break;
+
       return $operations;
 
     default:

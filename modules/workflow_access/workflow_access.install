@@ -1,0 +1,69 @@
+<?php
+
+/**
+ * @file
+ * Workflow access installation.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function workflow_access_schema() {
+  $schema['workflow_access'] = array(
+    'description' => 'Workflow access tables',
+    'fields' => array(
+      'sid' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'rid' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'grant_view' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'grant_update' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'grant_delete' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('sid', 'rid'),
+    'indexes' => array(
+      'rid' => array('rid'),
+    ),
+  );
+  return $schema;
+}
+
+/**
+ * Force rebuild of node access.
+ */
+function workflow_access_uninstall() {
+  node_access_needs_rebuild(TRUE);
+}
+
+/**
+ * Force rebuild of node access.
+ */
+function workflow_access_update_8000() {
+  node_access_needs_rebuild(TRUE);
+}

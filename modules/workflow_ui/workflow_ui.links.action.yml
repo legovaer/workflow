@@ -4,6 +4,7 @@
 workflow_type_add_action:
   route_name: entity.workflow_type.add_form
   title: 'Add workflow'
+  weight: 1
   appears_on:
     - entity.workflow_type.collection
 

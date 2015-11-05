@@ -305,9 +305,6 @@ class Workflow extends ConfigEntityBase {
    * The first State ID is user-dependent!
    */
   public function getFirstSid($entity, $field_name, AccountInterface $user, $force) {
-    // TODO D8-port: getFirstSid must be called from WorkflowElement.
-    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-
     $creation_state = $this->getCreationState();
     $options = $creation_state->getOptions($entity, $field_name, $user, $force);
     if ($options) {
