@@ -38,10 +38,8 @@ function hook_workflow_operations($op, EntityInterface $entity = NULL) {
 
   switch ($op) {
     case 'top_actions':
-//      workflow_debug(__FILE__, __FUNCTION__, __LINE__, $op);  // @todo D8-port: still test this snippet.
-      // The workflow_admin_ui module creates links to add a new state,
-      // and reach each workflow.
-      // Your module may add to these actions.
+      // As of D8, below hook_workflow_operations is removed, in favour of core hooks.
+      // @see file workflow_ui.links.action.yml for an example top action.
       return $operations;
 
     case 'operations':
@@ -72,7 +70,7 @@ function hook_workflow_operations($op, EntityInterface $entity = NULL) {
       break;
 
     case 'workflow_transition':
-      // As of D8, below hook_workflow_operations is removed, in favour core hooks.
+      // As of D8, below hook_workflow_operations is removed, in favour of core hooks.
       // @see EntityListBuilder::getOperations, workflow_operations, workflow.api.php.
 
       // Your module may add operations to the Entity list.

@@ -228,13 +228,22 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
   public function getDefaultOperations(EntityInterface $entity) {
     $operations = parent::getDefaultOperations($entity);
 
-    // As of D8, below hook_workflow_operations is removed, in favour core hooks.
+    /* @var $state \Drupal\workflow\Entity\WorkflowState */
+    $state = $entity;
+
+    // $workflow = $state->getWorkflow();
+
+    /**
+     * Allow modules to insert their own workflow operations to the list.
+     */
+    // This is what EntityListBuilder::getOperations() does:
+    // $operations = $this->getDefaultOperations($entity);
+    // $operations += $this->moduleHandler()->invokeAll('entity_operation', array($entity));
+    // $this->moduleHandler->alter('entity_operation', $operations, $entity);
+
+    // In D8, the interface of below hook_workflow_operations has changed a bit.
     // @see EntityListBuilder::getOperations, workflow_operations, workflow.api.php.
-//    // Allow other modules to insert operations per state.
-//    /* @var $state WorkflowState */
-//    $state = $entity;
-//    $workflow = $state->getWorkflow();
-//    $links = \Drupal::moduleHandler()->invokeAll('workflow_operations', ['state', $workflow, $state]);
+    $operations += $this->moduleHandler()->invokeAll('workflow_operations', array('state', $state));
 
     return $operations;
   }

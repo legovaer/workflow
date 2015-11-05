@@ -67,43 +67,43 @@ class WorkflowListBuilder extends ConfigEntityListBuilder {
       unset ($operations['delete']);
     }
 
-//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: 'top actions (via own routing??)');
-    // Allow modules to insert their own action links to the 'table', like cleanup module.
-    $top_actions = \Drupal::moduleHandler()->invokeAll('workflow_operations', ['top_actions', NULL]);
-    // @todo: add these top actions next to the core 'Add workflow' action.
-    $top_actions_args = array(
-      'links' => $top_actions,
-      'attributes' => array('class' => array('inline', 'action-links')),
-    );
-// $form['action-links'] = array(
-//       '#type' => 'markup',
-//       '#markup' => theme('links', $top_actions_args),
-//       '#weight' => -1,
-//     );
+    /**
+     * Allow modules to insert their own workflow operations to the list.
+     */
+    // This is what EntityListBuilder::getOperations() does:
+    // $operations = $this->getDefaultOperations($entity);
+    // $operations += $this->moduleHandler()->invokeAll('entity_operation', array($entity));
+    // $this->moduleHandler->alter('entity_operation', $operations, $entity);
 
-
-    // As of D8, below hook_workflow_operations is removed, in favour core hooks.
+    // In D8, the interface of below hook_workflow_operations has changed a bit.
     // @see EntityListBuilder::getOperations, workflow_operations, workflow.api.php.
-//    // Allow modules to insert their own workflow operations.
-//    foreach ($actions = \Drupal::moduleHandler()->invokeAll('workflow_operations', ['workflow', $workflow]) as $action) {
-//      $action['attributes'] = isset($action['attributes']) ? $action['attributes'] : array();
-//    }
-
-
-//    workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port:  'remove delete operation');
-    // Avoid the 'delete' operation if the Workflow is used somewhere.
-//    $status = $entity->status;
-//
-//    // @see parent::overviewTableRow() how to determine a deletable entity.
-//    if (!entity_has_status($this->entityType, $entity, ENTITY_IN_CODE) && !$entity->isDeletable())  {
-//      // Set to a state that does not allow deleting, but allows other actions.
-//      $entity->status = ENTITY_IN_CODE;
-//    }
-//
-//    // Just to be sure: reset status.
-//    $entity->status = $status;
+    $operations += $this->moduleHandler()->invokeAll('workflow_operations', array('workflow', $workflow));
 
     return $operations;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function render() {
+    $build = parent::render();
+
+    /**
+     * Allow modules to insert their own top_action links to the list, like cleanup module.
+     *
+     * This is not done anymore via the workflow hook.
+     * Instead, for an example:
+     *   @see workflow_ui.links.action.yml
+     *   @see workflow.api.php under 'hook_workflow_operations'.
+     */
+    // $top_actions = \Drupal::moduleHandler()
+    //   ->invokeAll('workflow_operations', array('top_actions', NULL));
+    // $top_actions_args = array(
+    //   'links' => $top_actions,
+    //   'attributes' => array('class' => array('inline', 'action-links')),
+    // );
+
+    return $build;
   }
 
 }
