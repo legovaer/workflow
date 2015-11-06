@@ -26,7 +26,7 @@ use Drupal\workflow\Entity\WorkflowTransition;
  *    'cache' => DRUPAL_NO_CACHE, // DRUPAL_CACHE_PER_ROLE will be assumed.
  *
  * @Block(
-   *   id = "workflow_transition_form_block",
+ *   id = "workflow_transition_form_block",
  *   admin_label = @Translation("Workflow Transition form"),
  *   category = @Translation("Forms")
  * )
@@ -38,12 +38,14 @@ class WorkflowTransitionBlock extends BlockBase  {
    */
   protected function blockAccess(AccountInterface $account) {
     /* @var $entity EntityInterface */
-    $entity = workflow_url_get_entity();
+    if (!$entity = workflow_url_get_entity()) {
+      return AccessResult::forbidden();
+    }
 
     // Only show block on entity view page (when default operation = '').
     if ($operation = workflow_url_get_operation()) {
       return AccessResult::forbidden();
-    };
+    }
 
     // Only show block if entity has workflow, and user has permission.
     foreach (_workflow_info_fields($entity) as $definition) {

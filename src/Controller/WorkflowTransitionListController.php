@@ -90,13 +90,14 @@ class WorkflowTransitionListController extends EntityListController implements C
     // On view tab, $entity is object,
     // On workflow tab, $entity is id().
     // Get the entity for this form.
-    $entity = workflow_url_get_entity($node);
+    if (!$entity = workflow_url_get_entity($node)) {
+      return $form;
+    }
 
     /*
      * Get derived data from parameters.
      */
-    $field_name = workflow_get_field_name($entity);
-    if (!$field_name) {
+    if (!$field_name = workflow_get_field_name($entity)) {
       return $form;
     }
 
