@@ -13,12 +13,14 @@ function workflow_access_schema() {
     'description' => 'Workflow access tables',
     'fields' => array(
       'sid' => array(
+        'description' => 'The Workflow state ID.',
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
         'default' => '',
       ),
       'rid' => array(
+        'description' => 'The User role ID.',
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
