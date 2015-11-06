@@ -19,13 +19,20 @@ use Drupal\user\Entity\Role;
 interface WorkflowManagerInterface {
 
   /**
-   * Execute a transition. The $force and schedule must be (un)set upfront.
-   *   If $transition->isScheduled() == TRUE, the Transition will only be
-   *     saved in the {workflow_transition_scheduled} table.
-   *   If $transition->isScheduled() == FALSE, the Transition will be
-   *     removed from the {workflow_transition_scheduled} table (if necessary),
-   *     and added to {workflow_transition_history} table.
-   *     Then the entity wil be updated to reflect the new status.
+   * Executes a transition (change state of an entity), from OUTSIDE the entity.
+   *
+   * Use WorkflowManager::executeTransition() to start a State Change from
+   *   outside an entity, e.g., workflow_cron().
+   * Use $transition->execute() to start a State Change from within an entity.
+   *
+   * A Scheduled Transition ($transition->isScheduled() == TRUE) will be
+   *   un-scheduled and saved in the history table.
+   *   The entity will not be updated.
+   * If $transition->isScheduled() == FALSE, the Transition will be
+   *   removed from the {workflow_transition_scheduled} table (if necessary),
+   *   and added to {workflow_transition_history} table.
+   *   Then the entity wil be updated to reflect the new status.
+   *
    *  If $transition->isForced() == TRUE, transisiton permissions will be
    *    bypassed.
    *
@@ -33,16 +40,20 @@ interface WorkflowManagerInterface {
    *   $transition->force($force);
    *   $transition->schedule(FALSE);
    *   $to_sid = Workflow::workflowManager()->executeTransition($transition);
+   *
    * @see workflow_execute_transition()
    *
    * @param \Drupal\workflow\Entity\WorkflowTransitionInterface $transition
+   *   A WorkflowTransition or WorkflowScheduledTransition.
+   * @param bool $force
+   *   If set to TRUE, workflow permissions will be ignored.
    *
    * @return string $to_sid
    *   The resulting WorkflowState id.
    */
-  public function executeTransition(WorkflowTransitionInterface $transition);
+  public function executeTransition(WorkflowTransitionInterface $transition, $force);
 
-    /**
+  /**
    * Given a timeframe, execute all scheduled transitions.
    *
    * Implements hook_cron().

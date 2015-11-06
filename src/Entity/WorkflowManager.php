@@ -27,7 +27,14 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  public function executeTransition(WorkflowTransitionInterface $transition) {
+  public function executeTransition(WorkflowTransitionInterface $transition, $force = FALSE) {
+    // The transition is not scheduled anymore.
+    $transition->schedule(FALSE);
+
+    if ($force) {
+      $transition->force($force);
+    }
+
     $update_entity = (!$transition->isScheduled() && !$transition->isExecuted());
 
     // Validate transition, save in history table and delete from schedule table.

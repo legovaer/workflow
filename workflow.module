@@ -149,34 +149,9 @@ function workflow_cron() {
  */
 
 /**
- * Executes a transition (change state of an entity), from OUTSIDE the entity.
- * A Scheduled Transition will be un-scheduled and save in the history table.
- * The entity will be updated with the current workflow field value.
- *
- * Use workflow_execute_transition($transition) to start a State Change from
- * outside an entity, e.g., workflow_cron().
- * Use $transition->execute() to start a State Change from within an entity.
- *
- *
- * @param WorkflowTransitionInterface $transition
- *   A WorkflowTransition or WorkflowScheduledTransition.
- * @param bool $force
- *   If set to TRUE, workflow permissions will be ignored.
- *
- * @return string
- *   The new WorkflowState ID.
+ * @deprecated D8: @see WorkflowManager::executeTransition().
  */
 function workflow_execute_transition(WorkflowTransitionInterface $transition, $force = FALSE) {
-
-  /*
-   * Step 1: Update the Transition in the History/Schedule tables.
-   */
-  if ($force) {
-    $transition->force($force);
-  }
-  // The transition is not scheduled anymore.
-  $transition->schedule(FALSE);
-
   // Execute transition and update the attached entity.
   return Workflow::workflowManager()->executeTransition($transition);
 }
@@ -322,7 +297,7 @@ function workflow_get_sid_name($sid) {
 
 /**
  * Determines the Workflow field_name of an entity.
- * If an entity has more workflows, only rturns the first one.
+ * If an entity has multiple workflows, only returns the first one.
  *
  * @param \Drupal\Core\Entity\EntityInterface $entity
  *   The entity at hand.
