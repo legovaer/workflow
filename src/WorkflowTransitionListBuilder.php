@@ -2,10 +2,10 @@
 
 /**
  * @file
- * Contains \Drupal\workflow\Controller\WorkflowTransitionListBuilder.
+ * Contains \Drupal\workflow\WorkflowTransitionListBuilder.
  */
 
-namespace Drupal\workflow\Controller;
+namespace Drupal\workflow;
 
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Entity\EntityListBuilder;

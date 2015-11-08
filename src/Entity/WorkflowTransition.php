@@ -29,7 +29,7 @@ use Drupal\user\UserInterface;
  *   module = "workflow",
  *   handlers = {
  *     "access" = "Drupal\workflow\WorkflowAccessControlHandler",
- *     "list_builder" = "Drupal\workflow\Controller\WorkflowTransitionListBuilder",
+ *     "list_builder" = "Drupal\workflow\WorkflowTransitionListBuilder",
  *     "form" = {
  *        "add" = "Drupal\workflow\Form\WorkflowTransitionForm",
  *        "edit" = "Drupal\workflow\Form\WorkflowTransitionForm",

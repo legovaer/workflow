@@ -40,7 +40,7 @@ class WorkflowTransitionListController extends EntityListController implements C
   protected $renderer;
 
   /**
-   * Constructs an  object.
+   * Constructs an object.
    *
    * @param \Drupal\Core\Datetime\DateFormatter $date_formatter
    *   The date formatter service.
