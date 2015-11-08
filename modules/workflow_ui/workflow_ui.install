@@ -9,10 +9,11 @@
  * Implements hook_install().
  */
 function workflow_ui_install() {
-  // TODO D8-port: the display of the link is not OK.
+  $url = \Drupal\Core\Url::fromRoute('user.admin_permissions', [],
+    ['fragment' => 'module-workflow']);
   $message = t("Please review which roles may 'participate in workflows'
-      <a href='!url'>on the Permissions page</a>.",
-    array('!url' => \Drupal::url('user.admin_permissions')));
+    <a href=':url'>on the Permissions page</a>.",
+    array(':url' => $url->toString()));
   drupal_set_message($message);
 }
 

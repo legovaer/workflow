@@ -18,27 +18,24 @@ function workflow_access_help($route_name, RouteMatchInterface $route_match) {
 
   switch ($route_name) {
     case 'entity.workflow_type.access_form':
-      // @FIXME // url() expects a route name or an external URI.
-      $url = \Drupal::url('workflow.access.settings');
+      $url = \Drupal\Core\Url::fromRoute('workflow.access.settings');
       $output .= t("WARNING: Use of the 'Edit any', 'Edit own', and even 'View
         published content' permissions for the content type may override these
-        access settings. You may need to <a href='!url'>alter the priority of
-        the Workflow access module</a>.", array('!url' => $url)
+        access settings. You may need to <a href=':url'>alter the priority of
+        the Workflow access module</a>.", array(':url' => $url->toString())
       );
       if (\Drupal::moduleHandler()->moduleExists('og')) {
         $output .= '<br>';
         $output .= t('WARNING: Organic Groups (OG) is present and may interfere
           with these settings.');
-        $output .= ' ';
-        // @FIXME // url() expects a route name or an external URI.
-        //$url = Url::fromRoute('admin/config/group/settings');
-        //$url = \Drupal::url('admin/config/group/settings');
-        $url = \Drupal::url('<front>');
-        $output .= t("In particular, if <a href=':url'>Strict node access
-          permissions</a> is enabled, since this may override Workflow access
-          settings.", array(':url' => $url)
-        );
-
+//        $output .= ' ';
+//        $url = \Drupal\Core\Url::fromUri('admin/config/group/settings'); // @todo D8: FIXME when OG module is ported.
+//        $output .= t("In particular, if <a href=':url'>Strict node access
+//          permissions</a> is enabled, since this may override Workflow access
+//          settings.", array(':url' => $url));
+        $output .= t("In particular, if <i>Strict node access
+          permissions</i> is enabled, since this may override Workflow access
+          settings.");
       }
       break;
 

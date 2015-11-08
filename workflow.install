@@ -9,15 +9,11 @@
  * Implements hook_install().
  */
 function workflow_install() {
-//  workflow_debug(__FILE__), __FUNCTION__, __LINE__, $form_id);  // @todo D8-port: still test this snippet.
-  // TODO D8-port: the display of the link is not OK.
-  // TODO: Add the suffix: /admin/modules#edit-modules-workflow .
-  $message = t('Thanks for using Workflow. To maintain workflows, enable the
-    <a href="!url">Workflow UI module</a>. To start using a Workflow, add
-    a Workflow Field to your entity.',
-    array(
-      '!url' => \Drupal::url('system.modules_list'),
-    )
+  $url = \Drupal\Core\Url::fromRoute('system.modules_list', [], ['fragment' => 'edit-modules-workflow']);
+  $message = t('Thanks for using Workflow. To maintain workflows,
+    <a href=":url">install the Workflow UI module</a>. To start using
+    a Workflow, add a Workflow Field to your entity.',
+    array(':url' => $url->toString())
   );
   drupal_set_message($message);
 }
@@ -26,8 +22,7 @@ function workflow_install() {
  * Implements hook_uninstall().
  */
 function workflow_uninstall() {
-// // @FIXME
-//  \Drupal::config('workflow.settings')->clear('workflow_states_per_page')->save();
+//  \Drupal::config('workflow.settings')->clear('workflow_states_per_page')->save(); // @FIXME
 }
 
 /**

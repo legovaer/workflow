@@ -34,7 +34,7 @@ class WorkflowAccessSettingsForm implements FormInterface { // extends FormBase 
     );
     $form['workflow_access']['#tree'] = TRUE;
 
-    $url = '';// @todo D8-port: $url = \Drupal\Core\Url::fromUri('https://api.drupal.org/api/drupal/core%21modules%21node%21node.api.php/function/hook_node_access_records/8');
+    $url = 'https://api.drupal.org/api/drupal/core%21modules%21node%21node.api.php/function/hook_node_access_records/8';
     $form['workflow_access']['workflow_access_priority'] = array(
       '#type' => 'weight',
       '#delta' => 10,
@@ -42,7 +42,7 @@ class WorkflowAccessSettingsForm implements FormInterface { // extends FormBase 
       '#default_value' => \Drupal::config('workflow_access.settings')->get('workflow_access_priority'),
       '#description' => t('This sets the node access priority. Changing this
       setting can be dangerous. If there is any doubt, leave it at 0.
-      <a href="@url">Read the manual at https://api.drupal.org/api/drupal/core%21modules%21node%21node.api.php/function/hook_node_access_records/8 .</a>', array('@url' => $url)),
+      <a href=":url" target="_blank">Read the manual</a>.', array(':url' => $url)),
     );
 
     $form += $this->actionsElement($form, $form_state);

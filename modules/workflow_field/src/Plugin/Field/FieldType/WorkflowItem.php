@@ -17,7 +17,6 @@ use Drupal\Core\Form\OptGroup;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\TypedData\DataDefinition;
 use Drupal\Core\TypedData\OptionsProviderInterface;
-use Drupal\Core\Url;
 use Drupal\options\Plugin\Field\FieldType\ListItemBase;
 use Drupal\workflow\Entity\Workflow;
 use Drupal\workflow\Entity\WorkflowState;
@@ -225,17 +224,16 @@ class WorkflowItem extends ListItemBase {
 
     // Let the user choose between the available workflow types.
     $wid = $this->getSetting('workflow_type');
-    $url = Url::fromRoute('entity.workflow_type.collection');
-    $element['workflow_type'] = array( // TODO D8-port: check this change-record.
+    $url = \Drupal\Core\Url::fromRoute('entity.workflow_type.collection');
+    $element['workflow_type'] = array(
       '#type' => 'select',
       '#title' => t('Workflow type'),
       '#options' => $workflows,
       '#default_value' => $wid,
       '#required' => TRUE,
       '#disabled' => $has_data,
-      // FIXME TODO D8-port: repair link.
-//      '#description' => t('Choose the Workflow type. Maintain workflows !url.', array('!url' => t('here'), $url)),
-      '#description' => t('Choose the Workflow type. Maintain workflows first.'),
+      '#description' => t('Choose the Workflow type. Maintain workflows
+         <a href=":url">here</a>.', array(':url' => $url->toString())),
     );
 
     // Get a string representation to show all options.

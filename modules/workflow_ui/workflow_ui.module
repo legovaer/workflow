@@ -32,6 +32,8 @@ function workflow_ui_help($route_name, RouteMatchInterface $route_match) {
         content.");
 
     case 'entity.workflow_transition.collection':
+      $url = \Drupal\Core\Url::fromRoute('user.admin_permissions', [],
+        ['fragment' => 'module-workflow']);
       return t('You are currently viewing the possible transitions to and from
         workflow states. The state is shown in the left column; the state to be
         moved to is to the right. For each transition, check the box next to
@@ -41,8 +43,8 @@ function workflow_ui_help($route_name, RouteMatchInterface $route_match) {
         role is built in and refers to the user who authored the content.')
       . '<br /><i>'
       . t("If not all roles are in the list, please review which roles may
-        'participate in workflows' <a href='!url'> on the Permissions page</a>.",
-        array('!url' => "/admin/people/permissions#module-workflow"));
+        'participate in workflows' <a href=':url'>on the Permissions page</a>.",
+        array(':url' => $url->toString()));
 
     case 'entity.workflow_label.collection':
       return t('You can add labels to transitions if you don\'t like the

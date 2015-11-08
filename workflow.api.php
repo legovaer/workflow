@@ -55,11 +55,7 @@ function hook_workflow_operations($op, EntityInterface $entity = NULL) {
       $operations['workflow_access_form'] = array(
         'title' => t('Access'),
         'weight' => 50,
-        // 'url' => $entity->urlInfo('access-form'),
-        // 'url' => \Drupal::url('access-form'),
         'url' => \Drupal\Core\Url::fromRoute('entity.workflow_type.access_form', ['workflow_type' => $workflow->id()]),
-        // 'href' => "admin/config/workflow/workflow/manage/$workflow_type/access",
-        // 'attributes' => array('alt' => $alt, 'title' => $alt),
         'query' => \Drupal::destination()->getAsArray(), // Add destination.
       );
       return $operations;
