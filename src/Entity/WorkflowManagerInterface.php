@@ -51,7 +51,7 @@ interface WorkflowManagerInterface {
    * @return string $to_sid
    *   The resulting WorkflowState id.
    */
-  public function executeTransition(WorkflowTransitionInterface $transition, $force);
+  public static function executeTransition(WorkflowTransitionInterface $transition, $force);
 
   /**
    * Given a timeframe, execute all scheduled transitions.
@@ -61,7 +61,7 @@ interface WorkflowManagerInterface {
    * @param int $start
    * @param int $end
    */
-  public function executeScheduledTransitionsBetween($start = 0, $end = 0);
+  public static function executeScheduledTransitionsBetween($start = 0, $end = 0);
 
   /**
    * Execute a single transition for the given entity.
@@ -77,7 +77,7 @@ interface WorkflowManagerInterface {
    *
    * @param \Drupal\workflow\Entity\Drupal\Core\Entity\EntityInterface $entity
    */
-  public function executeTransitionsOfEntity(EntityInterface $entity);
+  public static function executeTransitionsOfEntity(EntityInterface $entity);
 
   /********************************************************************
    *
@@ -90,14 +90,14 @@ interface WorkflowManagerInterface {
    *
    * Make sure some roles are allowed to participate in a Workflow by default.
    */
-  public function participateUserRoles(Workflow $workflow);
+  public static function participateUserRoles(Workflow $workflow);
 
   /**
    * Implements hook_user_delete().
    *
    * @param \Drupal\Core\Session\AccountInterface $account
    */
-  public function deleteUser(AccountInterface $account);
+  public static function deleteUser(AccountInterface $account);
 
   /**
    * Implements hook_user_cancel().
@@ -114,7 +114,7 @@ interface WorkflowManagerInterface {
    * @param \Drupal\Core\Session\AccountInterface $account
    * @param string $method
    */
-  public function cancelUser($edit, AccountInterface $account, $method);
+  public static function cancelUser($edit, AccountInterface $account, $method);
 
   /********************************************************************
    *
@@ -139,7 +139,7 @@ interface WorkflowManagerInterface {
    * @return string $sid
    *   The ID of the current state.
    */
-  public function getCurrentStateId(EntityInterface $entity, $field_name = '');
+  public static function getCurrentStateId(EntityInterface $entity, $field_name = '');
 
   /**
    * Gets the previous state ID of a given entity.
@@ -150,7 +150,7 @@ interface WorkflowManagerInterface {
    * @return string $sid
    *   The ID of the previous state.
    */
-  public function getPreviousStateId(EntityInterface $entity, $field_name = '');
+  public static function getPreviousStateId(EntityInterface $entity, $field_name = '');
 
   /**
    * Determins if User is owner/author of the entity.

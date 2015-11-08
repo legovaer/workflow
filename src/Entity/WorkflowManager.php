@@ -27,7 +27,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  public function executeTransition(WorkflowTransitionInterface $transition, $force = FALSE) {
+  static public function executeTransition(WorkflowTransitionInterface $transition, $force = FALSE) {
     // The transition is not scheduled anymore.
     $transition->schedule(FALSE);
 
@@ -62,7 +62,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  public function executeScheduledTransitionsBetween($start = 0, $end = 0) {
+  public static function executeScheduledTransitionsBetween($start = 0, $end = 0) {
     $clear_cache = FALSE;
 
     // If the time now is greater than the time to execute a transition, do it.
@@ -112,7 +112,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  public function executeTransitionsOfEntity(EntityInterface $entity) {
+  public static function executeTransitionsOfEntity(EntityInterface $entity) {
     // Avoid this hook on workflow objects.
     if (in_array($entity->getEntityTypeId(), [
       'workflow_type',
@@ -147,7 +147,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  public function deleteUser(AccountInterface $account) {
+  public static function deleteUser(AccountInterface $account) {
     workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     self::cancelUser([], $account, 'user_cancel_delete');
   }
@@ -155,7 +155,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  public function cancelUser($edit, AccountInterface $account, $method) {
+  public static function cancelUser($edit, AccountInterface $account, $method) {
 
     switch ($method) {
       case 'user_cancel_block': // Disable the account and keep its content.
@@ -191,7 +191,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  public function participateUserRoles(Workflow $workflow) {
+  public static function participateUserRoles(Workflow $workflow) {
     $type_id = $workflow->id();
     foreach (user_roles() as $rid => $role) {
       $perms = array("create $type_id workflow_transition" => 1);
@@ -202,7 +202,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  public function getCurrentStateId(EntityInterface $entity, $field_name = '') {
+  public static function getCurrentStateId(EntityInterface $entity, $field_name = '') {
     $sid = '';
 
     if (!$entity) {
@@ -223,7 +223,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       // No current state. Use creation state.
       // (E.g., content was created before adding workflow.)
       if (!$sid) {
-        $sid = $this->getCreationStateId($entity, $field_name);
+        $sid = self::getCreationStateId($entity, $field_name);
       }
     }
     return $sid;
@@ -232,7 +232,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  public function getPreviousStateId(EntityInterface $entity, $field_name = '') {
+  public static function getPreviousStateId(EntityInterface $entity, $field_name = '') {
     $sid = '';
 
     if (!$entity) {
@@ -255,7 +255,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       if (!$sid) {
         if ($entity->isNew()) {
           // A new Node. D7: $is_new is not set when saving terms, etc.
-          $sid = $this->getCreationStateId($entity, $field_name);
+          $sid = self::getCreationStateId($entity, $field_name);
         }
         elseif (!$sid) {
           // @todo?: Read the history with an explicit langcode.
@@ -270,7 +270,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       if (!$sid) {
         workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
         // No history found on an existing entity.
-        $sid = $this->getCreationStateId($entity, $field_name);
+        $sid = self::getCreationStateId($entity, $field_name);
       }
     }
 

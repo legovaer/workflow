@@ -15,9 +15,10 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\workflow\Entity\WorkflowManager;
 use Drupal\workflow\Entity\WorkflowState;
 use Drupal\workflow\Entity\WorkflowTransition;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a default workflow formatter.
@@ -151,12 +152,17 @@ class WorkflowDefaultFormatter extends FormatterBase implements ContainerFactory
     // @todo: Perhaps global user is not always the correct user.
     // E.g., on ScheduledTransition->execute()? But this function is mostly used in UI.
 
-    $current_sid = workflow_node_current_state($entity, $field_name);
+    $current_sid = WorkflowManager::getCurrentStateId($entity, $field_name);
     /* @var $current_state WorkflowState */
     $current_state = WorkflowState::load($current_sid);
 
     // First compose the current value with the normal formatter from list.module.
     $elements = workflow_state_formatter($entity, $field_name, $current_sid);
+
+    // The state must not be deleted, or corrupted.
+    if (!$current_state) {
+      return $elements;
+    }
 
     // Check permission, so that even with state change rights,
     // the form can be suppressed from the entity view (#1893724).

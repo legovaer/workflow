@@ -339,17 +339,20 @@ class Workflow extends ConfigEntityBase {
    *
    */
   public function getNextSid($entity, $field_name, $user, $force = FALSE) {
-    $new_sid = $this->id();
+    $new_sid = FALSE;
 
-    $options = $this->getOptions($entity, $field_name, $user, $force);
+    $current_sid = WorkflowManager::getCurrentStateId($entity, $field_name);
+    $current_state = WorkflowState::load($current_sid);
+    $options = $current_state->getOptions($entity, $field_name, $user, $force);
     // Loop over every option. To find the next one.
-    $flag = $this->isCreationState();
+    $flag = $current_state->isCreationState();
+    $new_sid = $current_state->id();
     foreach ($options as $sid => $name) {
       if ($flag) {
         $new_sid = $sid;
         break;
       }
-      if ($sid == $this->id()) {
+      if ($sid == $current_state->id()) {
         $flag = TRUE;
       }
     }
