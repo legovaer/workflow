@@ -25,6 +25,7 @@ use Drupal\workflow\Entity\WorkflowState;
 use Drupal\workflow\Entity\WorkflowTransitionInterface;
 
 module_load_include('inc', 'workflow', 'workflow.form');
+module_load_include('inc', 'workflow', 'workflow.field');
 
 /**********************************************************************
  *

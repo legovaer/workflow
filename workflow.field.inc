@@ -21,7 +21,7 @@ use Drupal\workflow\Entity\WorkflowState;
  * @todo: perhaps this is core functionality, but these values are only saved
  *        when the site builder explicitly save the instance settings. :-(
  */
-function workflowfield_form_field_storage_config_edit_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+function workflow_form_field_storage_config_edit_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   $field_name = $form_state->getFormObject()->getEntity()->getType();
 
   if ($field_name == 'workflow') {
@@ -37,7 +37,7 @@ function workflowfield_form_field_storage_config_edit_form_alter(&$form, FormSta
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function workflowfield_form_field_config_edit_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+function workflow_form_field_config_edit_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   $field_name = $form_state->getFormObject()->getEntity()->getType();
 
   if ($field_name == 'workflow') {
@@ -59,7 +59,7 @@ function workflowfield_form_field_config_edit_form_alter(&$form, FormStateInterf
  *
  * The module reuses the formatters defined in list.module.
  */
-function workflowfield_field_formatter_info_alter(&$info) {
+function workflow_field_formatter_info_alter(&$info) {
   $info['list_key']['field_types'][] = 'workflow';
   $info['list_default']['field_types'][] = 'workflow';
 }
@@ -70,9 +70,9 @@ function workflowfield_field_formatter_info_alter(&$info) {
  * The module does not implement widgets of its own, but reuses the
  * widgets defined in options.module.
  *
- * @see workflowfield_options_list()
+ * @see workflow_options_list()
  */
-function workflowfield_field_widget_info_alter(&$info) {
+function workflow_field_widget_info_alter(&$info) {
   $info['options_select']['field_types'][] = 'workflow';
   $info['options_buttons']['field_types'][] = 'workflow';
 }
@@ -112,4 +112,44 @@ function workflow_state_allowed_values(FieldStorageDefinitionInterface $definiti
   }
 
   return $allowed_options;
+}
+
+
+/**
+ * Creates a form element to show the current value of a Workflow state.
+ *
+ * @param EntityInterface $entity
+ *   The entity this field is on.
+ * @param string $field_name
+ *   The field_name
+ * @param string $current_sid
+ *   The current State Id.
+ *
+ * @return array
+ *   Form element, resembling the formatter of List module.
+ *   If state 0 is given, return an empty form element.
+ */
+function workflow_state_formatter($entity, $field_name, $current_sid = '') {
+  $element = array();
+
+  if (!$current_sid) {
+    $current_sid = workflow_node_current_state($entity, $field_name);
+  }
+  // Add the 'current value' formatter for this field.
+  // $list_display = $instance['display']['default'];
+  $list_display['type'] = 'list_default';
+  // Clone the entity and restore old value, in case you want to show an
+  // executed transition.
+  if ($entity->$field_name->value != $current_sid) {
+    $entity = clone $entity;
+    $entity->$field_name->value = $current_sid;
+  }
+  // Generate a renderable array for the field. Use default language determination ($langcode = NULL).
+  $element = $entity->$field_name->view($list_display);
+
+  // TODO D8: make weight better (even better: hook_field_extra_fields).
+  // Make sure the current value is before the form. (which has weight = 0.005)
+  // $element['#weight'] = 0;
+
+  return $element;
 }
