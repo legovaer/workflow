@@ -18,9 +18,6 @@ define('WORKFLOW_CREATION_STATE_NAME', '(' . t('creation') . ')');
 define('WORKFLOW_ROLE_AUTHOR_NAME', '(' . t('author') . ')');
 define('WORKFLOW_ROLE_AUTHOR_RID', 'workflow_author');
 
-// The definition of the Field_info property type. Shared between 'workflow_field' and 'workflow_rules'.
-define('WORKFLOWFIELD_PROPERTY_TYPE', 'text'); // @todo: 'list', 'text' or 'workflow'?
-
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\workflow\Entity\Workflow;
@@ -557,5 +554,5 @@ function workflow_debug($class_name, $function_name, $line = '', $value1 = '', $
   if ($value2) {
     $output .= ' > ' . $value2;
   }
-  drupal_set_message($output, 'warning');
+  drupal_set_message($output, 'warning', TRUE);
 }
