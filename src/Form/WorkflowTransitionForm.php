@@ -7,6 +7,7 @@
 
 namespace Drupal\workflow\Form;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -54,6 +55,7 @@ class WorkflowTransitionForm extends ContentEntityForm {
       $suffix = 'form';
     }
     $form_id = implode('_', array('workflow_transition', $field_name, $suffix));
+    $form_id = Html::getUniqueId($form_id);
 
     return $form_id;
   }
@@ -84,6 +86,7 @@ class WorkflowTransitionForm extends ContentEntityForm {
   public function form(array $form, FormStateInterface $form_state) {
     // $form = parent::form($form, $form_state);
 
+    /* @var $transition WorkflowTransitionInterface */
     $transition = $this->entity;
 
     /*
