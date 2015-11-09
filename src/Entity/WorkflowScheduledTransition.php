@@ -22,12 +22,14 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *   bundle_label = @Translation("Workflow type"),
  *   module = "workflow",
  *   handlers = {
+ *     "list_builder" = "Drupal\workflow\WorkflowTransitionListBuilder",
  *     "views_data" = "Drupal\workflow\WorkflowScheduledTransitionViewsData",
  *   },
  *   base_table = "workflow_transition_schedule",
  *   translatable = FALSE,
  *   entity_keys = {
  *     "id" = "tid",
+ *     "langcode" = "langcode",
  *   },
  *   links = {
  *     "canonical" = "/workflow_transition/{workflow_transition}",
