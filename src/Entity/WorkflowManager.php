@@ -27,10 +27,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * {@inheritdoc}
    */
-  static public function executeTransition(WorkflowTransitionInterface $transition, $force = FALSE) {
-    // The transition is not scheduled anymore.
-    $transition->schedule(FALSE);
-
+  public static function executeTransition(WorkflowTransitionInterface $transition, $force = FALSE) {
     if ($force) {
       $transition->force($force);
     }
@@ -88,6 +85,8 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
         // Do transition. Force it because user who scheduled was checked.
         // The scheduled transition is not scheduled anymore, and is also deleted from DB.
         // A watchdog message is created with the result.
+        $scheduled_transition->schedule(FALSE);
+        $scheduled_transition->force(TRUE);
         workflow_execute_transition($scheduled_transition, TRUE);
 
         if (!$field_name) {
