@@ -289,7 +289,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
    * @return string $sid
    *   The ID of the creation State for the Workflow of the field.
    */
-  private function getCreationStateId($entity, $field_name) {
+  private static function getCreationStateId($entity, $field_name) {
     $sid = '';
 
     $field_config = $entity->get($field_name)->getFieldDefinition();

@@ -168,7 +168,6 @@ class WorkflowDefaultFormatter extends FormatterBase implements ContainerFactory
     // the form can be suppressed from the entity view (#1893724).
     $type_id = $current_state->getWorkflowId();
     if (!\Drupal::currentUser()->hasPermission("access $type_id workflow_transition form")) {
-      workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
       return $elements;
     }
 
@@ -193,6 +192,9 @@ class WorkflowDefaultFormatter extends FormatterBase implements ContainerFactory
     // Create a transition, to pass to the form.
     $transition = WorkflowTransition::create();
     $transition->setValues($entity, $field_name, $current_sid, '', $user->id());
+
+    // Remove the default formatter. We are now building the widget.
+    $elements = array();
 
     // BEGIN Copy from CommentDefaultFormatter
     $elements['#cache']['contexts'][] = 'user.permissions';
