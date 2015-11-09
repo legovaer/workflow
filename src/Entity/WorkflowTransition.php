@@ -42,6 +42,7 @@ use Drupal\user\UserInterface;
  *   translatable = FALSE,
  *   entity_keys = {
  *     "id" = "hid",
+ *     "langcode" = "langcode",
  *   },
  *   links = {
  *     "canonical" = "/workflow/transition/{workflow_transition}",
