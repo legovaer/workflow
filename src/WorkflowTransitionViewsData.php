@@ -19,8 +19,17 @@ class WorkflowTransitionViewsData extends EntityViewsData {
    */
   public function getViewsData() {
     $data = parent::getViewsData();
-    // @todo D8-port: Add some data from D7 function workflow_views_views_data_alter() ??
+
+    // Use flexible $base_table, since both WorkflowTransition and
+    // WorkflowScheduledTransition use this.
+    $base_table = $this->entityType->getBaseTable();
+    $base_field = $this->entityType->getKey('id');
+
+    // @todo D8-port: Add data from D7 function workflow_views_views_data_alter()
     // @see http://cgit.drupalcode.org/workflow/tree/workflow_views/workflow_views.views.inc
+    $data[$base_table]['from_sid']['filter']['id'] = 'workflow_state';
+    $data[$base_table]['to_sid']['filter']['id'] = 'workflow_state';
+
     return $data;
   }
 
