@@ -20,8 +20,11 @@ define('WORKFLOW_ROLE_AUTHOR_RID', 'workflow_author');
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\workflow\Entity\Workflow;
 use Drupal\workflow\Entity\WorkflowState;
+use Drupal\workflow\Entity\WorkflowScheduledTransition;
+use Drupal\workflow\Entity\WorkflowTransition;
 use Drupal\workflow\Entity\WorkflowTransitionInterface;
 
 module_load_include('inc', 'workflow', 'workflow.form');
@@ -130,6 +133,27 @@ function workflow_entity_update(EntityInterface $entity) {
   ])) {
     // Execute/save the transitions fom the widgets in the entity form.
     Workflow::workflowManager()->executeTransitionsOfEntity($entity);
+  }
+}
+
+/**
+ * Implements hook_entity_delete().
+ *
+ * Delete the corresponding workflow table records.
+ */
+function workflow_entity_delete(EntityInterface $entity) {
+
+  foreach($fields = _workflow_info_fields($entity) as $field_id => $field_storage) {
+    /* @var $field_storage FieldStorageConfig */
+    $entity_type = $field_storage->getTargetEntityTypeId();
+    $entity_id = $entity->id();
+    $field_name = $field_storage->get('field_name');
+    foreach (WorkflowScheduledTransition::loadMultipleByProperties($entity_type, [$entity_id], [], $field_name) as $scheduled_transition) {
+      $scheduled_transition->delete();
+    }
+    foreach (WorkflowTransition::loadMultipleByProperties($entity_type, [$entity_id], [], $field_name) as $transition) {
+      $transition->delete();
+    }
   }
 }
 

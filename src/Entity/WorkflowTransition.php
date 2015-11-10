@@ -258,10 +258,14 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     /* @var $query \Drupal\Core\Entity\Query\QueryInterface */
     $query = \Drupal::entityQuery($transition_type)
       ->condition('entity_type', $entity_type)
-      ->condition('entity_id', $entity_ids, 'IN')
-// @todo     ->condition('revision_id', $revision_ids, 'IN')
       ->sort('timestamp', $sort) // 'DESC' || 'ASC'
       ->addTag($transition_type);
+    if (!empty($entity_ids)) {
+      $query->condition('entity_id', $entity_ids, 'IN');
+    }
+    if (!empty($revision_ids)) {
+      $query->condition('revision_id', $entity_ids, 'IN');
+    }
     if ($field_name != '') {
       $query->condition('field_name', $field_name, '=');
     }
