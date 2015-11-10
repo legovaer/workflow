@@ -142,17 +142,39 @@ function workflow_entity_update(EntityInterface $entity) {
  * Delete the corresponding workflow table records.
  */
 function workflow_entity_delete(EntityInterface $entity) {
-
-  foreach($fields = _workflow_info_fields($entity) as $field_id => $field_storage) {
-    /* @var $field_storage FieldStorageConfig */
-    $entity_type = $field_storage->getTargetEntityTypeId();
-    $entity_id = $entity->id();
-    $field_name = $field_storage->get('field_name');
-    foreach (WorkflowScheduledTransition::loadMultipleByProperties($entity_type, [$entity_id], [], $field_name) as $scheduled_transition) {
+  // @todo D8: test with multiple workflows.
+  if (get_class($entity) == 'Drupal\field\Entity\FieldConfig'
+    || get_class($entity) == 'Drupal\field\Entity\FieldStorageConfig') {
+    // A workflow_field is removed from an entity.
+    $field_config = $entity;
+    $entity_type = $field_config->get('entity_type');
+    $field_name = $field_config->get('field_name');
+    foreach (WorkflowScheduledTransition::loadMultipleByProperties($entity_type, [], [], $field_name) as $scheduled_transition) {
       $scheduled_transition->delete();
     }
-    foreach (WorkflowTransition::loadMultipleByProperties($entity_type, [$entity_id], [], $field_name) as $transition) {
+    foreach (WorkflowTransition::loadMultipleByProperties($entity_type, [], [], $field_name) as $transition) {
       $transition->delete();
+    }
+  }
+  elseif (!in_array($entity->getEntityTypeId(), [
+    'workflow_type',
+    'workflow_state',
+    'workflow_config_transition',
+    'workflow_transition',
+    'workflow_scheduled_transition',
+  ])) {
+    // A 'normal' entity is deleted.
+    foreach ($fields = _workflow_info_fields($entity) as $field_id => $field_storage) {
+      /* @var $field_storage FieldStorageConfig */
+      $entity_type = $field_storage->getTargetEntityTypeId();
+      $entity_id = $entity->id();
+      $field_name = $field_storage->get('field_name');
+      foreach (WorkflowScheduledTransition::loadMultipleByProperties($entity_type, [$entity_id], [], $field_name) as $scheduled_transition) {
+        $scheduled_transition->delete();
+      }
+      foreach (WorkflowTransition::loadMultipleByProperties($entity_type, [$entity_id], [], $field_name) as $transition) {
+        $transition->delete();
+      }
     }
   }
 }
