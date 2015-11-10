@@ -104,8 +104,6 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
     // We put a blank state first for validation.
     $state_options = array('' => ' ');
     $state_options += workflow_get_workflow_state_names($wid, $grouped = FALSE, $all = FALSE);
-    // Is this the last state available?
-    $form['#last_mohican'] = count($state_options) == 2;
 
     // Make it impossible to reassign to the same state that is disabled.
     if ($state->isCreationState() || !$sid || !$state->isActive()) {
@@ -201,8 +199,15 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
     if (!$workflow = workflow_ui_url_get_workflow()) {
       return $form;
     }
+    $wid = $workflow->getWorkflowId();
 
     $form = parent::buildForm($form, $form_state);
+
+    // Build select options for reassigning states.
+    // We put a blank state first for validation.
+    $state_options = workflow_get_workflow_state_names($wid, $grouped = FALSE, $all = FALSE);
+    // Is this the last state available?
+    $form['#last_mohican'] = (count($state_options) == 1);
 
     // Create a placeholder WorkflowState (It must NOT be saved to DB). Add it to the item list.
     $sid = '';
@@ -255,6 +260,7 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
 
         // Does user want to deactivate the state (reassign current content)?
         if ($sid && $value['status'] == 0 && $state->isActive()) {
+          workflow_debug( __FILE__, __FUNCTION__, __LINE__, '', '');  // @todo D8-port: still test this snippet.
           $args = array('%state' => $state->label()); // check_plain() is run by t().
           // Does that state have content in it?
           if ($value['count'] > 0 && empty($value['reassign'])) {
@@ -263,9 +269,10 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
             in this workflow, all content items which are in that state will have their
             workflow state removed.';
               drupal_set_message(t($message, $args), 'warning');
-            } else {
+            }
+            else {
               $message = 'The %state state has content; you must reassign the content to another state.';
-              form_set_error("states'][$sid]['reassign'", t($message, $args));
+              $form_state->setErrorByName("states'][$sid]['reassign'", $this->t($message, $args));
             }
           }
         }
