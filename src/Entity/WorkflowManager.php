@@ -337,5 +337,5 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
     }
     return $is_owner;
   }
-}
 
+}

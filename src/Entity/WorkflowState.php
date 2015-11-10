@@ -219,45 +219,46 @@ class WorkflowState extends ConfigEntityBase {
    *   The state ID, to which all affected entities must be moved.
    */
   public function deactivate($new_sid) {
-//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
 
     $current_sid = $this->id();
     $force = TRUE;
 
-    // As of 8.x-1.x, below custom hook is removed, in favour of core hook_workflow_state_predelete().
-//    // Notify interested modules. We notify first to allow access to data before we zap it.
-//    // E.g., Node API (@todo Field API):
-//    // - re-parents any entity that we don't want to orphan, whilst deactivating a State.
-//    // - delete any lingering entity to state values.
-//    \Drupal::moduleHandler()->invokeAll('workflow', ['state delete', $current_sid, $new_sid, NULL, $force]);
+    // Notify interested modules. We notify first to allow access to data before we zap it.
+    // - re-parents any entity that we don't want to orphan, whilst deactivating a State.
+    // - delete any lingering entity to state values.
+    // \Drupal::moduleHandler()->invokeAll('workflow', ['state delete', $current_sid, $new_sid, NULL, $force]);
+    // Invoke the hook.
+    \Drupal::moduleHandler()->invokeAll('entity_' . $this->getEntityTypeId() . '_predelete', array($this, $current_sid, $new_sid));
 
-    // TODO D8-port: re-implement below code.
-//    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: re-implement re-assign states when deactivating state in function WorkflowState::' . deactivate );
     // Re-parent any entity that we don't want to orphan, whilst deactivating a State.
-    // This is called in WorkflowState::deactivate().
-    // @todo: re-parent Workflow Field, whilst deactivating a state.
-    // TODO D8- State should not know about Transition: move this to Workflow->DeactivateState.
-//    if ($new_sid) {
-//      // A candidate for the batch API.
-//      // @TODO: Future updates should seriously consider setting this with batch.
-//
-//      $user = \Drupal::currentUser(); // We can use global, since deactivate() is a UI-only function.
-//      $comment = t('Previous state deleted');
-//      foreach (workflow_get_workflow_node_by_sid($current_sid) as $workflow_node) {
-//        // @todo: add Field support in 'state delete', by using workflow_transition_history or reading current field.
-//        $entity = Node::load($workflow_node->nid);
-//        $field_name = '';
-//        $transition = WorkflowTransition::create();
-//        $transition->setValues($entity, $field_name, $current_sid, $new_sid, $user->id(), REQUEST_TIME, $comment);
-//        $transition->force($force);
-//        // Execute Transition, invoke 'pre' and 'post' events, save new state in Field-table, save also in workflow_transition_history.
-//        // For Workflow Node, only {workflow_node} and {workflow_transition_history} are updated. For Field, also the Entity itself.
-//        $new_sid = workflow_execute_transition($entity, $field_name, $transition, $force);
-//      }
-//    }
-//
-//    // Delete any lingering entity to state values.
-//    workflow_delete_workflow_node_by_sid($current_sid);
+    // TODO D8-port: State should not know about Transition: move this to Workflow->DeactivateState.
+    if ($new_sid) {
+      // A candidate for the batch API.
+      // @TODO: Future updates should seriously consider setting this with batch.
+
+      $user = \Drupal::currentUser(); // We can use global, since deactivate() is a UI-only function.
+      $comment = t('Previous state deleted');
+
+      foreach(_workflow_info_fields() as $field_name => $field_info) {
+        $entity = NULL;
+        $entity_type = $field_info->getTargetEntityTypeId();
+        $field_name = $field_info->getName();
+        $query = \Drupal::entityQuery($entity_type);
+        $query->condition($field_name, $current_sid, '=');
+        $result = ($entity_type == 'comment') ? array() : $query->execute();
+
+        foreach ($result as $entity_id) {
+          $entity = \Drupal::entityManager()->getStorage($entity_type)->load($entity_id);
+          $transition = WorkflowTransition::create();
+          $transition->setValues($entity, $field_name, $current_sid, $new_sid, $user->id(), REQUEST_TIME, $comment, TRUE);
+          $transition->force($force);
+
+          // Execute Transition, invoke 'pre' and 'post' events, save new state in Field-table, save also in workflow_transition_history.
+          // For Workflow Node, only {workflow_node} and {workflow_transition_history} are updated. For Field, also the Entity itself.
+          $new_sid = workflow_execute_transition($transition, $force);
+        }
+      }
+    }
 
     // Delete the transitions this state is involved in.
     $workflow = Workflow::load($this->wid);
@@ -542,7 +543,7 @@ class WorkflowState extends ConfigEntityBase {
       $field_name = $field_info->getName();
       $query = \Drupal::entityQuery($field_info->getTargetEntityTypeId());
       // @see #2285983 for using SQLite on D7.
-        $count += $query
+      $count += $query
         ->condition($field_name, $sid, '=')
         ->count() // We only need the count.
         ->execute();

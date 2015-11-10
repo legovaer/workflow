@@ -88,17 +88,18 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
   public function buildRow(EntityInterface $entity) {
     $row = array();
 
-    /* @var $entity \Drupal\workflow\Entity\WorkflowState */
-    $state = $entity;
-    $sid = $state->id();
-    $label = $state->label();
-
     // Get the Workflow from the page.
     /* @var $workflow \Drupal\workflow\Entity\Workflow */
     if (!$workflow = workflow_ui_url_get_workflow()) {
       workflow_debug( __FILE__ , __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     }
     $wid = $url_wid = $workflow->id();
+
+    /* @var $entity \Drupal\workflow\Entity\WorkflowState */
+    $state = $entity;
+    $sid = $state->id();
+    $label = $state->label();
+    $count = $state->count();
 
     // Build select options for reassigning states.
     // We put a blank state first for validation.
@@ -168,8 +169,8 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
     ];
     $row['count'] = [
       '#type' => 'value',
-      '#value' => $state->count(),
-      '#markup' => $state->count(),
+      '#value' => $count,
+      '#markup' => $count,
     ];
 
     // Don't let the creation state change weight or status or name.
@@ -180,18 +181,13 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
       $row['reassign']['#disabled'] = TRUE;
     }
     // New state and disabled states cannot be reassigned.
-    if (!$sid || !$state->isActive()) {
+    if (!$sid || !$state->isActive() || ($count == 0) ) {
       $row['reassign']['#type'] = 'hidden';
       $row['reassign']['#disabled'] = TRUE;
     }
     // Disabled states cannot be renamed (and is a visual clue, too).
     if (!$state->isActive()) {
       $row['label_new']['#disabled'] = TRUE;
-    }
-
-    // @TODO D8-port: enable De-activate: status + reassign + count.
-    if (TRUE) {
-      $row['status']['#disabled'] = TRUE;
     }
 
     return $row + parent::buildRow($entity);
@@ -273,10 +269,6 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
               form_set_error("states'][$sid]['reassign'", t($message, $args));
             }
           }
-
-          // @TODO D8-port: enable De-activate: status + reassign + count.
-          $message = 'Deactivating state %state for does not reassign Fields of type Workflow with this status.';
-          drupal_set_message(t($message, $args), 'warning');
         }
 
         // Create the machine_name for new states.
