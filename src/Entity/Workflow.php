@@ -46,7 +46,7 @@ use Drupal\Core\Session\AccountInterface;
  *   }
  * )
  */
-class Workflow extends ConfigEntityBase {
+class Workflow extends ConfigEntityBase implements WorkflowInterface {
 
   /**
    * The machine name.
@@ -100,7 +100,6 @@ class Workflow extends ConfigEntityBase {
    *
    * @inheritdoc
    */
-
   public function save() {
     $status = parent::save();
     // Are we saving a new Workflow?
@@ -153,13 +152,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   /**
-   * Validate the workflow. Generate a message if not correct.
-   *
-   * This function is used on the settings page of:
-   * - Workflow field: WorkflowItem->settingsForm()
-   *
-   * @return bool
-   *   $is_valid
+   * {@inheritdoc}
    */
   public function isValid() {
     $is_valid = TRUE;
@@ -192,10 +185,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   /**
-   * Returns if the Workflow may be deleted.
-   *
-   * @return bool $is_deletable
-   *   TRUE if a Workflow may safely be deleted.
+   * {@inheritdoc}
    */
   public function isDeletable() {
     $is_deletable = FALSE;
@@ -220,10 +210,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   /**
-   * Retrieves the entity manager service.
-   *
-   * @return \Drupal\workflow\Entity\WorkflowManagerInterface
-   *   The entity manager service.
+   * {@inheritdoc}
    */
   public static function workflowManager() {
     return new WorkflowManager();
@@ -234,17 +221,14 @@ class Workflow extends ConfigEntityBase {
    */
 
   /**
-   * Create a new state for this workflow.
-   *
-   * @param string $name
-   *   The untranslated human readable label of the state.
-   * @param bool $save
-   *   Indicator if the new state must be saved. Normally, the new State is
-   *   saved directly in the database. This is because you can use States only
-   *   with Transitions, and they rely on State IDs which are generated
-   *   magically when saving the State. But you may need a temporary state.
-   * @return \Drupal\workflow\Entity\WorkflowState
-   *   The new state.
+   * {@inheritdoc}
+   */
+  public function getWorkflowId() {
+    return $this->id();
+  }
+
+  /**
+   * {@inheritdoc}
    */
   public function createState($sid, $save = TRUE) {
     $wid = $this->id();
@@ -264,7 +248,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   /**
-   * Gets the initial state for a newly created entity.
+   * {@inheritdoc}
    */
   public function getCreationState() {
     // First, find it.
@@ -288,7 +272,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   /**
-   * Gets the ID of the initial state for a newly created entity.
+   * {@inheritdoc}
    */
   public function getCreationSid() {
     if (!$this->creation_sid) {
@@ -299,10 +283,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   /**
-   * Gets the first valid state ID, after the creation state.
-   *
-   * Uses WorkflowState::getOptions(), because this does a access check.
-   * The first State ID is user-dependent!
+   * {@inheritdoc}
    */
   public function getFirstSid($entity, $field_name, AccountInterface $user, $force) {
     $creation_state = $this->getCreationState();
@@ -320,23 +301,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   /**
-   * Returns the next state for the current state.
-   * Is used in VBO Bulk actions.
-   *
-   * @param string $entity_type
-   *   The type of the entity at hand.
-   * @param object $entity
-   *   The entity at hand. May be NULL (E.g., on a Field settings page).
-   * @param $field_name
-   * @param $user
-   * @param bool $force
-   *
-   * @return array
-   *   An array of sid=>label pairs.
-   *   If $this->sid is set, returns the allowed transitions from this state.
-   *   If $this->sid is 0 or FALSE, then labels of ALL states of the State's
-   *   Workflow are returned.
-   *
+   * {@inheritdoc}
    */
   public function getNextSid($entity, $field_name, $user, $force = FALSE) {
     $new_sid = FALSE;
@@ -361,16 +326,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   /**
-   * Gets all states for a given workflow.
-   *
-   * @param mixed $all
-   *   Indicates to which states to return.
-   *   - TRUE = all, including Creation and Inactive;
-   *   - FALSE = only Active states, not Creation;
-   *   - 'CREATION' = only Active states, including Creation.
-   *
-   * @return WorkflowState[]
-   *   An array of WorkflowState objects.
+   * {@inheritdoc}
    */
   public function getStates($all = FALSE, $reset = FALSE) {
     $wid = $this->id();
@@ -407,13 +363,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   /**
-   * Gets a state for a given workflow.
-   *
-   * @param mixed $key
-   *   A state ID or state Name.
-   *
-   * @return WorkflowState
-   *   A WorkflowState object.
+   * {@inheritdoc}
    */
   public function getState($sid) {
     $wid = $this->id();
@@ -425,13 +375,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   /**
-   * Creates a Transition for this workflow.
-   *
-   * @param string $from_sid
-   * @param string $to_sid
-   * @param array $values
-   *
-   * @return mixed|null|static
+   * {@inheritdoc}
    */
   public function createTransition($from_sid, $to_sid, $values = array()) {
     $config_transition = NULL;
@@ -456,9 +400,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   /**
-   * Sorts all Transitions for this workflow, according to State weight.
-   *
-   * This is only needed for the Admin UI.
+   * {@inheritdoc}
    */
   public function sortTransitions() {
     // Sort the transitions on state weight.
@@ -466,15 +408,7 @@ class Workflow extends ConfigEntityBase {
   }
 
   /**
-   * Loads all allowed ConfigTransitions for this workflow.
-   *
-   * @param array|NULL $ids
-   *   Array of Transitions IDs. If NULL, show all transitions.
-   * @param array $conditions
-   *   $conditions['from_sid'] : if provided, a 'from' State ID.
-   *   $conditions['to_sid'] : if provided, a 'to' state ID.
-   *
-   * @return \Drupal\workflow\Entity\WorkflowConfigTransition[]
+   * {@inheritdoc}
    */
   public function getTransitions(array $ids = NULL, array $conditions = array()) {
     $config_transitions = array();
@@ -511,18 +445,15 @@ class Workflow extends ConfigEntityBase {
     return $config_transitions;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getTransitionsById($tid) {
     return $this->getTransitions(array($tid));
   }
 
   /**
-   *
-   * Get a specific transition.
-   *
-   * @param string $from_sid
-   * @param string $to_sid
-   *
-   * @return WorkflowConfigTransition[]
+   * {@inheritdoc}
    */
   public function getTransitionsByStateId($from_sid, $to_sid) {
     $conditions = array(
