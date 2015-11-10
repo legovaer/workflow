@@ -19,7 +19,6 @@ use Drupal\workflow\Entity\WorkflowState;
  */
 class WorkflowStateListBuilder extends DraggableListBuilder {
 
-  // @TODO D8-port WorkflowStateListBuilder: enable De-activate: status + reassign + count.
   // @TODO D8-port WorkflowStateListBuilder: enable machine_name: interactive WorkflowState element.
 
   /**
