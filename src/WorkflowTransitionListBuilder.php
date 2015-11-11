@@ -52,22 +52,17 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
 
     // TODO: D8-port: get entity from proper core methods.
     /* @var $entity EntityInterface */
-    $entity = $this->workflow_entity; // This is a custom variable.
-    // Get the field name. It is yet unknown. N.B. This does not work with multiple workflows per entity!
-    $field_name = workflow_get_field_name($entity);
-    if ($field_name) {
-      $entity_type = $entity->getEntityTypeId();
-      $entity_id = $entity->id();
+    $entity = $this->workflow_entity; // N.B. This is a custom variable.
 
-      // @todo D8-port: document $limit.
-      // @todo d8-port: $limit should be used in pager, not in load().
-      $this->limit = \Drupal::config('workflow.settings')
-        ->get('workflow_states_per_page');
-      $limit = $this->limit;
-      // Get Transitions with higest timestamp first.
-      $entities = WorkflowTransition::loadMultipleByProperties($entity_type, array($entity_id), [], $field_name, '', $limit, 'DESC');
-    }
+    $entity_type = $entity->getEntityTypeId();
+    $entity_id = $entity->id();
 
+    // @todo D8-port: document $limit.
+    // @todo d8-port: $limit should be used in pager, not in load().
+    $this->limit = \Drupal::config('workflow.settings')->get('workflow_states_per_page');
+    $limit = $this->limit;
+    // Get Transitions with highest timestamp first.
+    $entities = WorkflowTransition::loadMultipleByProperties($entity_type, array($entity_id), [], '', '', $limit, 'DESC');
     return $entities;
   }
 
@@ -87,7 +82,13 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
    * and inserts the 'edit' and 'delete' links as defined for the entity type.
    */
   public function buildHeader() {
+
+    $entity = $this->workflow_entity; // N.B. This is a custom variable.
+
     $header['timestamp'] = $this->t('Date');
+    if (count(_workflow_info_fields($entity)) > 1) {
+      $header['field_name'] = $this->t('Field name');
+    }
     $header['from_state'] = $this->t('From State');
     $header['to_state'] = $this->t('To State');
     $header['user_name'] = $this->t('By');
@@ -165,6 +166,8 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     unset($from_state); // Not needed anymore.
 
     $owner = $transition->getOwner();
+    $field_name = $transition->getFieldName();
+    $field_label = $transition->getFieldName();
     $variables = array(
       'transition' => $transition,
       'extra' => '',
@@ -178,6 +181,9 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
 //     'class' => array('workflow_history_row'), // TODO D8-port
     $row['timestamp']['data'] = $transition->getTimestampFormatted(); // 'class' => array('timestamp')
     // html_entity_decode() transforms chars like '&' correctly.
+    if (count(_workflow_info_fields($entity)) > 1) {
+      $row['field_name']['data'] = html_entity_decode($field_label);
+    }
     $row['from_state']['data'] = html_entity_decode($from_label); // 'class' => array('previous-state-name'))
     $row['to_state']['data'] = html_entity_decode($to_label); // 'class' => array('state-name'))
     $row['user_name']['data'] = $owner->getUsername(); // 'class' => array('user-name')
