@@ -406,6 +406,11 @@ class WorkflowItem extends ListItemBase {
   public function getSettableOptions(AccountInterface $account = NULL) {
     $allowed_options = array();
 
+    // When we are initially on the Storage settings form, no wid is set, yet.
+    if (!$wid = $this->getSetting('workflow_type')) {
+      return $allowed_options;
+    }
+
     $field_storage = $this->getFieldDefinition()->getFieldStorageDefinition();
     if ($field_storage->getTargetEntityTypeId() == 'comment') {
       /* @var $comment \Drupal\comment\CommentInterface */

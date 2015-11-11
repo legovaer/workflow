@@ -668,7 +668,12 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     if (isset($this->entity)) {
        return $this->entity;
     }
-    return $this->entity = $this->get('entity_id')->entity;
+    // @todo D8: the following line only returns Node, not Term.
+    // return $this->entity = $this->get('entity_id')->entity;
+
+    $entity_type = $this->getTargetEntityTypeId();
+    $id = $this->getTargetEntityId();
+    return $this->entity = \Drupal::entityManager()->getStorage($entity_type)->load($id);
   }
 
   /**
