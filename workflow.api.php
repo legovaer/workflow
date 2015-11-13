@@ -295,10 +295,8 @@ function hook_field_widget_workflow_default_form_alter(&$element, \Drupal\Core\F
   // D7: This hook is introduced in Drupal 7.8.
   // D8: This name is specified in the annotation of WorkflowDefaultWidget.
   workflow_debug(__FILE__, __FUNCTION__, __LINE__, '', '');
-  dpm($context['widget']->getPluginId());
 
   // A widget on an entity form.
-
   if ('workflow_default' == $context['widget']->getPluginId()) {
     // This object contains all you need. You may find it in one of two locations.
     /* @var $transition WorkflowTransitionInterface */
