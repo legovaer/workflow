@@ -3,8 +3,6 @@ status: true
 dependencies:
   module:
     - workflow
-  theme:
-    - bartik
 id: workflowtransitionform
 theme: bartik
 region: sidebar_second
