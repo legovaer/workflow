@@ -16,7 +16,7 @@ use Drupal\Core\Form\FormStateInterface;
  * @see \Drupal\workflow\Entity\WorkflowConfigTransition
  */
 //class WorkflowConfigTransitionLabelListBuilder extends ConfigEntityListBuilder implements FormInterface {
-class WorkflowConfigTransitionLabelForm extends WorkflowConfigtransitionFormBase {
+class WorkflowConfigTransitionLabelForm extends WorkflowConfigTransitionFormBase {
 
   /**
    * {@inheritdoc}

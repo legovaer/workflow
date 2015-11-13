@@ -17,7 +17,7 @@ use Drupal\workflow\Entity\WorkflowConfigTransition;
  *
  * @see \Drupal\workflow\Entity\WorkflowConfigTransition
  */
-class WorkflowConfigTransitionRoleForm extends WorkflowConfigtransitionFormBase {
+class WorkflowConfigTransitionRoleForm extends WorkflowConfigTransitionFormBase {
 
   /**
    * {@inheritdoc}
