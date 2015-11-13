@@ -37,7 +37,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
     // Validate transition, save in history table and delete from schedule table.
     $to_sid = $transition->execute();
 
-      // Save the (scheduled) transition.
+    // Save the (scheduled) transition.
     if ($update_entity) {
       if ($to_sid == $transition->getToSid()) {
         // Update the workflow field of the entity.
@@ -209,22 +209,22 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
     }
 
     // If $field_name is not known, yet, determine it.
-    $field_name = workflow_get_field_name($entity, $field_name);
+    $field_name = ($field_name) ? $field_name : workflow_get_field_name($entity, $field_name);
     // If $field_name is found, get more details.
     if (!$field_name) {
       // Return the initial value.
+      return $sid;
     }
-    else {
-      // Normal situation: get the value.
-      if (!$sid) {
-        $sid = $entity->$field_name->value;
-      }
-      // No current state. Use creation state.
-      // (E.g., content was created before adding workflow.)
-      if (!$sid) {
-        $sid = self::getCreationStateId($entity, $field_name);
-      }
+
+    // Normal situation: get the value.
+    $sid = $entity->$field_name->value;
+
+    // Entity is new or in preview or there is no current state. Use previous state.
+    // (E.g., content was created before adding workflow.)
+    if ( !$sid || !empty($entity->isNew()) || !empty($entity->in_preview) ) {
+      $sid = self::getPreviousStateId($entity, $field_name);
     }
+
     return $sid;
   }
 
@@ -239,38 +239,35 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
     }
 
     // If $field_name is not known, yet, determine it.
-    $field_name = workflow_get_field_name($entity, $field_name);
+    $field_name = ($field_name) ? $field_name : workflow_get_field_name($entity, $field_name);
     // If $field_name is found, get more details.
     if (!$field_name) {
       // Return the initial value.
+      return $sid;
     }
-    else {
-      if (isset($entity->original)) {
-        // A changed node.
-        workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-      }
 
-      // A node may not have a Workflow attached.
-      if (!$sid) {
-        if ($entity->isNew()) {
-          // A new Node. D7: $is_new is not set when saving terms, etc.
-          $sid = self::getCreationStateId($entity, $field_name);
-        }
-        elseif (!$sid) {
-          // @todo?: Read the history with an explicit langcode.
-          $langcode = ''; // $entity->language()->getId();
-          $entity_type = $entity->getEntityTypeId();
-          if ($last_transition = WorkflowTransition::loadByProperties($entity_type, $entity->id(), [], $field_name, $langcode, 'DESC')) {
-            $sid = $last_transition->getFromSid();
-          }
-        }
-      }
+    if (isset($entity->original)) {
+      // A changed node.
+      workflow_debug(__FILE__, __FUNCTION__, __LINE__, $sid);  // @todo D8-port: still test this snippet.
+    }
 
-      if (!$sid) {
-        workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
-        // No history found on an existing entity.
-        $sid = self::getCreationStateId($entity, $field_name);
+    // A node may not have a Workflow attached.
+    if ($entity->isNew()) {
+      // A new Node. D7: $is_new is not set when saving terms, etc.
+      $sid = self::getCreationStateId($entity, $field_name);
+    }
+    elseif (!$sid) {
+      // @todo?: Read the history with an explicit langcode.
+      $langcode = ''; // $entity->language()->getId();
+      $entity_type = $entity->getEntityTypeId();
+      if ($last_transition = WorkflowTransition::loadByProperties($entity_type, $entity->id(), [], $field_name, $langcode, 'DESC')) {
+        $sid = $last_transition->getFromSid();
       }
+    }
+
+    if (!$sid) {
+      // No history found on an existing entity.
+      $sid = self::getCreationStateId($entity, $field_name);
     }
 
     return $sid;
