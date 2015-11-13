@@ -125,18 +125,12 @@ class WorkflowTransitionForm extends ContentEntityForm {
     // N.B. Keep code aligned: workflow_form_alter(), WorkflowTransitionForm::actions().
     $actions = parent::actions($form, $form_state);
 
-    // A default button is provided by core.
-    $default_submit_button = $actions['submit'];
+    // A default button is provided by core. Override it.
+    $actions['submit']['#value'] = t('Update workflow');
+    $actions['submit']['#attributes'] = array('class' => array('form-save-default-button'));
 
     if (!_workflow_use_action_buttons()) {
       // Change the default submit button on the Workflow History tab.
-
-      // A default button is provided by core. Override it.
-      $actions['submit'] = array(
-          '#value' => t('Update workflow'),
-          '#attributes' => array('class' => array('form-save-default-button')),
-        ) + $default_submit_button;
-
       return $actions;
     }
     else {
@@ -161,9 +155,10 @@ class WorkflowTransitionForm extends ContentEntityForm {
       // $actions += _workflow_transition_form_get_action_buttons($form, $workflow_form);
       // Remove the default submit button from the form.
       // unset($actions['submit']);
-      $actions = _workflow_transition_form_get_action_buttons($form, $workflow_form);
+      $default_submit_action = $actions['submit'];
+      $actions = _workflow_transition_form_get_action_buttons($form, $workflow_form, $default_submit_action);
       foreach ($actions as $key => &$action) {
-        $action['#submit'] = $default_submit_button['#submit'];
+        $action['#submit'] = $default_submit_action['#submit'];
       }
     }
 
