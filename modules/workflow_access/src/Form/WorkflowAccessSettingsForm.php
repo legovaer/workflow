@@ -71,7 +71,7 @@ class WorkflowAccessSettingsForm implements FormInterface { // extends FormBase 
   /**
    * Returns an array of supported actions for the current entity form.
    */
-  function actions(array $form, FormStateInterface $form_state) {
+  protected function actions(array $form, FormStateInterface $form_state) {
     $actions['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Save'),
