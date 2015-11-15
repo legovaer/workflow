@@ -15,10 +15,10 @@
  *      }
  *   },
  *   links = {
- *     "edit-form" = "/workflow/transition/{workflow_transition}/edit",
- *     "revert-form" = "/workflow/transition/{workflow_transition}/revert",
- *     "delete-form" = "/workflow/transition/{workflow_transition}/delete",
- *   }
+ *     "edit-form" = "/workflow_transition/{workflow_transition}/edit",
+ *     "revert-form" = "/workflow_transition/{workflow_transition}/revert",
+ *     "delete-form" = "/workflow_transition/{workflow_transition}/delete",
+ *   },
  * )
  *
  */

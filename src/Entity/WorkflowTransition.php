@@ -45,11 +45,11 @@ use Drupal\user\UserInterface;
  *     "langcode" = "langcode",
  *   },
  *   links = {
- *     "canonical" = "/workflow/transition/{workflow_transition}",
- *     "edit-form" = "/workflow/transition/{workflow_transition}/edit",
- *     "revert-form" = "/workflow/transition/{workflow_transition}/revert",
- *     "delete-form" = "/workflow/transition/{workflow_transition}/delete",
- *   }
+ *     "canonical" = "/workflow_transition/{workflow_transition}",
+ *     "edit-form" = "/workflow_transition/{workflow_transition}/edit",
+ *     "revert-form" = "/workflow_transition/{workflow_transition}/revert",
+ *     "delete-form" = "/workflow_transition/{workflow_transition}/delete",
+ *   },
  * )
  */
 class WorkflowTransition extends ContentEntityBase implements WorkflowTransitionInterface {

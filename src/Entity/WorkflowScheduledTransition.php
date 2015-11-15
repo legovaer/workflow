@@ -35,7 +35,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *     "canonical" = "/workflow_transition/{workflow_transition}",
  *     "delete-form" = "/workflow_transition/{workflow_transition}/delete",
  *     "edit-form" = "/workflow_transition/{workflow_transition}/edit",
- *   }
+ *   },
  * )
  */
 class WorkflowScheduledTransition extends WorkflowTransition {

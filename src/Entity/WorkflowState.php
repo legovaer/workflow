@@ -45,8 +45,9 @@ use Drupal\user\UserInterface;
  *     "status",
  *   },
  *   links = {
+ *     "canonical" = "/admin/config/workflow/workflow/{workflow_type}",
  *     "collection" = "/admin/config/workflow/workflow/{workflow_type}/states",
- *   }
+ *   },
  * )
  */
 class WorkflowState extends ConfigEntityBase {

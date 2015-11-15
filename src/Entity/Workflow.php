@@ -40,10 +40,11 @@ use Drupal\Core\Session\AccountInterface;
  *     "options",
  *   },
  *   links = {
+ *     "canonical" = "/admin/config/workflow/workflow",
  *     "collection" = "/admin/config/workflow/workflow",
  *     "edit-form" = "/admin/config/workflow/workflow/{workflow_type}/edit",
  *     "delete-form" = "/admin/config/workflow/workflow/{workflow_type}/delete",
- *   }
+ *   },
  * )
  */
 class Workflow extends ConfigEntityBase implements WorkflowInterface {

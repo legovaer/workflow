@@ -1,6 +1,6 @@
 ### Workflow Transition CRUD
 entity.workflow_transition.revert_form:
-  path: '/workflow/transition/{workflow_transition}/revert'
+  path: '/workflow_transition/{workflow_transition}/revert'
   defaults:
     _entity_form: 'workflow_transition.revert'
     _title: 'Revert Workflow transition'

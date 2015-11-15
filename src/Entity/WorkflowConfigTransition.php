@@ -38,8 +38,9 @@ use Drupal\user\UserInterface;
  *     "roles",
  *   },
  *   links = {
+ *     "canonical" = "/admin/config/workflow/workflow/{workflow_type}",
  *     "collection" = "/admin/config/workflow/workflow/{workflow_type}/transitions",
- *   }
+ *   },
  * )
  */
 class WorkflowConfigTransition extends ConfigEntityBase implements WorkflowConfigTransitionInterface{
