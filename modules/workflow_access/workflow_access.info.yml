@@ -2,7 +2,6 @@ name: 'Workflow access'
 description: 'Content access control based on workflows and roles. Depends on the node_access system, so only works for entities of type ''node''.'
 dependencies:
   - workflow
-  - workflow_ui
 package: Workflow
 core: 8.x
 type: module

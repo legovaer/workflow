@@ -17,6 +17,7 @@ use Drupal\Core\Session\AccountInterface;
  *   id = "workflow_type",
  *   label = @Translation("Workflow"),
  *   module = "workflow",
+ *   translatable = FALSE,
  *   handlers = {
  *     "storage" = "Drupal\workflow\Entity\WorkflowStorage",
  *     "list_builder" = "Drupal\workflow_ui\Controller\WorkflowListBuilder",
@@ -28,6 +29,7 @@ use Drupal\Core\Session\AccountInterface;
  *   },
  *   admin_permission = "administer workflow",
  *   config_prefix = "workflow",
+ *   bundle_of = "workflow_transition",
  *   entity_keys = {
  *     "id" = "id",
  *     "label" = "label",

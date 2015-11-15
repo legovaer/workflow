@@ -22,15 +22,17 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface,
   /**
    * Helper function for __construct. Used for all children of WorkflowTransition (aka WorkflowScheduledTransition)
    *
-   * @param EntityInterface $entity
-   * @param string $field_name
-   * @param string $from_sid
+   * Usage:
+   *   $transition = WorkflowTransition::create([$current_sid, 'field_name' => $field_name]);
+   *   $transition->setTargetEntity($entity);
+   *   $transition->setValues($new_sid, $user->id(), REQUEST_TIME, $comment);
+   *
    * @param string $to_sid
    * @param int $uid
    * @param int $timestamp
    * @param string $comment
    */
-  public function setValues(EntityInterface $entity, $field_name, $from_sid, $to_sid, $uid = NULL, $timestamp = REQUEST_TIME, $comment = '');
+  public function setValues($to_sid, $uid = NULL, $timestamp = REQUEST_TIME, $comment = '');
 
   /**
    * Load (Scheduled) WorkflowTransitions, most recent first.

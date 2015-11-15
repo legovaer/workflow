@@ -109,19 +109,10 @@ class WorkflowDefaultWidget extends WidgetBase {
     $entity = $item->getEntity();
     $from_sid = workflow_node_current_state($entity, $field_name);
 
+    // Create a transition, to pass to the form. No need to use setValues().
     /* @var $transition WorkflowTransition */
-    $transition = NULL;
-    // Prepare a new transition, if still not provided.
-    if (!$transition) {
-      $transition = WorkflowTransition::create();
-      $transition->setValues($entity, $field_name,
-        $from_sid,
-        $default_value = '',
-        $uid = \Drupal::currentUser()->id(),
-        REQUEST_TIME,
-        $comment = ''
-      );
-    }
+    $transition = WorkflowTransition::create([$from_sid, 'field_name' => $field_name]);
+    $transition->setTargetEntity($entity);
 
     if (!$this->isDefaultValueWidget($form_state)) {
       // @TODO D8-port: use a proper WorkflowTransitionElement call.

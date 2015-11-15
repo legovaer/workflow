@@ -250,8 +250,9 @@ class WorkflowState extends ConfigEntityBase {
 
         foreach ($result as $entity_id) {
           $entity = \Drupal::entityManager()->getStorage($entity_type)->load($entity_id);
-          $transition = WorkflowTransition::create();
-          $transition->setValues($entity, $field_name, $current_sid, $new_sid, $user->id(), REQUEST_TIME, $comment, TRUE);
+          $transition = WorkflowTransition::create([$current_sid, 'field_name' => $field_name]);
+          $transition->setTargetEntity($entity);
+          $transition->setValues($new_sid, $user->id(), REQUEST_TIME, $comment, TRUE);
           $transition->force($force);
 
           // Execute Transition, invoke 'pre' and 'post' events, save new state in Field-table, save also in workflow_transition_history.

@@ -79,7 +79,6 @@ class WorkflowTransitionListController extends EntityListController implements C
     /*
      * Get data from parameters.
      */
-    $user = workflow_current_user();
 
     // TODO D8-port: make Workflow History tab happen for every entity_type.
     // For workflow_tab_page with multiple workflows, use a separate view. See [#2217291].
@@ -104,10 +103,10 @@ class WorkflowTransitionListController extends EntityListController implements C
     /*
      * Step 1: generate the Transition Form.
      */
-    // Create a transition, to pass to the form.
+    // Create a transition, to pass to the form. No need to use setValues().
     $current_sid = workflow_node_current_state($entity, $field_name);
-    $transition = WorkflowTransition::create();
-    $transition->setValues($entity, $field_name, $current_sid, '', $user->id());
+    $transition = WorkflowTransition::create([$current_sid, 'field_name' => $field_name]);
+    $transition->setTargetEntity($entity);
     // Add the WorkflowTransitionForm to the page.
     $form = $this->entityFormBuilder()->getForm($transition, 'add');
 

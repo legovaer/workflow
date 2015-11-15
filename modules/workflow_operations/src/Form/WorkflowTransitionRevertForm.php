@@ -137,8 +137,9 @@ class WorkflowTransitionRevertForm extends EntityConfirmFormBase {
     $previous_sid = $transition->getFromSid();
     $comment = t('State reverted.');
 
-    $transition = WorkflowTransition::create();
-    $transition->setValues($entity, $field_name, $current_sid, $previous_sid, $user->id(), REQUEST_TIME, $comment);
+    $transition = WorkflowTransition::create([$current_sid, 'field_name' => $field_name]);
+    $transition->setTargetEntity($entity);
+    $transition->setValues($previous_sid, $user->id(), REQUEST_TIME, $comment);
 
     return $transition;
   }

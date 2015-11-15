@@ -189,9 +189,9 @@ class WorkflowDefaultFormatter extends FormatterBase implements ContainerFactory
       return $elements;
     }
 
-    // Create a transition, to pass to the form.
-    $transition = WorkflowTransition::create();
-    $transition->setValues($entity, $field_name, $current_sid, '', $user->id());
+    // Create a transition, to pass to the form. No need to use setValues().
+    $transition = WorkflowTransition::create([$current_sid, 'field_name' => $field_name]);
+    $transition->setTargetEntity($entity);
 
     // Remove the default formatter. We are now building the widget.
     $elements = array();

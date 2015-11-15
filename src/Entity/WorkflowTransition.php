@@ -15,6 +15,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Language\Language;
 use Drupal\user\UserInterface;
+use Drupal\workflow\Entity\WorkflowState;
 
 /**
  * Implements an actual, executed, Transition.
@@ -39,11 +40,17 @@ use Drupal\user\UserInterface;
  *     "views_data" = "Drupal\workflow\WorkflowTransitionViewsData",
  *   },
  *   base_table = "workflow_transition_history",
+ *   data_table = "workflow_transition_field_data",
+ *   fieldable = FALSE,
  *   translatable = FALSE,
  *   entity_keys = {
  *     "id" = "hid",
+ *     "bundle" = "wid",
  *     "langcode" = "langcode",
  *   },
+ *   permission_granularity = "bundle",
+ *   bundle_entity_type = "workflow_type",
+ *   field_ui_base_route = "entity.workflow_type.edit_form",
  *   links = {
  *     "canonical" = "/workflow_transition/{workflow_transition}",
  *     "edit-form" = "/workflow_transition/{workflow_transition}/edit",
@@ -108,10 +115,9 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * All arguments must be passed, when creating an object programmatically.
    * One argument $entity may be passed, only to directly call delete() afterwards.
    */
-  public function __construct(array $values = array(), $entityType = 'WorkflowTransition') {
+  public function __construct(array $values = array(), $entityType = 'WorkflowTransition', $bundle) {
     // Please be aware that $entity_type and $entityType are different things!
-    parent::__construct($values, $entityType);
-
+    parent::__construct($values, $entityType, $bundle);
     // This transition is not scheduled.
     $this->is_scheduled = FALSE;
     // This transition is not executed, if it has no hid, yet, upon load.
@@ -120,45 +126,67 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 
   /**
    * {@inheritdoc}
+   *
+   * @param array $values
+   *   $values[0] may contain a Worflow object or State object or State ID.
+   *
+   * @return static
+   *   The entity object.
    */
-  public function setValues(EntityInterface $entity = NULL, $field_name, $from_sid, $to_sid, $uid = NULL, $timestamp = REQUEST_TIME, $comment = '', $force_create = FALSE) {
+  public static function create(array $values = array()) {
+    if (is_array($values) && isset($values[0])) {
+      $value = $values[0];
+      if (is_string($value)) {
+        $state = WorkflowState::load($value);
+        $values['wid'] = $state->getWorkflowId();
+        $values['from_sid'] = $state->id();
+      }
+      elseif (is_object($value) && $value instanceof WorkflowState) {
+        $state = $value;
+        $values['wid'] = $state->getWorkflowId();
+        $values['from_sid'] = $state->id();
+      }
+//      elseif (is_object($value) && $value instanceof Workflow) {
+//        $workflow = $value;
+//        $values['wid'] = $workflow->id();
+//      }
+    }
+
+    // Add default values.
+    $values += [
+      'timestamp' => REQUEST_TIME,
+      'uid' => \Drupal::currentUser()->id(),
+    ];
+
+    $entity_manager = \Drupal::entityManager();
+    return $entity_manager->getStorage($entity_manager->getEntityTypeFromClass(get_called_class()))->create($values);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setValues($to_sid, $uid = NULL, $timestamp = REQUEST_TIME, $comment = '', $force_create = FALSE) {
     // Normally, the values are passed in an array, and set in parent::__construct, but we do it ourselves.
 
-    $user = \Drupal::currentUser();
+    $uid = ($uid === NULL) ? workflow_current_user()->id() : $uid;
+    $from_sid = $this->getFromSid();
 
-    $this->set('field_name', $field_name);
-    $uid = ($uid === NULL) ? $user->id() : $uid;
+    $this->set('to_sid', $to_sid);
+    $this->setOwnerId($uid);
+    $this->setTimestamp($timestamp);
+    $this->setComment($comment);
 
     // If constructor is called with new() and arguments.
-    // Load the supplied entity.
-    $this->setTargetEntity($entity);
-
-    if (!$entity && !$from_sid && !$to_sid) {
-      $this->setOwnerId($uid);
-      $this->setTimestamp($timestamp);
-      $this->setComment($comment);
+    if (!$from_sid && !$to_sid && !$this->getTargetEntity()) {
       // If constructor is called without arguments, e.g., loading from db.
     }
-    elseif ($entity && $from_sid) {
+    elseif ($from_sid && $this->getTargetEntity()) {
       // Caveat: upon entity_delete, $to_sid is '0'.
       // If constructor is called with new() and arguments.
-      $this->set('from_sid', $from_sid);
-      $this->set('to_sid', $to_sid);
-      $this->setOwnerId($uid);
-      $this->setTimestamp($timestamp);
-      $this->setComment($comment);
     }
     elseif (!$from_sid) {
       // Not all parameters are passed programmatically.
-      if ($force_create) {
-        //
-        $this->set('from_sid', $from_sid);
-        $this->set('to_sid', $to_sid);
-        $this->setOwnerId($uid);
-        $this->setTimestamp($timestamp);
-        $this->setComment($comment);
-      }
-      else {
+      if (!$force_create) {
         drupal_set_message(
           t('Wrong call to constructor Workflow*Transition(@from_sid to @to_sid)',
             array('@from_sid' => $from_sid, '@to_sid' => $to_sid)),

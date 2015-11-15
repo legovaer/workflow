@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\workflow\Entity\Workflow;
+use Drupal\workflow\Entity\WorkflowTransitionInterface;
 
 /**
  * Implements hook_help().
@@ -97,8 +98,10 @@ function workflow_access_node_access_records(\Drupal\node\NodeInterface $node) {
         $old_sid = $new_sid = _workflow_get_sid_by_items($node->{$field_name}[\Drupal\Core\Language\Language::LANGCODE_NOT_SPECIFIED]);
       }
       if ($old_sid) {
-        $transition = new WorkflowTransition();
-        $transition->setValues('node', $node, $field_name, $old_sid, $new_sid, $node->getOwnerId(), REQUEST_TIME, '');
+        /* @var $transition WorkflowTransitionInterface */
+        $transition = WorkflowTransition::create([$old_sid, 'field_name' => $field_name]);
+        $transition->setTargetEntity($node);
+        $transition->setValues($new_sid, $node->getOwnerId(), REQUEST_TIME, '');
 
         // Store the transition, so it can be easily fetched later on.
         // Store in an array, to prepare for multiple workflow_fields per entity.

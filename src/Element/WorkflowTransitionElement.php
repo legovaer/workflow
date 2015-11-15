@@ -564,8 +564,9 @@ class WorkflowTransitionElement extends FormElement {
       $field_name = $transition->getFieldName();
       $from_sid = $transition->getFromSid();
       /* @var $transition WorkflowTransitionInterface */
-      $transition = WorkflowScheduledTransition::create(['entity' => $transition_entity, 'field_name' => $field_name, 'from_sid' => $from_sid]);
-      $transition->setValues($transition_entity, $field_name, $from_sid, $to_sid, $user->id(), $timestamp, $comment);
+      $transition = WorkflowScheduledTransition::create([$from_sid, 'field_name' => $field_name]);
+      $transition->setTargetEntity($transition_entity);
+      $transition->setValues($to_sid, $user->id(), $timestamp, $comment);
     }
     if (!$transition->isExecuted()) {
       // Set new values.

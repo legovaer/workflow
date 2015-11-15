@@ -64,32 +64,23 @@ class WorkflowTransitionBlock extends BlockBase  {
   public function build() {
     $form = [];
 
-    /*
-     * Input.
-     */
-    // // Retrieve existing configuration for this block.
-    // $config = $this->getConfiguration();
-    $user = workflow_current_user();
     // Get the entity for this form.
     /* @var $entity EntityInterface */
-    $entity = workflow_url_get_entity();
-    // Get the field name. Avoid error on Node Add page.
-    $field_name = ($entity) ? workflow_get_field_name($entity) : '';
-
-    if (!$entity) {
+    if (!$entity = workflow_url_get_entity()) {
       return $form;
     }
-    if (!$field_name) {
+    // Get the field name. Avoid error on Node Add page.
+    if (!$field_name = workflow_get_field_name($entity)) {
       return $form;
     }
 
     /*
      * Output: generate the Transition Form.
      */
-    // Create a transition, to pass to the form.
+    // Create a transition, to pass to the form. No need to use setValues().
     $current_sid = workflow_node_current_state($entity, $field_name);
-    $transition = WorkflowTransition::create();
-    $transition->setValues($entity, $field_name, $current_sid, '', $user->id());
+    $transition = WorkflowTransition::create([$current_sid, 'field_name' => $field_name]);
+    $transition->setTargetEntity($entity);
     // Add the WorkflowTransitionForm to the page.
     $form = $this->entityFormBuilder()->getForm($transition, 'add');
 
