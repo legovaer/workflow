@@ -951,10 +951,11 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
         'type' => 'string',
         'weight' => -5,
       ))
-      ->setDisplayOptions('form', array(
-        'type' => 'string_textfield',
-        'weight' => -5,
-      ))
+// @todo D8: activate this, but test with WorkflowTransitionForm::form().
+//      ->setDisplayOptions('form', array(
+//        'type' => 'string_textfield',
+//        'weight' => -5,
+//      ))
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['langcode'] = BaseFieldDefinition::create('language')
@@ -1024,10 +1025,11 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 //        'type' => 'timestamp',
 //        'weight' => 0,
 //      ))
-      ->setDisplayOptions('form', array(
-        'type' => 'datetime_timestamp',
-        'weight' => 10,
-      ))
+// @todo D8: activate this, but test with WorkflowTransitionForm::form().
+//      ->setDisplayOptions('form', array(
+//        'type' => 'datetime_timestamp',
+//        'weight' => 10,
+//      ))
 //      ->setDisplayConfigurable('form', TRUE);
       ->setRevisionable(TRUE);
 
@@ -1036,13 +1038,15 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       ->setDescription(t('The comment explaining this transition.'))
       ->setRevisionable(TRUE)
       ->setTranslatable(TRUE)
-      ->setDisplayOptions('form', array(
-        'type' => 'string_textarea',
-        'weight' => 25,
-        'settings' => array(
-          'rows' => 4,
-        ),
-      ));
+// @todo D8: activate this, but test with WorkflowTransitionForm::form().
+//      ->setDisplayOptions('form', array(
+//        'type' => 'string_textarea',
+//        'weight' => 25,
+//        'settings' => array(
+//          'rows' => 4,
+//        ),
+//      ))
+    ;
 
     return $fields;
   }

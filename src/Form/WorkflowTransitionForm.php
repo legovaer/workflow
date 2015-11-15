@@ -84,7 +84,9 @@ class WorkflowTransitionForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function form(array $form, FormStateInterface $form_state) {
-    // $form = parent::form($form, $form_state);
+    // Call parent to get (extra) fields.
+    // This might case baseFieldDefitiions to appear twice.
+    $form = parent::form($form, $form_state);
 
     /* @var $transition WorkflowTransitionInterface */
     $transition = $this->entity;
@@ -202,7 +204,8 @@ class WorkflowTransitionForm extends ContentEntityForm {
    */
   public function save(array $form, FormStateInterface $form_state) {
     // Execute transition and update the attached entity.
-    return Workflow::workflowManager()->executeTransition($this->entity);
+    $entity = $this->getEntity();
+    return Workflow::workflowManager()->executeTransition($entity);
   }
 
   /*************************************************************************
