@@ -115,12 +115,29 @@ class WorkflowDefaultWidget extends WidgetBase {
     $transition->setTargetEntity($entity);
 
     if (!$this->isDefaultValueWidget($form_state)) {
-      // @TODO D8-port: use a proper WorkflowTransitionElement call.
+
+      // Here, not the $element is added, but the entity form.
+
+      // Option 1: use the Element.
       $element['#default_value'] = $transition;
       $element += WorkflowTransitionElement::transitionElement($element, $form_state, $form);
+
+      // Option 2: use the Form, in order to get extra fields.
+      //$entity_form_builder = \Drupal::getContainer()->get('entity.form_builder');
+      //$element += $entity_form_builder->getForm($transition, 'add');
+      //// Remove the action button. The Entity itself has one.
+      //unset($element['actions']);
+
+      // Option 3: use the true Element.
+      // $form = $this->element($form, $form_state, $transition);
+      //$element['workflow_transition'] = array(
+      //      '#type' => 'workflow_transition',
+      //      '#title' => t('Workflow transition'),
+      //      '#default_value' => $transition,
+      // );
+
     }
     else {
-
       // @todo D8: add a default value, so people can set a default comment.
       // On the Field settings page, User may not set a default value
       // (this is done by the Workflow module).

@@ -29,7 +29,7 @@ use Drupal\Core\Entity\EntityConstraintViolationList;
  *   },
  *   base_table = "workflow_transition_schedule",
  *   data_table = "workflow_transition_field_data",
- *   fieldable = FALSE,
+ *   fieldable = TRUE,
  *   translatable = FALSE,
  *   entity_keys = {
  *     "id" = "tid",
@@ -76,7 +76,7 @@ class WorkflowScheduledTransition extends WorkflowTransition {
     $this->validated = TRUE;
     // $constraints = $this->getTypedData()->getConstraints();
     // $violations = $this->getTypedData()->validate();
-    $violations = [];
+    $violations = NULL; // new \Traversable();
     // return new EntityConstraintViolationList($this, iterator_to_array($violations));
     return new EntityConstraintViolationList($this, iterator_to_array($violations));
   }

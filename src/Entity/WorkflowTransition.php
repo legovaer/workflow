@@ -41,7 +41,7 @@ use Drupal\workflow\Entity\WorkflowState;
  *   },
  *   base_table = "workflow_transition_history",
  *   data_table = "workflow_transition_field_data",
- *   fieldable = FALSE,
+ *   fieldable = TRUE,
  *   translatable = FALSE,
  *   entity_keys = {
  *     "id" = "hid",
@@ -146,10 +146,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
         $values['wid'] = $state->getWorkflowId();
         $values['from_sid'] = $state->id();
       }
-//      elseif (is_object($value) && $value instanceof Workflow) {
-//        $workflow = $value;
-//        $values['wid'] = $workflow->id();
-//      }
     }
 
     // Add default values.
@@ -694,8 +690,10 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
     // return $this->entity = $this->get('entity_id')->entity;
 
     $entity_type = $this->getTargetEntityTypeId();
-    $id = $this->getTargetEntityId();
-    return $this->entity = \Drupal::entityManager()->getStorage($entity_type)->load($id);
+    if ($id = $this->getTargetEntityId()) {
+      $this->entity = \Drupal::entityManager()->getStorage($entity_type)->load($id);
+    }
+    return $this->entity;
   }
 
   /**

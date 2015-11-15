@@ -132,7 +132,7 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     // Build a transition from the values.
     $config = $this->configuration['workflow'];
     $field_name = $config['workflow_field_name'];
-    $to_sid = $config['workflow_to_sid'];
+    $to_sid = isset($config['workflow_to_sid']) ? $config['workflow_to_sid'] : '';
     $user = workflow_current_user();
     $comment = $config['workflow_comment'];
     $force = $config['workflow_force'];
@@ -140,7 +140,6 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     // Add transition to config.
     $transition = WorkflowTransition::create([$current_sid, 'field_name' => $field_name]);
     $transition->setValues($to_sid, $user->id(), REQUEST_TIME, $comment, TRUE);
-    workflow_debug( __FILE__, __FUNCTION__, __LINE__, $transition->getEntityTypeId(), $transition->bundle());  // @todo D8-port: still test this snippet.
     return $transition;
   }
 
@@ -174,6 +173,9 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
       return NULL;
     }
 
+    // Get a default Transition from configuration.
+    $transition = $this->getTransitionforConfiguration($current_sid);
+
     // Get the Comment. Parse the $comment variables.
     $comment_string = $this->configuration['workflow']['workflow_comment'];
     $comment = t($comment_string, array(
@@ -183,8 +185,6 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
       '%user' => $user->getUsername(),
     ));
 
-    // Get a default Transition from configuration.
-    $transition = $this->getTransitionforConfiguration($current_sid);
     // Add actual data.
     $to_sid = $transition->getToSid();
     $transition->setTargetEntity($entity);
@@ -214,9 +214,14 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     // - $context['view'] = "(Object) view"
     // - $context['settings'] = "array()"
 
-    /* // @TODO D8-port
+    // @todo: test with multiple workflows per entity.
+    $wids = workflow_get_workflow_names();
+    $wid = array_keys($wids)[0];
     // Get the common Workflow, or create a dummy Workflow.
-    $workflow = $wid ? Workflow::load($wid) : Workflow::create(); // set('label','dummy VBO');
+    $workflow = $wid ? Workflow::load($wid) : Workflow::create(['id' => 'dummy_action', 'label' => 'dummy_action']);
+    $current_state = $workflow->getCreationState();
+
+    /* // @TODO D8-port
     // Show the current state and the Workflow form to allow state changing.
     // N.B. This part is replicated in hook_node_view, workflow_tab_page, workflow_vbo.
     if ($workflow) {
@@ -250,25 +255,19 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     ));
 */
 
-    $transition = $this->getTransitionForConfiguration();
+    $transition = $this->getTransitionForConfiguration($current_state);
 
+    // Add the WorkflowTransitionForm to the page.
+
+    // Here, not the $element is added, but the entity form.
     $element = []; // Just to be explicit.
     $element['#default_value'] = $transition;
     $form += WorkflowTransitionElement::transitionElement($element, $form_state, $form);
-//    // @TODO D8-port: introduce '#type' => 'workflow_transition' element.
-//    $form['workflow_transition'] = array(
-//      '#type' => 'workflow_transition',
-//      '#title' => t('Workflow transition'),
-//      '#default_value' => $transition,
-//    );
 
-    /* // @TODO D8-port
-    if (!$entity) {
-      // For the Advanced actions form on admin/config/system/actions,
-      // remove the Submit function.
-      unset($form['#submit']);
-    }
-    */
+    // Todo D8: add the entity form.
+    //$form = \Drupal::getContainer()->get('entity.form_builder')->getForm($transition, 'add');
+    // Remove the action button. The Entity itself has one.
+    //unset($element['actions']);
 
     // Make adaptations for VBO-form:
     $entity = $transition->getTargetEntity();
@@ -278,7 +277,7 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     // Override the options widget.
     $form['workflow']['workflow_to_sid']['#description'] = t('Please select the state that should be assigned when this action runs.');
 
-    // Add Field_name. @todo?? Add field_name to WorkflowTransitionElement?
+    // Add Field_name. @todo?? Add 'field_name' to WorkflowTransitionElement?
     $form['workflow']['workflow_field_name'] = array(
       '#type' => 'select',
       '#title' => t('Field name'),
@@ -286,13 +285,15 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
       '#options' => _workflow_info_field_names($entity),
       '#default_value' => $field_name,
       '#required' => TRUE,
+      '#weight' => -20,
     );
-    // Add Force. @todo?? Add field_name to WorkflowTransitionElement?
+    // Add Force. @todo?? Add 'force' to WorkflowTransitionElement?
     $form['workflow']['workflow_force'] = array(
       '#type' => 'checkbox',
       '#title' => t('Force transition'),
       '#description' => t('If this box is checked, the new state will be assigned even if workflow permissions disallow it.'),
       '#default_value' => $force,
+      '#weight' => -19,
     );
     // Change comment field.
     $form['workflow']['workflow_comment'] = array(
