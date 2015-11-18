@@ -7,7 +7,6 @@
 
 namespace Drupal\workflowfield\Plugin\Field\FieldType;
 
-use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldConfigStorageBase;
 use Drupal\Core\Field\FieldItemBase;

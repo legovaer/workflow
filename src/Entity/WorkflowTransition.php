@@ -184,8 +184,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       // Not all parameters are passed programmatically.
       if (!$force_create) {
         drupal_set_message(
-          t('Wrong call to constructor Workflow*Transition(@from_sid to @to_sid)',
-            array('@from_sid' => $from_sid, '@to_sid' => $to_sid)),
+          t('Wrong call to constructor Workflow*Transition(%from_sid to %to_sid)',
+            array('%from_sid' => $from_sid, '%to_sid' => $to_sid)),
           'error');
       }
     }
@@ -586,7 +586,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
             $args = array(
               '@type' => $entity_type_info->getLabel(),
               '%label' => $entity->label(),
-              '%state_name' => t($new_state->label()), // @todo check_plain()?
+              '%state_name' => $new_state->label(),
               'link' => ($this->getTargetEntityId()) ? $this->getTargetEntity()->link(t('View')) : '',
             );
             \Drupal::logger('workflow')->notice($message, $args);
