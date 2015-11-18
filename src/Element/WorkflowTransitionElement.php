@@ -214,7 +214,6 @@ class WorkflowTransitionElement extends FormElement {
     // Get settings from workflow. @todo : implement default_settings.
     if ($workflow) {
       $workflow_settings = $workflow->options;
-      $workflow_label = ($workflow) ? SafeMarkup::checkPlain(t($workflow->label())) : '';
     }
     else {
       // @TODO D8-port: now only tested with Action.
@@ -325,7 +324,7 @@ class WorkflowTransitionElement extends FormElement {
       else {
         $element['workflow'] += array(
           '#type' => 'details',
-          '#title' => t($workflow_label->__tostring()), // HtmlEscapedText
+          '#title' => t('@label', array('@label' => $workflow->label())),
           '#collapsible' => TRUE,
           '#open' => ($settings_fieldset == 2) ? FALSE : TRUE,
         );
@@ -337,10 +336,11 @@ class WorkflowTransitionElement extends FormElement {
       $help_text = isset($element['#description']) ? $element['#description'] : '';
       $element['workflow']['workflow_to_sid'] = array(
         '#type' => ($wid) ? $settings_options_type : 'select', // Avoid error with grouped options.
-        '#title' => ($settings_title_as_name && !$transition->isExecuted()) ? t('Change !name state', array('!name' => $workflow_label)) : t('Target state'),
+        '#title' => ($settings_title_as_name && !$transition->isExecuted())
+           ? t('Change !name state', array('!name' => $workflow->label()))
+           : t('Target state'),
         '#access' => TRUE,
         '#options' => $options,
-        // '#name' => $workflow_label,
         // '#parents' => array('workflow'),
         '#default_value' => $default_value,
         '#description' => $help_text,
