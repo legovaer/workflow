@@ -101,7 +101,7 @@ function workflow_ui_url_get_title() {
     $label = $workflow->label();
   }
 
-  $title = t('Edit Workflow %label', ['$entity' => 'Workflow', '%label' => $label]);
+  $title = t('Edit @entity %label', ['@entity' => 'Workflow', '%label' => $label]);
   return $title;
 }
 
