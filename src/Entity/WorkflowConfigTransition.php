@@ -132,6 +132,9 @@ class WorkflowConfigTransition extends ConfigEntityBase implements WorkflowConfi
     /* @var $a WorkflowTransitionInterface */
     /* @var $b WorkflowTransitionInterface */
 
+    if (!$a->getFromSid() || !$b->getFromSid()) {
+      return 0;
+    }
     // First sort on From-State.
     $from_state_a = $a->getFromState();
     $from_state_b = $b->getFromState();
