@@ -302,7 +302,7 @@ class WorkflowItem extends ListItemBase {
           $previous_wid = $state->getWorkflowId();
           $lines[] = $state->getWorkflow()->label() . "'s states: ";
         }
-        $label = SafeMarkup::checkPlain(t($state->label()));
+        $label = t('@label', array('@label' => $state->label()));
 
         $lines[] = "   $key|$label";
       }
