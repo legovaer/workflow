@@ -504,7 +504,7 @@ class WorkflowState extends ConfigEntityBase {
       // We cannot use getTransitions, since there are no ConfigTransitions
       // from State with ID 0, and we do not want to repeat States.
       foreach ($workflow->getStates() as $state) {
-        $options[$state->id()] = t('@label', array('@label' => $state->label()));
+        $options[$state->id()] = html_entity_decode(t('@label', array('@label' => $state->label())));
       }
     }
     else {
@@ -518,7 +518,7 @@ class WorkflowState extends ConfigEntityBase {
           $label = $to_state ? $to_state->label() : '';
         }
         $to_sid = $transition->to_sid;
-        $options[$to_sid] = t('@label', array('@label' => $label));
+        $options[$to_sid] = html_entity_decode(t('@label', array('@label' => $label)));
       }
 
       // Save to entity-specific cache.

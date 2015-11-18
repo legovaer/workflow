@@ -28,6 +28,7 @@ use Drupal\user\UserInterface;
  *   config_prefix = "transition",
  *   entity_keys = {
  *     "id" = "id",
+ *     "label" = "label",
  *   },
  *   config_export = {
  *     "id",
