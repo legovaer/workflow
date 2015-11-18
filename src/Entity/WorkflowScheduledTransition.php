@@ -48,9 +48,9 @@ class WorkflowScheduledTransition extends WorkflowTransition {
   /**
    * Constructor.
    */
-  public function __construct(array $values = array(), $entityType = 'WorkflowScheduledTransition', $bundle) {
+  public function __construct(array $values = array(), $entityType = 'WorkflowScheduledTransition', $bundle = FALSE, $translations = array()) {
     // Please be aware that $entity_type and $entityType are different things!
-    parent::__construct($values, $entityType, $bundle);
+    parent::__construct($values, $entityType, $bundle, $translations);
 
     // This transition is scheduled.
     $this->is_scheduled = TRUE;
