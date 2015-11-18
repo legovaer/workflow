@@ -8,6 +8,7 @@ workflow.access.settings:
     _title: 'Access settings'
   requirements:
     _permission: 'administer workflow'
+    _module_dependencies: 'workflow_ui'
 
 entity.workflow_type.access_form:
   path: '/admin/config/workflow/workflow/{workflow_type}/access'
@@ -17,3 +18,4 @@ entity.workflow_type.access_form:
     _title_callback: 'workflow_ui_url_get_title'
   requirements:
     _permission: 'administer workflow'
+    _module_dependencies: 'workflow_ui'

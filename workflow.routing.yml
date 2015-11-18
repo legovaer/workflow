@@ -42,7 +42,8 @@ entity.node.workflow_history:
     _controller: '\Drupal\workflow\Controller\WorkflowTransitionListController::historyOverview'
     field_name: ~
   requirements:
-    _custom_access:  '\Drupal\workflow\Controller\WorkflowTransitionListController::historyAccess'
+    _custom_access: '\Drupal\workflow\Controller\WorkflowTransitionListController::historyAccess'
+    _module_dependencies: 'node'
   options:
     parameters:
       entity:
@@ -55,7 +56,8 @@ entity.taxonomy_term.workflow_history:
     _controller: '\Drupal\workflow\Controller\WorkflowTransitionListController::historyOverview'
     field_name: ~
   requirements:
-    _custom_access:  '\Drupal\workflow\Controller\WorkflowTransitionListController::historyAccess'
+    _custom_access: '\Drupal\workflow\Controller\WorkflowTransitionListController::historyAccess'
+    _module_dependencies: 'taxonomy'
   options:
     parameters:
       entity:
