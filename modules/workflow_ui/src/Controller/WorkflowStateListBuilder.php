@@ -38,7 +38,7 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
 
     $entities = parent::load();
     foreach ($entities as $key => $entity) {
-      if ($entity->wid != $wid) {
+      if (!isset($entity->wid) || $entity->wid != $wid) {
         unset($entities[$key]);
       }
     }
@@ -261,17 +261,19 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
         // Does user want to deactivate the state (reassign current content)?
         if ($sid && $value['status'] == 0 && $state->isActive()) {
           workflow_debug( __FILE__, __FUNCTION__, __LINE__, '', '');  // @todo D8-port: still test this snippet.
-          $args = array('%state' => $state->label()); // check_plain() is run by t().
+          $args = array('%state' => $state->label());
           // Does that state have content in it?
           if ($value['count'] > 0 && empty($value['reassign'])) {
             if ($form['#last_mohican']) {
-              $message = 'Since you are deleting the last available workflow state
-            in this workflow, all content items which are in that state will have their
-            workflow state removed.';
-              drupal_set_message(t($message, $args), 'warning');
+              $message = 'Since you are deleting the last available
+                workflow state in this workflow, all content items
+                which are in that state will have their workflow state
+                removed.';
+              drupal_set_message($this->t($message, $args), 'warning');
             }
             else {
-              $message = 'The %state state has content; you must reassign the content to another state.';
+              $message = 'The %state state has content; you must
+                reassign the content to another state.';
               $form_state->setErrorByName("states'][$sid]['reassign'", $this->t($message, $args));
             }
           }
@@ -324,7 +326,7 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
           $new_state = WorkflowState::load($new_sid);
 
           $args = [
-            '%workflow' => $workflow->label(), // check_plain() is run by t().
+            '%workflow' => $workflow->label(),
             '%old_state' => $state->label(),
             '%new_state' => isset($new_state) ? $new_state->label() : '',
           ];
@@ -333,19 +335,19 @@ class WorkflowStateListBuilder extends DraggableListBuilder {
             if ($form['#last_mohican']) {
               $new_sid = NULL; // Do not reassign to new state.
               $message = 'Removing workflow states from content in the %workflow.';
-              drupal_set_message(t($message, $args));
+              drupal_set_message($this->t($message, $args));
             } else {
               // Prepare the state delete function.
               $message = 'Reassigning content from %old_state to %new_state.';
-              drupal_set_message(t($message, $args));
+              drupal_set_message($this->t($message, $args));
             }
           }
           // Delete the old state without orphaning content, move them to the new state.
           $state->deactivate($new_sid);
 
-          $message = 'Deactivated workflow state %old_state in %workflow.';
+          $message = $this->t('Deactivated workflow state %old_state in %workflow.', $args);
           \Drupal::logger('workflow')->notice($message, []);
-          drupal_set_message(t($message, $args));
+          drupal_set_message($message);
         }
 
         // Set a proper weight to the new state.
