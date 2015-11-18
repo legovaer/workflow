@@ -245,11 +245,11 @@ class WorkflowItem extends ListItemBase {
     $allowed_values_function = $this->getSetting('allowed_values_function');
 
     $element['allowed_values'] = array(
-      '#type' => ($wid) ? 'textarea' : 'hidden',
+      '#type' => 'textarea',
       '#title' => t('Allowed values for the selected Workflow type'),
-      '#default_value' => $this->allowedValuesString($allowed_values),
+      '#default_value' => ($wid) ? $this->allowedValuesString($allowed_values) : [],
       '#rows' => count($allowed_values),
-      '#access' => TRUE, // User can see the data,
+      '#access' => ($wid) ? TRUE : FALSE, // User can see the data,
       '#disabled' => TRUE, // .. but cannot change them.
       '#element_validate' => array(array(get_class($this), 'validateAllowedValues')),
 
