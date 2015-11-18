@@ -245,10 +245,9 @@ function workflow_get_user_role_names($permission) {
   static $roles = NULL;
 
   if (!$roles[$permission]) {
-    $roles[$permission] =
-      array(WORKFLOW_ROLE_AUTHOR_RID => WORKFLOW_ROLE_AUTHOR_NAME) +
-      // Copied from AccountForm::form().
-      array_map(array('\Drupal\Component\Utility\SafeMarkup', 'checkPlain'), user_role_names(TRUE, $permission));
+    // Copied from AccountForm::form().
+    $roles[$permission] = array_map(array('\Drupal\Component\Utility\Html', 'escape'),
+      array(WORKFLOW_ROLE_AUTHOR_RID => WORKFLOW_ROLE_AUTHOR_NAME) + user_role_names(TRUE, $permission));
   }
 
   return $roles[$permission];
