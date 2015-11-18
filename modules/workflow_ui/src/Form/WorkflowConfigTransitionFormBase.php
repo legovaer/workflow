@@ -126,10 +126,7 @@ abstract class WorkflowConfigTransitionFormBase implements FormInterface {
     $form[$this->entitiesKey] = array(
       '#type' => 'table',
       '#header' => $this->buildHeader(),
-      '#empty' => t('There is no @label yet.', array(
-//          '@label' => $this->entityType->getLabel())
-          '@label' => t('Transition'))
-      ),
+      '#empty' => t('There is no @label yet.', array('@label' => 'Transition')),
       '#tabledrag' => array(array('action' => 'order', 'relationship' => 'sibling', 'group' => 'weight',),),
     );
 

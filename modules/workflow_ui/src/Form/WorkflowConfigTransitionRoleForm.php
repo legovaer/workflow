@@ -7,7 +7,6 @@
 
 namespace Drupal\workflow_ui\Form;
 
-use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\workflow\Entity\WorkflowConfigTransition;
@@ -51,10 +50,9 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigTransitionFormBase 
       $header['label_new'] = t('From \ To');
 
       foreach ($states as $state) {
-        $label = SafeMarkup::checkPlain($state->label());
         // Don't allow transition TO (creation).
         if (!$state->isCreationState()) {
-          $header[$state->id()] = $label;
+          $header[$state->id()] = t('@label', array('@label' => $state->label()));
         }
       }
     }
@@ -97,10 +95,9 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigTransitionFormBase 
         $allow_all_roles = []; // array_combine (array_keys($roles) , array_keys($roles));
 
         foreach ($states as $state) {
-          $label = SafeMarkup::checkPlain($from_state->label());
           $row['to'] = [
             '#type' => 'value',
-            '#markup' => $label,
+            '#markup' => t('@label', array('@label' => $from_state->label())),
           ];
 
           foreach ($states as $to_state) {
