@@ -234,10 +234,10 @@ class WorkflowScheduledTransition extends WorkflowTransition {
 //        'type' => 'timestamp',
 //        'weight' => 0,
 //      ))
-      ->setDisplayOptions('form', array(
-        'type' => 'datetime_timestamp',
-        'weight' => 10,
-      ))
+//      ->setDisplayOptions('form', array(
+//        'type' => 'datetime_timestamp',
+//        'weight' => 10,
+//      ))
 //      ->setDisplayConfigurable('form', TRUE);
       ->setRevisionable(TRUE);
 

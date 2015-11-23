@@ -956,7 +956,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 //        'type' => 'string_textfield',
 //        'weight' => -5,
 //      ))
-      ->setDisplayConfigurable('form', TRUE);
+//      ->setDisplayConfigurable('form', TRUE)
+    ;
 
     $fields['langcode'] = BaseFieldDefinition::create('language')
       ->setLabel(t('Language'))
