@@ -111,7 +111,7 @@ function _workflow_transition_form_get_first_workflow_element(&$form) {
     if (isset($form[$key]['widget'][0]['#default_value'])) {
       $transition = $form[$key]['widget'][0]['#default_value'];
       if (is_object($transition) && $transition instanceof WorkflowTransitionInterface ) {
-        $workflow_element = $form[$key]['widget'][0]['workflow'];
+        $workflow_element = $form[$key]['widget'][0];
         break;
       }
     }
@@ -182,7 +182,7 @@ function _workflow_transition_form_get_action_buttons(array $form, array $workfl
         // Hide same-state-button on the transition-form (that is:
         // view page or workflow history tab) if there is nothing to do.
         // However, a Transition may be fieldable.
-        if ($form['workflow']['workflow_comment']['#access'] == FALSE) {
+        if ($form['workflow_comment']['#access'] == FALSE) {
           $workflow_submit_action['#access'] = FALSE;
         }
       }
@@ -244,16 +244,16 @@ function _workflow_transition_form_element_validate_time($element, \Drupal\Core\
  */
 function _workflow_transition_form_validate_buttons($form, \Drupal\Core\Form\FormStateInterface &$form_state) {
   // Retrieve the data from the form.
-  $transition = $form_state->getValue('workflow')['workflow_transition'];
+  $transition = $form_state->getValue('workflow_transition');
   if ($transition) {
     // On WorkflowTransitionForm :
     // D7: $form_state['input']['workflow_to_sid'] = $new_sid;
-    // D7: $form_state['values'][$field_name][$langcode][0]['workflow']['workflow_to_sid'] = $new_sid;
+    // D7: $form_state['values'][$field_name][$langcode][0]['workflow_to_sid'] = $new_sid;
 
     $values = $form_state->getValues();
 
     $to_sid = $form_state->getTriggeringElement()['#workflow']['workflow_to_sid'];
-    $values['workflow']['workflow_to_sid'] = $to_sid;
+    $values['workflow_to_sid'] = $to_sid;
 
     // Update the form_state.
     $form_state->setValues($values);

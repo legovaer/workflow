@@ -9,6 +9,7 @@ namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Field\FieldItemList;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\user\Entity\Role;
 
@@ -126,7 +127,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
     foreach (_workflow_info_fields($entity) as $field_info) {
       $field_name = $field_info->getName();
       /* @var $transition WorkflowTransitionInterface */
-      $transition = $entity->$field_name->workflow['workflow_transition'];
+      $transition = $entity->$field_name->__get('workflow_transition');
       if ($transition) {
         if ($entity->getEntityTypeId() !== 'comment') {
           // We come from Content edit page, from widget.

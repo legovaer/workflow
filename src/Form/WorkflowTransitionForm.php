@@ -140,7 +140,7 @@ class WorkflowTransitionForm extends ContentEntityForm {
 
       // Find the first workflow.
       // (So this won't work with multiple workflows per entity.)
-      $workflow_form = &$form['workflow'];
+      $workflow_form = &$form;
 
       // Quit if there is no Workflow on this page.
       if (!$workflow_form ) {

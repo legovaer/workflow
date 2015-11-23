@@ -124,7 +124,7 @@ class WorkflowTransitionListController extends EntityListController implements C
     /*
      * Finally: sort the elements (overriding their weight).
      */
-    $form['workflow']['#weight'] = 10;
+    // $form['#weight'] = 10;
     $form['actions']['#weight'] = 100;
     $form['workflow_list_title']['#weight'] = 200;
     $form['table']['#weight'] = 201;

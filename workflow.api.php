@@ -309,10 +309,10 @@ function hook_field_widget_workflow_default_form_alter(&$element, \Drupal\Core\F
       drupal_set_message('I got you, user 1, you will never schedule again,
         and you WILL document each state change!', 'warning');
       // Let's prohibit scheduling for user 1.
-      $element['workflow']['workflow_scheduling']['#access'] = FALSE;
+      $element['workflow_scheduling']['#access'] = FALSE;
       // Let's prohibit scheduling for user 1.
-      if ($element['workflow']['workflow_comment']['#access'] == TRUE) {
-        $element['workflow']['workflow_comment']['#required'] = TRUE;
+      if ($element['workflow_comment']['#access'] == TRUE) {
+        $element['workflow_comment']['#required'] = TRUE;
       }
     }
   }
@@ -334,11 +334,11 @@ function hook_form_workflow_transition_form_alter(&$form, FormStateInterface $fo
   // Todo, populate the WorkflowTranstiionForm with a Widget, so we have 1 way-of-working.
 
   // Let's take a (changeable) reference to the element.
-  $workflow_element = &$form['workflow'];
+  $workflow_element = &$form;
 
   // This object contains all you need. You may find it in one of two locations.
   /* @var $transition WorkflowTransitionInterface */
-  $transition = $form['workflow']['workflow_transition']['#value'];
+  $transition = $form['workflow_transition']['#value'];
   // dpm($transition);
 
   // An example of customizing/overriding the workflow widget.
@@ -357,8 +357,8 @@ function hook_form_workflow_transition_form_alter(&$form, FormStateInterface $fo
   // Get the Entity.
   /* @var $entity \Drupal\Core\Entity\EntityInterface */
   $entity = NULL;
-  //$entity = $form['workflow']['workflow_entity']['#value'];
-  $entity_type = 'node'; // $form['workflow']['workflow_entity_type']['#value'];
+  //$entity = $form['workflow_entity']['#value'];
+  $entity_type = 'node'; // $form['workflow_entity_type']['#value'];
   $entity_bundle = ''; // $entity->bundle();
   $sid = '';
   if ($entity) {

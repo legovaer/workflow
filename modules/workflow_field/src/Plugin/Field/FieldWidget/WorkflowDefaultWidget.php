@@ -168,9 +168,9 @@ class WorkflowDefaultWidget extends WidgetBase {
       _workflow_use_action_buttons(FALSE);
 
       // Make sure the options box is not hidden (when action buttons active).
-      //$element['workflow']['workflow_to_sid']['#type'] = 'select';
-      $element['workflow']['workflow_to_sid']['#title'] = 'Initial state';
-      $element['workflow']['workflow_to_sid']['#access'] = TRUE;
+      //$element['workflow_to_sid']['#type'] = 'select';
+      $element['workflow_to_sid']['#title'] = 'Initial state';
+      $element['workflow_to_sid']['#access'] = TRUE;
 
       unset($element['workflow_current_state']);
 
@@ -216,13 +216,13 @@ class WorkflowDefaultWidget extends WidgetBase {
     // WorkflowTransition object at this point. We need to convert it
     // back to the regular 'value' string format.
     foreach ($values as &$item) {
-      if (!empty($item ['workflow']) ) { // } && $item ['value'] instanceof DrupalDateTime) {
+      if (!empty($item) ) { // } && $item['value'] instanceof DrupalDateTime) {
 
         // The following can NOT be retrieved from the WorkflowTransition.
         /* @var $entity EntityInterface */
         $entity = $form_state->getFormObject()->getEntity();
         /* @var $transition \Drupal\workflow\Entity\WorkflowTransitionInterface */
-        $transition = $item['workflow']['workflow_transition'];
+        $transition = $item['workflow_transition'];
         $field_name = $transition->getFieldName();
         // N.B. Use a proprietary version of copyFormValuesToEntity,
         // where $entity/$transition is passed by reference.
@@ -282,7 +282,7 @@ class WorkflowDefaultWidget extends WidgetBase {
         // For instance, workflow_rules evaluates this.
         //
         // Set the transition back, to be used in hook_entity_update().
-        $item['workflow']['workflow_transition'] = $transition;
+        $item['workflow_transition'] = $transition;
         //
         // Set the value at the proper location.
         $item['value'] = $to_sid;
