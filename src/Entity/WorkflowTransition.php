@@ -946,11 +946,11 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       ->setTranslatable(FALSE)
       ->setRevisionable(FALSE)
       ->setSetting('max_length', 32)
-      ->setDisplayOptions('view', array(
-        'label' => 'hidden',
-        'type' => 'string',
-        'weight' => -5,
-      ))
+//      ->setDisplayOptions('view', array(
+//        'label' => 'hidden',
+//        'type' => 'string',
+//        'weight' => -5,
+//      ))
 // @todo D8: activate this, but test with WorkflowTransitionForm::form().
 //      ->setDisplayOptions('form', array(
 //        'type' => 'string_textfield',
