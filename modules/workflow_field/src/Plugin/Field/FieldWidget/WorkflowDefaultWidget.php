@@ -168,9 +168,9 @@ class WorkflowDefaultWidget extends WidgetBase {
       _workflow_use_action_buttons(FALSE);
 
       // Make sure the options box is not hidden (when action buttons active).
-      //$element['workflow_to_sid']['#type'] = 'select';
-      $element['workflow_to_sid']['#title'] = 'Initial state';
-      $element['workflow_to_sid']['#access'] = TRUE;
+      //$element['to_sid']['#type'] = 'select';
+      $element['to_sid']['#title'] = 'Initial state';
+      $element['to_sid']['#access'] = TRUE;
 
       unset($element['workflow_current_state']);
 

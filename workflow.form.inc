@@ -70,7 +70,7 @@ function workflow_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_
 
   // Quit if there are no Workflow Action buttons.
   // (If user has only 1 workflow option, there are no Action buttons.)
-  if (count($workflow_element['workflow_to_sid']['#options']) <= 1) {
+  if (count($workflow_element['to_sid']['#options']) <= 1) {
     return;
   }
 
@@ -129,7 +129,7 @@ function _workflow_transition_form_get_first_workflow_element(&$form) {
  * @return array $actions
  */
 function _workflow_transition_form_get_action_buttons(array $form, array $workflow_element, array $default_submit_action) {
-  $current_sid = $workflow_element['workflow_to_sid']['#default_value'];
+  $current_sid = $workflow_element['to_sid']['#default_value'];
   /* @var $transition WorkflowTransitionInterface */
   $transition = $workflow_element['workflow_transition']['#value'];
   $field_name = $transition->getFieldName();
@@ -137,17 +137,17 @@ function _workflow_transition_form_get_action_buttons(array $form, array $workfl
   // Find the default submit button and add our action buttons before it.
   // Get the min weight for our buttons.
   $option_weight = isset($default_submit_action['#weight']) ? $default_submit_action['#weight'] : 0;
-  $option_weight = $option_weight - count($workflow_element['workflow_to_sid']['#options']);
+  $option_weight = $option_weight - count($workflow_element['to_sid']['#options']);
   $min_weight = $option_weight;
-  foreach ($workflow_element['workflow_to_sid']['#options'] as $sid => $option_name) {
+  foreach ($workflow_element['to_sid']['#options'] as $sid => $option_name) {
     // Make the workflow button act exactly like the original submit button.
 
     $same_state_button = ($sid == $current_sid);
     $workflow_submit_action = $default_submit_action;
     // Add target State ID and Field name, to set correct value in validate_buttons callback.
     $workflow_submit_action['#workflow'] = array(
-      'workflow_field_name' => $field_name,
-      'workflow_to_sid' => $sid,
+      'field_name' => $field_name,
+      'to_sid' => $sid,
     );
     // Keep option order. Put current state first.
     $workflow_submit_action['#weight'] = ($same_state_button) ? $min_weight : ++$option_weight;
@@ -182,7 +182,7 @@ function _workflow_transition_form_get_action_buttons(array $form, array $workfl
         // Hide same-state-button on the transition-form (that is:
         // view page or workflow history tab) if there is nothing to do.
         // However, a Transition may be fieldable.
-        if ($form['workflow_comment']['#access'] == FALSE) {
+        if ($form['comment']['#access'] == FALSE) {
           $workflow_submit_action['#access'] = FALSE;
         }
       }
@@ -213,8 +213,8 @@ function _workflow_transition_form_get_triggering_button(\Drupal\Core\Form\FormS
 
   $triggering_element = $form_state->getTriggeringElement();
   if (isset($triggering_element['#workflow'])) {
-    $result['field_name'] = $triggering_element['#workflow']['workflow_field_name'];
-    $result['to_sid'] = $triggering_element['#workflow']['workflow_to_sid'];
+    $result['field_name'] = $triggering_element['#workflow']['field_name'];
+    $result['to_sid'] = $triggering_element['#workflow']['to_sid'];
   }
 
   return $result;
@@ -247,13 +247,13 @@ function _workflow_transition_form_validate_buttons($form, \Drupal\Core\Form\For
   $transition = $form_state->getValue('workflow_transition');
   if ($transition) {
     // On WorkflowTransitionForm :
-    // D7: $form_state['input']['workflow_to_sid'] = $new_sid;
-    // D7: $form_state['values'][$field_name][$langcode][0]['workflow_to_sid'] = $new_sid;
+    // D7: $form_state['input']['to_sid'] = $new_sid;
+    // D7: $form_state['values'][$field_name][$langcode][0]['to_sid'] = $new_sid;
 
     $values = $form_state->getValues();
 
-    $to_sid = $form_state->getTriggeringElement()['#workflow']['workflow_to_sid'];
-    $values['workflow_to_sid'] = $to_sid;
+    $to_sid = $form_state->getTriggeringElement()['#workflow']['to_sid'];
+    $values['to_sid'] = $to_sid;
 
     // Update the form_state.
     $form_state->setValues($values);

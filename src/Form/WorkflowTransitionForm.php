@@ -85,23 +85,19 @@ class WorkflowTransitionForm extends ContentEntityForm {
    */
   public function form(array $form, FormStateInterface $form_state) {
     // Call parent to get (extra) fields.
-    // This might case baseFieldDefitiions to appear twice.
+    // This might cause baseFieldDefinitions to appear twice.
     $form = parent::form($form, $form_state);
 
     /* @var $transition WorkflowTransitionInterface */
     $transition = $this->entity;
 
-    /*
-     * @TODO D8-port: use a proper WorkflowTransitionElement call.
-     */
-    // $form = $this->element($form, $form_state, $transition);
-    //    $form['workflow_transition'] = array(
-    //      '#type' => 'workflow_transition',
-    //      '#title' => t('Workflow transition'),
-    //      '#default_value' => $transition,
-    //    );
-    $element['#default_value'] = $transition;
-    $form += WorkflowTransitionElement::transitionElement($element, $form_state, $form);
+    // Do not pass the element, but the form.
+    // $element['#default_value'] = $transition;
+    // $form += WorkflowTransitionElement::transitionElement($element, $form_state, $form);
+    //
+    // Pass the form via parameter
+    $form['#default_value'] = $transition;
+    $form = WorkflowTransitionElement::transitionElement($form, $form_state, $form);
     return $form;
   }
 
@@ -149,7 +145,7 @@ class WorkflowTransitionForm extends ContentEntityForm {
 
       // Quit if there are no Workflow Action buttons.
       // (If user has only 1 workflow option, there are no Action buttons.)
-      if (count($workflow_form['workflow_to_sid']['#options']) <= 1) {
+      if (count($workflow_form['to_sid']['#options']) <= 1) {
         return;
       }
 

@@ -311,8 +311,8 @@ function hook_field_widget_workflow_default_form_alter(&$element, \Drupal\Core\F
       // Let's prohibit scheduling for user 1.
       $element['workflow_scheduling']['#access'] = FALSE;
       // Let's prohibit scheduling for user 1.
-      if ($element['workflow_comment']['#access'] == TRUE) {
-        $element['workflow_comment']['#required'] = TRUE;
+      if ($element['comment']['#access'] == TRUE) {
+        $element['comment']['#required'] = TRUE;
       }
     }
   }
@@ -349,8 +349,8 @@ function hook_form_workflow_transition_form_alter(&$form, FormStateInterface $fo
     // Let's prohibit scheduling for user 1.
     $workflow_element['workflow_scheduling']['#access'] = FALSE;
     // Let's prohibit scheduling for user 1.
-    if ( $workflow_element['workflow_comment']['#access'] == TRUE) {
-      $workflow_element['workflow_comment']['#required'] = TRUE;
+    if ( $workflow_element['comment']['#access'] == TRUE) {
+      $workflow_element['comment']['#required'] = TRUE;
     }
   }
 

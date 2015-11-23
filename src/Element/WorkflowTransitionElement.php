@@ -304,11 +304,11 @@ class WorkflowTransitionElement extends FormElement {
     $element['#attributes']['class'][] = 'workflow-transition-container';
     if (!$show_widget) {
       // Show no widget.
-      $element['workflow_to_sid']['#type'] = 'value';
-      $element['workflow_to_sid']['#value'] = $default_value;
-      $element['workflow_to_sid']['#options'] = $options; // In case action buttons need them.
-      $element['workflow_comment']['#type'] = 'value';
-      $element['workflow_comment']['#value'] = '';
+      $element['to_sid']['#type'] = 'value';
+      $element['to_sid']['#value'] = $default_value;
+      $element['to_sid']['#options'] = $options; // In case action buttons need them.
+      $element['comment']['#type'] = 'value';
+      $element['comment']['#value'] = '';
 
       return $element; // <-- exit.
     }
@@ -329,11 +329,13 @@ class WorkflowTransitionElement extends FormElement {
         );
       }
 
+      // This overrides BaseFieldDefinition. @todo: apply for form and widget.
       // The 'options' widget. May be removed later if 'Action buttons' are chosen.
       // The help text is not available for container. Let's add it to the
       // State box. N.B. it is emptyu on Workflow Tab, Node View page.
       $help_text = isset($element['#description']) ? $element['#description'] : '';
-      $element['workflow_to_sid'] = array(
+      // This overrides BaseFieldDefinition. @todo: apply for form and widget.
+      $element['to_sid'] = array(
         '#type' => ($wid) ? $settings_options_type : 'select', // Avoid error with grouped options.
         '#title' => ($settings_title_as_name && !$transition->isExecuted())
            ? t('Change !name state', array('!name' => $workflow->label()))
@@ -416,7 +418,8 @@ class WorkflowTransitionElement extends FormElement {
       );
     }
 
-    $element['workflow_comment'] = array(
+    // This overrides BaseFieldDefinition. @todo: apply for form and widget.
+    $element['comment'] = array(
       '#type' => 'textarea',
       '#required' => $settings_comment == '2',
       '#access' => $settings_comment !='0', // Align with action buttons.
@@ -452,8 +455,8 @@ class WorkflowTransitionElement extends FormElement {
       // It will be replaced by action buttons, but sometimes, the select box
       // is still shown.
       // @see workflowfield_form_alter().
-      $element['workflow_to_sid']['#type'] = 'select';
-      $element['workflow_to_sid']['#access'] = FALSE;
+      $element['to_sid']['#type'] = 'select';
+      $element['to_sid']['#access'] = FALSE;
     }
     return $element;
   }
@@ -486,7 +489,7 @@ class WorkflowTransitionElement extends FormElement {
      * Derived input
      */
     // Make sure we have subset ['workflow_scheduled_date_time']
-    if (isset($item['workflow_to_sid'])) {
+    if (isset($item['to_sid'])) {
       // In WorkflowTransitionForm, we receive the complete $form_state.
       // Remember, the workflow_scheduled element is not set on 'add' page.
       $scheduled = !empty($item['workflow_scheduling']['scheduled']);
@@ -500,8 +503,8 @@ class WorkflowTransitionElement extends FormElement {
     }
 
     // Get user input from element.
-    $to_sid = $item['workflow_to_sid'];
-    $comment = $item['workflow_comment'];
+    $to_sid = $item['to_sid'];
+    $comment = $item['comment'];
     $force = FALSE;
 
 // @todo D8: add the VBO use case.

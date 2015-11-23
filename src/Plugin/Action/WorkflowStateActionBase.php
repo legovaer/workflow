@@ -103,7 +103,7 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     // Add actual data.
     $transition = $this->getTransitionForExecution($entity);
 
-    $force = $this->configuration['workflow_force'];
+    $force = $this->configuration['force'];
     $transition->force();
 
     // Fire the transition.
@@ -115,10 +115,10 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
    */
   public function defaultConfiguration() {
     $configuration = $this->configuration + ['workflow' => array(
-      'workflow_field_name' => '',
-      'workflow_to_sid' => '',
-      'workflow_comment' => "Action set %title to %state by %user.",
-      'workflow_force' => 0,
+      'field_name' => '',
+      'to_sid' => '',
+      'comment' => "Action set %title to %state by %user.",
+      'force' => 0,
     )];
     return $configuration;
   }
@@ -131,11 +131,11 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
   protected function getTransitionForConfiguration($current_sid = '') {
     // Build a transition from the values.
     $config = $this->configuration;
-    $field_name = $config['workflow_field_name'];
-    $to_sid = isset($config['workflow_to_sid']) ? $config['workflow_to_sid'] : '';
+    $field_name = $config['field_name'];
+    $to_sid = isset($config['to_sid']) ? $config['to_sid'] : '';
     $user = workflow_current_user();
-    $comment = $config['workflow_comment'];
-    $force = $config['workflow_force'];
+    $comment = $config['comment'];
+    $force = $config['force'];
 
     // Add transition to config.
     $transition = WorkflowTransition::create([$current_sid, 'field_name' => $field_name]);
@@ -166,7 +166,7 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     $entity->enforceIsNew(FALSE);
 
     $config = $this->configuration;
-    $field_name = $config['workflow_field_name'];
+    $field_name = $config['field_name'];
     $current_sid = workflow_node_current_state($entity, $field_name);
     if (!$current_sid) {
       \Drupal::logger('workflow_action')->notice('Unable to get current workflow state of entity %id.', array('%id' => $entity_id));
@@ -177,7 +177,7 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     $transition = $this->getTransitionforConfiguration($current_sid);
 
     // Get the Comment. Parse the $comment variables.
-    $comment_string = $this->configuration['workflow_comment'];
+    $comment_string = $this->configuration['comment'];
     $comment = t($comment_string, array(
       '%title' => $entity->label(),
       // "@" and "%" will automatically run check_plain().
@@ -191,7 +191,7 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     $transition->setValues($to_sid, $user->id(), REQUEST_TIME, $comment);
 
     // // Leave Force to subclass.
-    // $force = $this->configuration['workflow_force'];
+    // $force = $this->configuration['force'];
     // $transition->force();
 
     return $transition;
@@ -272,13 +272,13 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     // Make adaptations for VBO-form:
     $entity = $transition->getTargetEntity();
     $field_name = $transition->getFieldName();
-    $force = $this->configuration['workflow_force'];
+    $force = $this->configuration['force'];
 
     // Override the options widget.
-    $form['workflow_to_sid']['#description'] = t('Please select the state that should be assigned when this action runs.');
+    $form['to_sid']['#description'] = t('Please select the state that should be assigned when this action runs.');
 
     // Add Field_name. @todo?? Add 'field_name' to WorkflowTransitionElement?
-    $form['workflow_field_name'] = array(
+    $form['field_name'] = array(
       '#type' => 'select',
       '#title' => t('Field name'),
       '#description' => t('Choose the field name.'),
@@ -288,7 +288,7 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
       '#weight' => -20,
     );
     // Add Force. @todo?? Add 'force' to WorkflowTransitionElement?
-    $form['workflow_force'] = array(
+    $form['force'] = array(
       '#type' => 'checkbox',
       '#title' => t('Force transition'),
       '#description' => t('If this box is checked, the new state will be assigned even if workflow permissions disallow it.'),
@@ -296,11 +296,11 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
       '#weight' => -19,
     );
     // Change comment field.
-    $form['workflow_comment'] = array(
+    $form['comment'] = array(
       '#title' => t('Message'),
       '#description' => t('This message will be written into the workflow history log when the action
       runs. You may include the following variables: %state, %title, %user.'),
-    ) + $form['workflow_comment'];
+    ) + $form['comment'];
 
     return $form;
   }
@@ -310,7 +310,7 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     $configuration = $form_state->getValues();
-    unset($configuration['workflow_transition']); // No cluttered objects in datastorage.
+    unset($configuration['transition']); // No cluttered objects in datastorage.
     $this->configuration = $configuration;
   }
 

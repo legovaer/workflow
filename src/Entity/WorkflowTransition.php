@@ -917,13 +917,11 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 //      ->setDisplayConfigurable('form', TRUE)
       ;
 
-//    $fields['entity_type'] = BaseFieldDefinition::create('entity_reference')
     $fields['entity_type'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Entity type'))
       ->setDescription(t('The Entity type this transition belongs to.'))
       ->setSetting('is_ascii', TRUE)
       ->setSetting('max_length', EntityTypeInterface::ID_MAX_LENGTH)
-//      ->setSetting('target_type', 'node_type')
       ->setReadOnly(TRUE);
 
     $fields['entity_id'] = BaseFieldDefinition::create('entity_reference')
@@ -946,17 +944,17 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       ->setTranslatable(FALSE)
       ->setRevisionable(FALSE)
       ->setSetting('max_length', 32)
+      ->setDisplayConfigurable('form', FALSE)
+//      ->setDisplayOptions('form', array(
+//        'type' => 'string_textfield',
+//        'weight' => -5,
+//      ))
+//      ->setDisplayConfigurable('view', FALSE)
 //      ->setDisplayOptions('view', array(
 //        'label' => 'hidden',
 //        'type' => 'string',
 //        'weight' => -5,
 //      ))
-// @todo D8: activate this, but test with WorkflowTransitionForm::form().
-//      ->setDisplayOptions('form', array(
-//        'type' => 'string_textfield',
-//        'weight' => -5,
-//      ))
-//      ->setDisplayConfigurable('form', TRUE)
     ;
 
     $fields['langcode'] = BaseFieldDefinition::create('language')
@@ -987,6 +985,12 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       ->setLabel(t('To state'))
       ->setDescription(t('The {workflow_states}.sid the entity transitioned to.'))
       ->setSetting('target_type', 'workflow_state')
+// @todo D8: activate this. Test with both Form and Widget.
+      ->setDisplayOptions('form', array(
+        'type' => 'select',
+        'weight' => -5,
+      ))
+      ->setDisplayConfigurable('form', FALSE)
       ->setReadOnly(TRUE);
 
     $fields['uid'] = BaseFieldDefinition::create('entity_reference')
@@ -1026,7 +1030,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
 //        'type' => 'timestamp',
 //        'weight' => 0,
 //      ))
-// @todo D8: activate this, but test with WorkflowTransitionForm::form().
+// @todo D8: activate this. Test with both Form and Widget.
 //      ->setDisplayOptions('form', array(
 //        'type' => 'datetime_timestamp',
 //        'weight' => 10,
@@ -1039,14 +1043,15 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       ->setDescription(t('The comment explaining this transition.'))
       ->setRevisionable(TRUE)
       ->setTranslatable(TRUE)
-// @todo D8: activate this, but test with WorkflowTransitionForm::form().
-//      ->setDisplayOptions('form', array(
-//        'type' => 'string_textarea',
-//        'weight' => 25,
-//        'settings' => array(
-//          'rows' => 4,
-//        ),
-//      ))
+// @todo D8: activate this. Test with both Form and Widget.
+      ->setDisplayOptions('form', array(
+        'type' => 'string_textarea',
+        'weight' => 25,
+        'settings' => array(
+          'rows' => 4,
+        ),
+      ))
+      ->setDisplayConfigurable('form', FALSE)
     ;
 
     return $fields;

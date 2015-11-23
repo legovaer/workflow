@@ -32,7 +32,7 @@ class NextNodeWorkflowStateAction extends WorkflowStateActionBase {
     $form = parent::buildConfigurationForm($field_name, $form_state);
 
     // Remove to_sid. User can't set it, since we want a dynamic 'next' state.
-    unset($form['workflow_to_sid']);
+    unset($form['to_sid']);
 
     return $form;
   }
