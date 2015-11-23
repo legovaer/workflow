@@ -101,3 +101,11 @@ function workflow_schema() {
  */
 function workflow_update_8000() {
 }
+
+/**
+ * Update from version beta1 to beta2 are not possible. Please re-install this module.
+ *
+ */
+function workflow_update_8001() {
+  drupal_set_message("Update from version beta1 to beta2 are not possible. Please re-install this module.");
+}
