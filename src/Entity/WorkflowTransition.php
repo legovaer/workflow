@@ -944,7 +944,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       ->setTranslatable(FALSE)
       ->setRevisionable(FALSE)
       ->setSetting('max_length', 32)
-      ->setDisplayConfigurable('form', FALSE)
+//      ->setDisplayConfigurable('form', FALSE)
 //      ->setDisplayOptions('form', array(
 //        'type' => 'string_textfield',
 //        'weight' => -5,
@@ -986,11 +986,11 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       ->setDescription(t('The {workflow_states}.sid the entity transitioned to.'))
       ->setSetting('target_type', 'workflow_state')
 // @todo D8: activate this. Test with both Form and Widget.
-      ->setDisplayOptions('form', array(
-        'type' => 'select',
-        'weight' => -5,
-      ))
-      ->setDisplayConfigurable('form', FALSE)
+//      ->setDisplayOptions('form', array(
+//        'type' => 'select',
+//        'weight' => -5,
+//      ))
+//      ->setDisplayConfigurable('form', TRUE)
       ->setReadOnly(TRUE);
 
     $fields['uid'] = BaseFieldDefinition::create('entity_reference')
@@ -1044,14 +1044,14 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       ->setRevisionable(TRUE)
       ->setTranslatable(TRUE)
 // @todo D8: activate this. Test with both Form and Widget.
-      ->setDisplayOptions('form', array(
-        'type' => 'string_textarea',
-        'weight' => 25,
-        'settings' => array(
-          'rows' => 4,
-        ),
-      ))
-      ->setDisplayConfigurable('form', FALSE)
+//      ->setDisplayOptions('form', array(
+//        'type' => 'string_textarea',
+//        'weight' => 25,
+//        'settings' => array(
+//          'rows' => 4,
+//        ),
+//      ))
+//      ->setDisplayConfigurable('form', FALSE)
     ;
 
     return $fields;
