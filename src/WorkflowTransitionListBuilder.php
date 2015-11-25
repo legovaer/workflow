@@ -38,6 +38,13 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
   protected $limit = 50;
 
   /**
+   * Indicates if a column 'Field name' must be generated.
+   *
+   * @var bool
+   */
+  protected $show_column_fieldname = NULL;
+
+  /**
    * Indicates if a footer must be generated.
    *
    * @var bool
@@ -88,8 +95,7 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     $field_name = workflow_url_get_field_name();
 
     $header['timestamp'] = $this->t('Date');
-    if (count(_workflow_info_fields($entity)) > 1) {
-      // @todo: also remove when field_name is set in route??
+    if ($this->showColumnFieldname($entity)) {
       $header['field_name'] = $this->t('Field name');
     }
     $header['from_state'] = $this->t('From State');
@@ -184,8 +190,7 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
 //     'class' => array('workflow_history_row'), // TODO D8-port
     $row['timestamp']['data'] = $transition->getTimestampFormatted(); // 'class' => array('timestamp')
     // html_entity_decode() transforms chars like '&' correctly.
-    if (count(_workflow_info_fields($entity)) > 1) {
-      // @todo: also remove when field_name is set in route??
+    if ($this->showColumnFieldname($entity)) {
       $row['field_name']['data'] = html_entity_decode($field_label);
     }
     $row['from_state']['data'] = html_entity_decode($from_label); // 'class' => array('previous-state-name'))
@@ -314,6 +319,23 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
    * The WorkflowState entities are always saved.
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+  }
+
+  /**
+   * Determines if the column 'Field name' must be shown.
+   *
+   * @param EntityInterface $entity
+   *
+   * @return bool
+   */
+  protected function showColumnFieldname(EntityInterface $entity) {
+    if (is_null($this->show_column_fieldname)) {
+      // @todo: also remove when field_name is set in route??
+      if (count(_workflow_info_fields($entity)) > 1) {
+        $this->show_column_fieldname = TRUE;
+      }
+    }
+    return $this->show_column_fieldname;
   }
 
 }
