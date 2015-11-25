@@ -96,7 +96,7 @@ class WorkflowTransitionListController extends EntityListController implements C
     /*
      * Get derived data from parameters.
      */
-    if (!$field_name = workflow_get_field_name($entity)) {
+    if (!$field_name = workflow_get_field_name($entity, workflow_url_get_field_name())) {
       return $form;
     }
 
@@ -167,14 +167,18 @@ class WorkflowTransitionListController extends EntityListController implements C
     $entity_type = $entity->getEntityTypeId();
     $entity_bundle = $entity->bundle();
     $entity_id = ($entity) ? $entity->id() : '';
+    $field_name = workflow_url_get_field_name();
 
-    if (isset($access[$uid][$entity_type][$entity_id])) {
-      return $access[$uid][$entity_type][$entity_id];
+    if (isset($access[$uid][$entity_type][$entity_id][$field_name ? $field_name : 'no_field'])) {
+      return $access[$uid][$entity_type][$entity_id][$field_name ? $field_name : 'no_field'];
     }
+
+    $access_result = AccessResult::forbidden();
 
     // When having multiple workflows per bundle, use Views display
     // 'Workflow history per entity' instead!
-    if (!$workflows = workflow_get_workflows_by_type($entity_bundle, $entity_type)) {
+    $fields = _workflow_info_fields($entity, $entity_type, $entity_bundle, $field_name);
+    if (!$fields) {
       return AccessResult::forbidden();
     }
     else {
@@ -189,21 +193,19 @@ class WorkflowTransitionListController extends EntityListController implements C
        */
       // @todo: what to do with multiple workflow_fields per bundle? Use Views instead! Or introduce a setting.
       // @TODO D8-port: workflow_tab_access: use proper 'WORKFLOW_TYPE' permissions
-      $access[$uid][$entity_type][$entity_id] = AccessResult::forbidden();
-      foreach ($fields = _workflow_info_fields($entity, $entity_type, $entity_bundle) as $definition) {
+      foreach ($fields as $definition) {
         $type_id = $definition->getSetting('workflow_type');
         if ($account->hasPermission("access any $type_id workflow_transion overview")) {
-          $access[$uid][$entity_type][$entity_id] = AccessResult::allowed();
+          $access_result = AccessResult::allowed();
         }
         elseif ($is_owner && $account->hasPermission("access own $type_id workflow_transion overview")) {
-          $access[$uid][$entity_type][$entity_id] = AccessResult::allowed();
+          $access_result = AccessResult::allowed();
         }
         elseif ($account->hasPermission('administer nodes')) {
-          $access[$uid][$entity_type][$entity_id] = AccessResult::allowed();
+          $access_result = AccessResult::allowed();
         }
+        $access[$uid][$entity_type][$entity_id][$field_name ? $field_name : 'no_field'] = $access_result;
       }
-
-      return $access[$uid][$entity_type][$entity_id];
     }
     return AccessResult::forbidden();
   }

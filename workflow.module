@@ -410,6 +410,20 @@ function workflow_url_get_entity(EntityInterface $entity = NULL) {
 }
 
 /**
+ * Helper function to get the field name from a route.
+ *
+ * For now only used for ../{entity_id}/workflow history tab.
+ *
+ * @return string|null $field_name
+ */
+function workflow_url_get_field_name() {
+  /* @var $route_match \Drupal\Core\Routing\RouteMatchInterface */
+  $route_match = \Drupal::routeMatch();
+  $field_name = $route_match->getParameter('field_name');
+  return $field_name;
+}
+
+/**
  * Helper function to get the entity from a route.
  *
  */

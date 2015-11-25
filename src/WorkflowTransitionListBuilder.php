@@ -53,6 +53,7 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     // TODO: D8-port: get entity from proper core methods.
     /* @var $entity EntityInterface */
     $entity = $this->workflow_entity; // N.B. This is a custom variable.
+    $field_name = workflow_url_get_field_name();
 
     $entity_type = $entity->getEntityTypeId();
     $entity_id = $entity->id();
@@ -62,7 +63,7 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     $this->limit = \Drupal::config('workflow.settings')->get('workflow_states_per_page');
     $limit = $this->limit;
     // Get Transitions with highest timestamp first.
-    $entities = WorkflowTransition::loadMultipleByProperties($entity_type, array($entity_id), [], '', '', $limit, 'DESC');
+    $entities = WorkflowTransition::loadMultipleByProperties($entity_type, array($entity_id), [], $field_name, '', $limit, 'DESC');
     return $entities;
   }
 
@@ -84,9 +85,11 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
   public function buildHeader() {
 
     $entity = $this->workflow_entity; // N.B. This is a custom variable.
+    $field_name = workflow_url_get_field_name();
 
     $header['timestamp'] = $this->t('Date');
     if (count(_workflow_info_fields($entity)) > 1) {
+      // @todo: also remove when field_name is set in route??
       $header['field_name'] = $this->t('Field name');
     }
     $header['from_state'] = $this->t('From State');
@@ -182,6 +185,7 @@ class WorkflowTransitionListBuilder extends EntityListBuilder implements FormInt
     $row['timestamp']['data'] = $transition->getTimestampFormatted(); // 'class' => array('timestamp')
     // html_entity_decode() transforms chars like '&' correctly.
     if (count(_workflow_info_fields($entity)) > 1) {
+      // @todo: also remove when field_name is set in route??
       $row['field_name']['data'] = html_entity_decode($field_label);
     }
     $row['from_state']['data'] = html_entity_decode($from_label); // 'class' => array('previous-state-name'))
