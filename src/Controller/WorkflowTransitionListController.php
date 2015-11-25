@@ -207,7 +207,7 @@ class WorkflowTransitionListController extends EntityListController implements C
         $access[$uid][$entity_type][$entity_id][$field_name ? $field_name : 'no_field'] = $access_result;
       }
     }
-    return AccessResult::forbidden();
+    return $access_result;
   }
 
 }
