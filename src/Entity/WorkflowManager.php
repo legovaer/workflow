@@ -212,7 +212,7 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
     // If $field_name is not known, yet, determine it.
     $field_name = ($field_name) ? $field_name : workflow_get_field_name($entity, $field_name);
     // If $field_name is found, get more details.
-    if (!$field_name) {
+    if (!$field_name || !isset($entity->$field_name)) {
       // Return the initial value.
       return $sid;
     }

@@ -108,7 +108,7 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
    * @param string $entityType
    *   The entity type of this Entity subclass.
    *
-   * @internal param string $entity_type The entity type of the attached $entity.*   The entity type of the attached $entity.
+   * @internal param string $entity_type The entity type of the attached $entity.
    * @see entity_create()
    *
    * No arguments passed, when loading from DB.

@@ -17,7 +17,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Session\AccountInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Drupal\workflow\Entity\Workflow;
@@ -34,92 +33,34 @@ use Drupal\workflow\Element\WorkflowTransitionElement;
  *   type = "workflow"
  * )
  */
-class WorkflowStateActionBase extends ConfigurableActionBase implements ContainerFactoryPluginInterface {
+abstract class WorkflowStateActionBase extends ConfigurableActionBase implements ContainerFactoryPluginInterface {
 
   /**
-   * The event dispatcher service.
-   *
-   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   * {@inheritdoc}
    */
-  protected $dispatcher;
-
-  /**
-   * Constructs a new DeleteNode object.
-   *
-   * @param array $configuration
-   *   A configuration array containing information about the plugin instance.
-   * @param string $plugin_id
-   *   The plugin ID for the plugin instance.
-   * @param mixed $plugin_definition
-   *   The plugin implementation definition.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher
-   *   The tempstore factory.
-   */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EventDispatcherInterface $dispatcher) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->dispatcher = $dispatcher;
+  public function calculateDependencies(){
+    return [
+      'module' => array('workflow',),
+    ];
   }
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($configuration, $plugin_id, $plugin_definition, $container->get('event_dispatcher'));
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function execute($object = NULL) {
-// D7: As advanced action with Trigger 'node':
-// - $entity is empty;
-// - $context['group'] = 'node'
-// - $context['hook'] = 'node_insert / _update / _delete'
-// - $context['node'] = (Object) stdClass
-// - $context['entity_type'] = NULL
-
-// D7: As advanced action with Trigger 'taxonomy':
-// - $entity is (Object) stdClass;
-// - $context['type'] = 'entity'
-// - $context['group'] = 'taxonomy'
-// - $context['hook'] = 'taxonomy_term_insert / _update / _delete'
-// - $context['node'] = (Object) stdClass
-// - $context['entity_type'] = NULL
-
-// D7: As advanced action with Trigger 'workflow API':
-// ...
-
-// D7: As VBO action:
-// - $entity is (Object) stdClass;
-// - $context['type'] = NULL
-// - $context['group'] = NULL
-// - $context['hook'] = NULL
-// - $context['node'] = (Object) stdClass
-// - $context['entity_type'] = 'node'
-
-    /* @var $entity \Drupal\Core\Entity\EntityInterface */
-    $entity = $object;
-
-    // Add actual data.
-    $transition = $this->getTransitionForExecution($entity);
-
-    $force = $this->configuration['force'];
-    $transition->force();
-
-    // Fire the transition.
-    workflow_execute_transition($transition, $force);
+    return new static($configuration, $plugin_id, $plugin_definition);
   }
 
   /**
    * {@inheritdoc}
    */
   public function defaultConfiguration() {
-    $configuration = $this->configuration + ['workflow' => array(
+    $configuration = $this->configuration + array(
       'field_name' => '',
       'to_sid' => '',
       'comment' => "Action set %title to %state by %user.",
       'force' => 0,
-    )];
+    );
     return $configuration;
   }
 
@@ -131,6 +72,7 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
   protected function getTransitionForConfiguration($current_sid = '') {
     // Build a transition from the values.
     $config = $this->configuration;
+
     $field_name = $config['field_name'];
     $to_sid = isset($config['to_sid']) ? $config['to_sid'] : '';
     $user = workflow_current_user();
@@ -263,6 +205,8 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
     $element = []; // Just to be explicit.
     $element['#default_value'] = $transition;
     $form += WorkflowTransitionElement::transitionElement($element, $form_state, $form);
+    // Remove the transition: generates an error upon saving the action definition.
+    unset($form['workflow_transition']);
 
     // Todo D8: add the entity form.
     //$form = \Drupal::getContainer()->get('entity.form_builder')->getForm($transition, 'add');
@@ -320,15 +264,6 @@ class WorkflowStateActionBase extends ConfigurableActionBase implements Containe
   public function access($object, AccountInterface $account = NULL, $return_as_object = FALSE) {
     $access = AccessResult::allowed();
     return $return_as_object ? $access : $access->isAllowed();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function calculateDependencies(){
-    return [
-      'module' => array('workflow',),
-    ];
   }
 
 }

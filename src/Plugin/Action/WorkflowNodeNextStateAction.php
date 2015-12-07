@@ -2,14 +2,12 @@
 
 /**
  * @file
- * Contains \Drupal\workflow\Plugin\Action\NextWorkflowState.
+ * Contains \Drupal\workflow\Plugin\Action\WorkflowNodeNextStateAction.
  */
 
 namespace Drupal\workflow\Plugin\Action;
 
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\workflow\Entity\WorkflowState;
-use Drupal\workflow\Plugin\Action\WorkflowStateActionBase;
 
 /**
  * Sets an entity to the next state.
@@ -23,13 +21,22 @@ use Drupal\workflow\Plugin\Action\WorkflowStateActionBase;
  *   type = "node"
  * )
  */
-class NextNodeWorkflowStateAction extends WorkflowStateActionBase {
+class WorkflowNodeNextStateAction extends WorkflowStateActionBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function calculateDependencies(){
+    return [
+      'module' => array('workflow', 'node'),
+    ];
+  }
 
   /**
    * {@inheritdoc}
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
-    $form = parent::buildConfigurationForm($field_name, $form_state);
+    $form = parent::buildConfigurationForm($form, $form_state);
 
     // Remove to_sid. User can't set it, since we want a dynamic 'next' state.
     unset($form['to_sid']);
@@ -41,8 +48,11 @@ class NextNodeWorkflowStateAction extends WorkflowStateActionBase {
    * {@inheritdoc}
    */
   public function execute($object = NULL) {
-    // Add actual data.
-    $transition = $this->getTransitionForExecution($object);
+
+    if (!$transition = $this->getTransitionForExecution($object)) {
+      drupal_set_message('The object is not valid for this action.', 'warning');
+      return;
+    }
 
     /*
      * Set the new next state.
@@ -50,33 +60,17 @@ class NextNodeWorkflowStateAction extends WorkflowStateActionBase {
     $entity = $transition->getTargetEntity();
     $field_name = $transition->getFieldName();
     $user = $transition->getOwner();
+    $force = $this->configuration['force'];
     // $comment = $transition->getComment();
 
-    $current_state = $transition->getFromState();
-
-    $force = FALSE;
-//    $force = $this->configuration['workflow_force'];
-
-    $workflow = $transition->getWorkflow();
     // Get the node's new State Id (which is the next available state).
-    $to_sid = $workflow->getNextSid($entity, $field_name, $user, $force);
+    $to_sid = $transition->getWorkflow()->getNextSid($entity, $field_name, $user, $force);
 
     // Add actual data.
     $transition->to_sid = $to_sid;
 
-//    $transition->force($force);
-
     // Fire the transition.
     workflow_execute_transition($transition, $force);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function calculateDependencies(){
-    return [
-      'module' => array('workflow', 'node'),
-    ];
   }
 
 }
