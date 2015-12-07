@@ -20,5 +20,5 @@ function workflow_ui_install() {
 /**
  * Drupal 8 updates.
  */
-function workflow_ui_update_8000(&$sandbox) {
+function workflow_ui_update_8001(&$sandbox) {
 }
