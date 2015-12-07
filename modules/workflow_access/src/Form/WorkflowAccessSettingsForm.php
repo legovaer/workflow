@@ -7,25 +7,34 @@
 
 namespace Drupal\workflow_access\Form;
 
-use Drupal\Core\Form\FormInterface;
+use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
  * Provides the base form for workflow add and edit forms.
  */
-class WorkflowAccessSettingsForm implements FormInterface { // extends FormBase {
+class WorkflowAccessSettingsForm extends ConfigFormBase {
 
   /**
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'workflow_access_settings_form';
+    return 'workflow_access_settings';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getEditableConfigNames() {
+    return ['workflow_access.settings'];
   }
 
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    $config = $this->config('workflow_access.settings');
+    $weight = $config->get('workflow_access_priority');
 
     $form['workflow_access'] = array(
       '#type' => 'details',
@@ -39,46 +48,13 @@ class WorkflowAccessSettingsForm implements FormInterface { // extends FormBase 
       '#type' => 'weight',
       '#delta' => 10,
       '#title' => t('Workflow Access Priority'),
-      '#default_value' => \Drupal::config('workflow_access.settings')->get('workflow_access_priority'),
+      '#default_value' => $weight,
       '#description' => t('This sets the node access priority. Changing this
       setting can be dangerous. If there is any doubt, leave it at 0.
       <a href=":url" target="_blank">Read the manual</a>.', array(':url' => $url)),
     );
 
-    $form += $this->actionsElement($form, $form_state);
-
-    return $form;
-  }
-
-  /**
-   * Returns the action form element for the current entity form.
-   */
-  protected function actionsElement(array $form, FormStateInterface $form_state) {
-    $element = $this->actions($form, $form_state);
-
-    if (isset($element['submit'])) {
-      // Give the primary submit button a #button_type of primary.
-      $element['submit']['#button_type'] = 'primary';
-    }
-
-    if (!empty($element)) {
-      $element['#type'] = 'actions';
-    }
-
-    return $element;
-  }
-
-  /**
-   * Returns an array of supported actions for the current entity form.
-   */
-  protected function actions(array $form, FormStateInterface $form_state) {
-    $actions['submit'] = array(
-      '#type' => 'submit',
-      '#value' => t('Save'),
-      '#submit' => array('::submitForm'),
-    );
-
-    return $actions;
+    return parent::buildForm($form, $form_state);
   }
 
   /**
@@ -92,8 +68,12 @@ class WorkflowAccessSettingsForm implements FormInterface { // extends FormBase 
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $weight = $form_state->getValues()['workflow_access']['workflow_access_priority'];
-    \Drupal::configFactory()->getEditable('workflow_access.settings')->set('workflow_access_priority', $weight)->save();
-    $form_state->setRedirect('entity.workflow_type.collection');
+
+    $this->config('workflow_access.settings')
+      ->set('workflow_access_priority', $weight)
+      ->save();
+
+    parent::submitForm($form, $form_state);
   }
 
 }
