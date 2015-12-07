@@ -58,7 +58,7 @@ abstract class WorkflowStateActionBase extends ConfigurableActionBase implements
     $configuration = $this->configuration + array(
       'field_name' => '',
       'to_sid' => '',
-      'comment' => "Action set %title to %state by %user.",
+      'comment' => "New state is set by a triggered Action.",
       'force' => 0,
     );
     return $configuration;
@@ -73,7 +73,7 @@ abstract class WorkflowStateActionBase extends ConfigurableActionBase implements
     // Build a transition from the values.
     $config = $this->configuration;
 
-    $field_name = $config['field_name'];
+    $field_name = workflow_get_field_name($entity, $config['field_name']);
     $to_sid = isset($config['to_sid']) ? $config['to_sid'] : '';
     $user = workflow_current_user();
     $comment = $config['comment'];
@@ -108,37 +108,31 @@ abstract class WorkflowStateActionBase extends ConfigurableActionBase implements
     $entity->enforceIsNew(FALSE);
 
     $config = $this->configuration;
-    $field_name = $config['field_name'];
+    $field_name = workflow_get_field_name($entity, $config['field_name']);
     $current_sid = workflow_node_current_state($entity, $field_name);
     if (!$current_sid) {
       \Drupal::logger('workflow_action')->notice('Unable to get current workflow state of entity %id.', array('%id' => $entity_id));
       return NULL;
     }
 
-    // Get a default Transition from configuration.
-    $transition = $this->getTransitionforConfiguration($current_sid);
-
+    $to_sid = isset($config['to_sid']) ? $config['to_sid'] : '';
     // Get the Comment. Parse the $comment variables.
     $comment_string = $this->configuration['comment'];
     $comment = t($comment_string, array(
       '%title' => $entity->label(),
       // "@" and "%" will automatically run check_plain().
-      '%state' => workflow_get_sid_name($transition->getToSid()),
+      '%state' => workflow_get_sid_name($to_sid),
       '%user' => $user->getUsername(),
     ));
+    $force = $this->configuration['force'];
 
-    // Add actual data.
-    $to_sid = $transition->getToSid();
+    $transition = WorkflowTransition::create([$current_sid, 'field_name' => $field_name]);
     $transition->setTargetEntity($entity);
     $transition->setValues($to_sid, $user->id(), REQUEST_TIME, $comment);
-
-    // // Leave Force to subclass.
-    // $force = $this->configuration['force'];
-    // $transition->force();
+    $transition->force($force);
 
     return $transition;
   }
-
 
   /**
    * {@inheritdoc}
