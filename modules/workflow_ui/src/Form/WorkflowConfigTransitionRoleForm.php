@@ -105,7 +105,7 @@ class WorkflowConfigTransitionRoleForm extends WorkflowConfigTransitionFormBase 
             if ($to_state->isCreationState()) {
               continue;
             }
-            // Only  allow transitions from $from_state.
+            // Only allow transitions from $from_state.
             if ($state->id() <> $from_state->id()) {
               continue;
             }

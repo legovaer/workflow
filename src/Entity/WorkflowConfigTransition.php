@@ -106,7 +106,7 @@ class WorkflowConfigTransition extends ConfigEntityBase implements WorkflowConfi
     // Create the machine_name. This can be used to rebuild/revert the Feature in a target system.
     if (empty($this->id())) {
       $wid = $workflow->id();
-      $this->set('id', implode('', [$wid, str_replace($wid, '', $this->from_sid), str_replace($wid, '', $this->to_sid)]));
+      $this->set('id', implode('', [$wid, substr($this->from_sid, strlen($wid)), substr($this->to_sid, strlen($wid))]));
     }
 
     $status = parent::save();
