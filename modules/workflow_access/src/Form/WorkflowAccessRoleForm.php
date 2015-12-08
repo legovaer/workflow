@@ -27,7 +27,7 @@ class WorkflowAccessRoleForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function getEditableConfigNames() {
+  protected function getEditableConfigNames() {
     return ['workflow_access.role'];
   }
 
@@ -38,7 +38,7 @@ class WorkflowAccessRoleForm extends ConfigFormBase {
     // @todo D8: this title and this form are not used.
     $title = 'Access';
     if ($workflow = workflow_ui_url_get_workflow()) {
-      $title = t('!name Access', array('!name' => $workflow->label()));
+      $title = t('Access Workflow %name', array('%name' => $workflow->label()));
     }
     return $title;
   }

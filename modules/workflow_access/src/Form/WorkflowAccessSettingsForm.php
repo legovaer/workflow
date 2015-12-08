@@ -25,7 +25,7 @@ class WorkflowAccessSettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function getEditableConfigNames() {
+  protected function getEditableConfigNames() {
     return ['workflow_access.settings'];
   }
 
