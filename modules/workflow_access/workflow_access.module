@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\workflow\Entity\Workflow;
+use Drupal\workflow\Entity\WorkflowTransition;
 use Drupal\workflow\Entity\WorkflowTransitionInterface;
 
 /**
@@ -20,9 +21,16 @@ function workflow_access_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
     case 'entity.workflow_type.access_form':
       $url = \Drupal\Core\Url::fromRoute('workflow.access.settings');
+      $output .= t("This page lets you refine the permissions per role and per
+        workflow state. Although the workflow module allows you to add multiple
+        workflows to per entity type, Workflow Access supports only one
+        workflow per entity type."
+      );
+      $output .="<br>";
       $output .= t("WARNING: Use of the 'Edit any', 'Edit own', and even 'View
         published content' permissions for the content type may override these
-        access settings. You may need to <a href=':url'>alter the priority of
+        access settings. You may disable those permissions or
+        <a href=':url'>alter the priority of
         the Workflow access module</a>.", array(':url' => $url->toString())
       );
       if (\Drupal::moduleHandler()->moduleExists('og')) {
@@ -57,16 +65,68 @@ function workflow_access_workflow_operations($op, EntityInterface $entity = NULL
 }
 
 /**
+ * Implements hook_entity_insert().
+ *
+ * We use the Role weight as an id.
+ * In contrary to content_access module, that uses a 'content_access_roles_gids'
+ * config setting.
+ * @todo: determine the best way for D8. See also content_access.module
+ * The problem is that node_access table uses Int, whereas the Role Id is string.
+ */
+function workflow_access_entity_insert(EntityInterface $entity) {
+  return workflow_access_entity_update($entity);
+}
+
+function workflow_access_entity_update(EntityInterface $entity) {
+  if ($entity instanceof \Drupal\user\RoleInterface) {
+    // Attend user to Rebuild data, because the weight of a role
+    // is the key for workflow_Access.
+    // @todo: determine the best way for D8. See also content_access.module
+    node_access_needs_rebuild(TRUE);
+  }
+}
+
+/**
  * Implements hook_node_grants().
  *
  * Supply the workflow access grants. We are simply using
  * roles as access lists, so rids translate directly to gids.
  */
 function workflow_access_node_grants(AccountInterface $account, $op) {
+  $gids = array();
+  $roles = $account->getRoles();
+  foreach ($roles as $role) {
+    // @todo D8: compare with content_access module.
+    $gids[] = workflow_access_get_role_gid($role);
+  }
+
   return array(
-    'workflow_access' => array_keys($account->getRoles()),
+    'workflow_access' => $gids,
     'workflow_access_owner' => array($account->id()),
   );
+}
+
+/**
+ * Helper providing numeric id for role.
+ * Copied from content_access.module
+ */
+function workflow_access_get_role_gid($rid) {
+  // @todo D8: compare with content_access module.
+//  $config = \Drupal::configFactory()->getEditable('content_access.settings');
+//  $roles_gids = $config->get('content_access_roles_gids');
+//  return $roles_gids[$role];
+  $role = \Drupal\user\Entity\Role::load($rid);
+  $weight = 100;
+  // Avoid negative values.
+  if ($role) {
+    $weight = 100 + $role->getWeight();
+  }
+  else {
+    // For Author, no role exists.
+    $weight = 100 - 20;
+  }
+
+  return $weight;
 }
 
 /**
@@ -78,6 +138,13 @@ function workflow_access_node_grants(AccountInterface $account, $op) {
 function workflow_access_node_access_records(\Drupal\node\NodeInterface $node) {
   $grants = array();
 
+  //if (!$node->isPublished()) {
+  //  // @todo: return;
+  //}
+
+  $entity_type = $node->getEntityTypeId();
+
+
   // Only relevant for content with Workflow.
   if (!isset($node->workflow_transitions)) {
     $node->workflow_transitions = array();
@@ -88,15 +155,11 @@ function workflow_access_node_access_records(\Drupal\node\NodeInterface $node) {
     // - when rebuilding permissions via batch for workflow_node and workflow_field.
     // In that case, we need to create the workflow_transitions ourselves to
     // calculate the grants.
-    foreach (_workflow_info_fields($node, 'node') as $field_name => $field) {
-      $old_sid = FALSE;
+    foreach (_workflow_info_fields($node, $entity_type) as $field) {
+      $field_name = $field->getName(); // Do not use id().
+      $old_sid = $new_sid = $node->$field_name->value;
+
       // Create a dummy transition, just to set $node->workflow_transitions.
-      if (isset($node->workflow)) {
-        $old_sid = $new_sid = $node->workflow;
-      }
-      elseif (isset($node->{$field_name}[\Drupal\Core\Language\Language::LANGCODE_NOT_SPECIFIED])) {
-        $old_sid = $new_sid = _workflow_get_sid_by_items($node->{$field_name}[\Drupal\Core\Language\Language::LANGCODE_NOT_SPECIFIED]);
-      }
       if ($old_sid) {
         /* @var $transition WorkflowTransitionInterface */
         $transition = WorkflowTransition::create([$old_sid, 'field_name' => $field_name]);
@@ -114,7 +177,8 @@ function workflow_access_node_access_records(\Drupal\node\NodeInterface $node) {
   // Get 'author' of this entity.
   // - Some entities (e.g., taxonomy_term) do not have a uid.
   // But then again: node_access is only for nodes...
-  $uid = !$node->getOwnerId() ? $node->getOwnerId() : 0;
+  $uid = ($node->getOwnerId()) ? (int) $node->getOwnerId() : 0;
+  $priority = workflow_access_get_setting('workflow_access_priority');
 
   $count = 0;
   foreach ($node->workflow_transitions as $transition) {
@@ -123,29 +187,27 @@ function workflow_access_node_access_records(\Drupal\node\NodeInterface $node) {
       continue;
     }
 
-    $field_name = $transition->field_name;
-    $priority = \Drupal::config('workflow_access.settings')->get('workflow_access_priority');
-    // @todo: $priority = $this->config('workflow_access.settings')->get('workflow_access_priority');
-
-    if ($current_sid = workflow_node_current_state($node, 'node', $field_name)) {
+    $field_name = $transition->getFieldName();
+    if ($current_sid = workflow_node_current_state($node, $field_name)) {
       foreach (workflow_access_get_workflow_access_by_sid($current_sid) as $rid => $grant) {
         $realm = ($uid > 0 && $rid == WORKFLOW_ROLE_AUTHOR_RID) ? 'workflow_access_owner' : 'workflow_access';
-        $gid = ($uid > 0 && $rid == WORKFLOW_ROLE_AUTHOR_RID) ? $uid : $rid;
+        $gid = ($uid > 0 && $rid == WORKFLOW_ROLE_AUTHOR_RID) ? $uid : workflow_access_get_role_gid($rid);
 
         // Anonymous ($uid == 0) author is not allowed for role 'author' (== -1).
         // Both logically (Anonymous having more rights then authenticated)
         // and technically: $gid must be a positive int.
-        if ($gid < 0) { // if ($uid == 0 && $grant->rid == WORKFLOW_ROLE_AUTHOR_RID) {
+        if ($uid == 0 && $rid == WORKFLOW_ROLE_AUTHOR_RID) {
           continue;
         }
 
         $grants[] = array(
           'realm' => $realm,
           'gid' => $gid,
-          'grant_view' => $grant->grant_view,
-          'grant_update' => $grant->grant_update,
-          'grant_delete' => $grant->grant_delete,
+          'grant_view' => (int) $grant['grant_view'],
+          'grant_update' => (int) $grant['grant_update'],
+          'grant_delete' => (int) $grant['grant_delete'],
           'priority' => $priority,
+          // 'langcode' => $node->language(),
           'field_name' => $field_name, // Just for analysis and info.
         );
       }
@@ -182,7 +244,12 @@ function workflow_access_node_access_explain($row) {
  * Given a sid, retrieve the access information and return the row(s).
  */
 function workflow_access_get_workflow_access_by_sid($sid) {
-  return  \Drupal::config('workflow_access.role')->get($sid);
+  $result = \Drupal::config('workflow_access.role')->get($sid);
+  if($result == NULL) {
+    // Avoid errors in calling function when no data available.
+    $result = array();
+  }
+  return $result;
 }
 
 /**
@@ -202,4 +269,15 @@ function workflow_access_insert_workflow_access_by_sid($sid, &$data, \Drupal\Cor
   $config
     ->set($sid, $data)
     ->save();
+}
+
+/**
+ * Get the module settings.
+ *
+ * @see WorkflowAccessSettingsForm::submitForm()
+ */
+function workflow_access_get_setting($value) {
+  $config = \Drupal::config('workflow_access.settings');
+  $priority = $config->get($value);
+  return $priority;
 }
