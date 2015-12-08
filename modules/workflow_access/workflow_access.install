@@ -9,51 +9,9 @@
  * Implements hook_schema().
  */
 function workflow_access_schema() {
-  $schema['workflow_access'] = array();
-    'description' => 'Workflow access tables',
-    'fields' => array(
-      'sid' => array(
-        'description' => 'The Workflow state ID.',
-        'type' => 'varchar',
-        'length' => 64,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'rid' => array(
-        'description' => 'The User role ID.',
-        'type' => 'varchar',
-        'length' => 64,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'grant_view' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'grant_update' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'grant_delete' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-    ),
-    'primary key' => array('sid', 'rid'),
-    'indexes' => array(
-      'rid' => array('rid'),
-    ),
-  );
-  return $schema;
+  // The D7-table 'workflow_access' is not used anymore.
+  // The data is no in table 'config'.
+  return array();
 }
 
 /**
@@ -63,9 +21,21 @@ function workflow_access_uninstall() {
   node_access_needs_rebuild(TRUE);
 }
 
-  // Remove the table. Data is now in config.
-  $schema = \Drupal\Core\Database\Database::getConnection()->schema();
-  $schema->dropTable('workflow_access');
+/**
+ * Force rebuild of node access.
+ */
+function workflow_access_update_8001(&$sandbox) {
   // Rebuild data.
   node_access_needs_rebuild(TRUE);
+}
+
+/**
+ * Remove table workflow_access. All current settings are lost!
+ */
+function workflow_access_update_8002(&$sandbox) {
+ // Remove the table. Data is now in config.
+ $schema = \Drupal\Core\Database\Database::getConnection()->schema();
+ $schema->dropTable('workflow_access');
+ // Rebuild data.
+ node_access_needs_rebuild(TRUE);
 }
