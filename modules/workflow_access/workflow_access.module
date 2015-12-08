@@ -125,11 +125,12 @@ function workflow_access_node_access_records(\Drupal\node\NodeInterface $node) {
 
     $field_name = $transition->field_name;
     $priority = \Drupal::config('workflow_access.settings')->get('workflow_access_priority');
+    // @todo: $priority = $this->config('workflow_access.settings')->get('workflow_access_priority');
 
     if ($current_sid = workflow_node_current_state($node, 'node', $field_name)) {
-      foreach (workflow_access_get_workflow_access_by_sid($current_sid) as $grant) {
-        $realm = ($uid > 0 && $grant->rid == WORKFLOW_ROLE_AUTHOR_RID) ? 'workflow_access_owner' : 'workflow_access';
-        $gid = ($uid > 0 && $grant->rid == WORKFLOW_ROLE_AUTHOR_RID) ? $uid : $grant->rid;
+      foreach (workflow_access_get_workflow_access_by_sid($current_sid) as $rid => $grant) {
+        $realm = ($uid > 0 && $rid == WORKFLOW_ROLE_AUTHOR_RID) ? 'workflow_access_owner' : 'workflow_access';
+        $gid = ($uid > 0 && $rid == WORKFLOW_ROLE_AUTHOR_RID) ? $uid : $rid;
 
         // Anonymous ($uid == 0) author is not allowed for role 'author' (== -1).
         // Both logically (Anonymous having more rights then authenticated)
@@ -181,35 +182,24 @@ function workflow_access_node_access_explain($row) {
  * Given a sid, retrieve the access information and return the row(s).
  */
 function workflow_access_get_workflow_access_by_sid($sid) {
-  $results = db_query('SELECT * from {workflow_access} where sid = :sid', array(':sid' => $sid));
-  return $results->fetchAll();
-}
-
-/**
- * Given a sid and rid (the unique key), delete all access data for this state.
- */
-function workflow_access_delete_workflow_access_by_sid_rid($sid, $rid) {
-  db_delete('workflow_access')
-    ->condition('sid', $sid)
-    ->condition('rid', $rid)
-    ->execute();
+  return  \Drupal::config('workflow_access.role')->get($sid);
 }
 
 /**
  * Given a sid, delete all access data for this state.
  */
 function workflow_access_delete_workflow_access_by_sid($sid) {
-  db_delete('workflow_access')
-    ->condition('sid', $sid)
-    ->execute();
+  \Drupal::configFactory()->getEditable('workflow_access.role')
+    ->clear($sid)
+    ->save();
 }
 
 /**
  * Given data, insert into workflow access - we never update.
  */
-function workflow_access_insert_workflow_access_by_sid(&$data) {
-  workflow_access_delete_workflow_access_by_sid_rid($data['sid'], $data['rid']);
-  \Drupal::database()->merge('workflow_access')
-    ->key($data)
-    ->execute();
+function workflow_access_insert_workflow_access_by_sid($sid, &$data, \Drupal\Core\Config\Config $config = NULL) {
+  $config = \Drupal::configFactory()->getEditable('workflow_access.role');
+  $config
+    ->set($sid, $data)
+    ->save();
 }

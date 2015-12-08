@@ -2,33 +2,40 @@
 
 /**
  * @file
- * Contains \Drupal\workflow_access\Form\WorkflowAccessSettingsForm.
+ * Contains \Drupal\workflow_access\Form\WorkflowAccessRoleForm.
  */
 
 namespace Drupal\workflow_access\Form;
 
-use Drupal\Core\Entity\EntityForm;
+use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Form\FormBase;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\workflow\Entity\WorkflowState;
 
 /**
  * Provides the base form for workflow add and edit forms.
  */
-class WorkflowAccessForm extends FormBase {
+class WorkflowAccessRoleForm extends ConfigFormBase {
 
   /**
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'workflow_access_form';
+    return 'workflow_access_role';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getEditableConfigNames() {
+    return ['workflow_access.role'];
   }
 
   /**
    * Title callback from workflow_access.routing.yml.
    */
   public function title() {
+    // @todo D8: this title and this form are not used.
     $title = 'Access';
     if ($workflow = workflow_ui_url_get_workflow()) {
       $title = t('!name Access', array('!name' => $workflow->label()));
@@ -63,32 +70,31 @@ class WorkflowAccessForm extends FormBase {
     $roles = workflow_get_user_role_names("create $type_id workflow_transition");
 
     // Add a table for every workflow state.
-    foreach ($workflow->getStates($all = TRUE) as $state) {
+    foreach ($workflow->getStates($all = TRUE) as $sid => $state) {
       if ($state->isCreationState()) {
         // No need to set perms on creation.
         continue;
       }
+
       $view = $update = $delete = array();
       $count = 0;
-      foreach (workflow_access_get_workflow_access_by_sid($state->id()) as $access) {
+      foreach (workflow_access_get_workflow_access_by_sid($sid) as $rid => $access) {
         $count++;
-        if ($access->grant_view) {
-          $view[] = $access->rid;
-        }
-        if ($access->grant_update) {
-          $update[] = $access->rid;
-        }
-        if ($access->grant_delete) {
-          $delete[] = $access->rid;
-        }
+        $view[$rid] = ($access['grant_view']) ? $rid : 0;
+        $update[$rid] = ($access['grant_update']) ? $rid : 0;
+        $delete[$rid] = ($access['grant_delete']) ? $rid : 0;
       }
       // Allow view grants by default for anonymous and authenticated users,
       // if no grants were set up earlier.
       if (!$count) {
-        $view = array(AccountInterface::ANONYMOUS_ROLE, AccountInterface::AUTHENTICATED_ROLE);
+        $view = array(
+          AccountInterface::ANONYMOUS_ROLE => AccountInterface::ANONYMOUS_ROLE,
+          AccountInterface::AUTHENTICATED_ROLE =>AccountInterface::AUTHENTICATED_ROLE,
+        );
       }
+
       // @todo: better tables using a #theme function instead of direct #prefixing.
-      $form[$state->id()] = array(
+      $form[$sid] = array(
         '#type' => 'fieldset',
         '#title' => $state->label(),
         '#collapsible' => TRUE,
@@ -96,35 +102,35 @@ class WorkflowAccessForm extends FormBase {
         '#tree' => TRUE,
       );
 
-      $form[$state->id()]['view'] = array(
+      $form[$sid]['view'] = array(
         '#type' => 'checkboxes',
         '#options' => $roles,
         '#default_value' => $view,
         '#title' => t('Roles who can view posts in this state'),
         '#prefix' => '<table width="100%" style="border: 0;"><tbody style="border: 0;"><tr><td>',
+        '#suffix' => "</td>",
       );
 
-      $form[$state->id()]['update'] = array(
+      $form[$sid]['update'] = array(
         '#type' => 'checkboxes',
         '#options' => $roles,
         '#default_value' => $update,
         '#title' => t('Roles who can edit posts in this state'),
-        '#prefix' => "</td><td>",
+        '#prefix' => "<td>",
+        '#suffix' => "</td>",
       );
 
-      $form[$state->id()]['delete'] = array(
+      $form[$sid]['delete'] = array(
         '#type' => 'checkboxes',
         '#options' => $roles,
         '#default_value' => $delete,
         '#title' => t('Roles who can delete posts in this state'),
-        '#prefix' => "</td><td>",
+        '#prefix' => "<td>",
         '#suffix' => "</td></tr></tbody></table>",
       );
     }
 
-    $form['submit'] = array('#type' => 'submit', '#value' => t('Save configuration'));
-
-    return $form;
+    return parent::buildForm($form, $form_state);
   }
 
   /**
@@ -150,24 +156,19 @@ class WorkflowAccessForm extends FormBase {
       }
 
       foreach ($access['view'] as $rid => $checked) {
-        $data = array(
-          'sid' => $sid,
-          'rid' => $rid,
+        $data[$rid] = array(
           'grant_view' => (!empty($checked)) ? (bool) $checked : 0,
           'grant_update' => (!empty($access['update'][$rid])) ? (bool) $access['update'][$rid] : 0,
           'grant_delete' => (!empty($access['delete'][$rid])) ? (bool) $access['delete'][$rid] : 0,
         );
-        workflow_access_insert_workflow_access_by_sid($data);
       }
+      workflow_access_insert_workflow_access_by_sid($sid, $data);
 
-      // Update all nodes having same workflow state to reflect new settings.
-      // just set a flag, which is working for both Workflow Field ánd Workflow Node.
+      // Update all nodes to reflect new settings.
       node_access_needs_rebuild(TRUE);
     }
 
-    drupal_set_message(t('Workflow access permissions updated.'));
-//    $form_state['redirect'] = 'admin/config/workflow/workflow/' . $form['#wid'];
-//    $form_state->setRedirect('entity.workflow_type.collection');
+    parent::submitForm($form, $form_state);
   }
 
 }
