@@ -240,25 +240,26 @@ class WorkflowItem extends ListItemBase {
     /*
      * Overwrite ListItemBase::storageSettingsForm().
      */
-    $allowed_values = WorkflowState::loadMultiple([], $wid);
-    $allowed_values_function = $this->getSetting('allowed_values_function');
+    if ($wid) {
+      $allowed_values = WorkflowState::loadMultiple([], $wid);
+      $allowed_values_function = $this->getSetting('allowed_values_function');
 
-    $element['allowed_values'] = array(
-      '#type' => 'textarea',
-      '#title' => t('Allowed values for the selected Workflow type'),
-      '#default_value' => ($wid) ? $this->allowedValuesString($allowed_values) : [],
-      '#rows' => count($allowed_values),
-      '#access' => ($wid) ? TRUE : FALSE, // User can see the data,
-      '#disabled' => TRUE, // .. but cannot change them.
-      '#element_validate' => array(array(get_class($this), 'validateAllowedValues')),
+      $element['allowed_values'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Allowed values for the selected Workflow type'),
+        '#default_value' => ($wid) ? $this->allowedValuesString($allowed_values) : [],
+        '#rows' => count($allowed_values),
+        '#access' => ($wid) ? TRUE : FALSE, // User can see the data,
+        '#disabled' => TRUE, // .. but cannot change them.
+        '#element_validate' => array(array(get_class($this), 'validateAllowedValues')),
 
-      '#field_has_data' => $has_data,
-      '#field_name' => $this->getFieldDefinition()->getName(),
-      '#entity_type' => $this->getEntity()->getEntityTypeId(),
-      '#allowed_values' => $allowed_values,
-    );
-
-    $element['allowed_values']['#description'] = $this->allowedValuesDescription();
+        '#field_has_data' => $has_data,
+        '#field_name' => $this->getFieldDefinition()->getName(),
+        '#entity_type' => $this->getEntity()->getEntityTypeId(),
+        '#allowed_values' => $allowed_values,
+        '#description' => $this->allowedValuesDescription(),
+      );
+    }
 
     return $element;
   }
