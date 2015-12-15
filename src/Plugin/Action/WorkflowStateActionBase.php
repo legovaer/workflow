@@ -65,27 +65,6 @@ abstract class WorkflowStateActionBase extends ConfigurableActionBase implements
   }
 
   /**
-   * @param string $current_sid
-   *
-   * @return WorkflowTransitionInterface
-   */
-  protected function getTransitionForConfiguration($current_sid = '') {
-    // Build a transition from the values.
-    $config = $this->configuration;
-
-    $field_name = workflow_get_field_name($entity, $config['field_name']);
-    $to_sid = isset($config['to_sid']) ? $config['to_sid'] : '';
-    $user = workflow_current_user();
-    $comment = $config['comment'];
-    $force = $config['force'];
-
-    // Add transition to config.
-    $transition = WorkflowTransition::create([$current_sid, 'field_name' => $field_name]);
-    $transition->setValues($to_sid, $user->id(), REQUEST_TIME, $comment, TRUE);
-    return $transition;
-  }
-
-  /**
    * @return WorkflowTransitionInterface
    */
   protected function getTransitionForExecution(EntityInterface $entity) {
@@ -150,14 +129,27 @@ abstract class WorkflowStateActionBase extends ConfigurableActionBase implements
     // - $context['view'] = "(Object) view"
     // - $context['settings'] = "array()"
 
-    // @todo: test with multiple workflows per entity.
+    $config = $this->configuration;
+    $field_name = $config['field_name'];
     $wids = workflow_get_workflow_names();
-    $wid = array_keys($wids)[0];
+
+    if (empty($field_name)) {
+      if (count($wids) > 1) {
+        drupal_set_message('You have more then one workflow in the system. Please first select the fieldname
+          and save the form. Then, revisit the form to set the correct state value.', 'warning');
+      }
+      $wid = count($wids) ? array_keys($wids)[0] : '';
+    }
+    else {
+      $fields = _workflow_info_fields($entity = NULL, $entity_type = $config['type'], $entity_bundle = '', $field_name);
+      $wid = count($fields) ? reset($fields)->getSetting('workflow_type') : '';
+    }
+
     // Get the common Workflow, or create a dummy Workflow.
     $workflow = $wid ? Workflow::load($wid) : Workflow::create(['id' => 'dummy_action', 'label' => 'dummy_action']);
     $current_state = $workflow->getCreationState();
 
-    /* // @TODO D8-port
+    /* // @TODO D8-port for VBO
     // Show the current state and the Workflow form to allow state changing.
     // N.B. This part is replicated in hook_node_view, workflow_tab_page, workflow_vbo.
     if ($workflow) {
@@ -190,8 +182,12 @@ abstract class WorkflowStateActionBase extends ConfigurableActionBase implements
       $field_id
     ));
 */
-
-    $transition = $this->getTransitionForConfiguration($current_state);
+    $to_sid = $config['to_sid'];
+    $user = workflow_current_user();
+    $comment = $config['comment'];
+    $force = $config['force'];
+    $transition = WorkflowTransition::create([$current_state, 'field_name' => $field_name]);
+    $transition->setValues($to_sid, $user->id(), REQUEST_TIME, $comment, TRUE);
 
     // Add the WorkflowTransitionForm to the page.
 
