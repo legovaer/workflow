@@ -316,6 +316,18 @@ function workflow_get_workflow_names($required = TRUE) {
 }
 
 /**
+ * Gets an Options list of field names.
+ */
+function workflow_get_workflow_field_names($entity = NULL, $entity_type = '', $entity_bundle = '', $field_name = '') {
+  $result = [];
+  foreach (_workflow_info_fields($entity, $entity_type, $entity_bundle, $field_name) as $definition) {
+    $field_name = $definition->getName();
+    $result[$field_name] = $definition->getName();
+  }
+  return $result;
+}
+
+/**
  * Helper function, to get the label of a given State Id.
  *
  * @param $sid
@@ -568,20 +580,6 @@ function _workflow_info_fields($entity = NULL, $entity_type = '', $entity_bundle
     }
   }
   return $field_info;
-}
-
-
-/**
- * Gets a list of field names, to be used in Options lists.
- *
- */
-function _workflow_info_field_names($entity = NULL, $entity_type = '', $entity_bundle = '', $field_name = '') {
-  $result = [];
-  foreach ($fields = _workflow_info_fields($entity, $entity_type, $entity_bundle, $field_name) as $definition) {
-    $field_name = $definition->getName();
-    $result[$field_name] = $definition->getName();
-  }
-  return $result;
 }
 
 /**

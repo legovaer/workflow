@@ -216,7 +216,7 @@ abstract class WorkflowStateActionBase extends ConfigurableActionBase implements
       '#type' => 'select',
       '#title' => t('Field name'),
       '#description' => t('Choose the field name.'),
-      '#options' => _workflow_info_field_names($entity),
+      '#options' => workflow_get_workflow_field_names($entity),
       '#default_value' => $field_name,
       '#required' => TRUE,
       '#weight' => -20,
