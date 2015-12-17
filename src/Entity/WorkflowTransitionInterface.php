@@ -75,15 +75,6 @@ interface WorkflowTransitionInterface extends WorkflowConfigTransitionInterface,
   public static function loadMultipleByProperties($entity_type, array $entity_ids, array $revision_ids = [], $field_name = '', $langcode = '',$limit = NULL, $sort = 'ASC', $transition_type = '');
 
   /**
-   * Update the entity, attached to the Transition.
-   * This is not needed in a Widget, but is needed on the WorkflowForm.
-   *
-   * @return int
-   *   Either SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
-   */
-  public function updateTargetEntity();
-
-  /**
    * Execute a transition (change state of an entity).
    *
    * A Scheduled Transition shall only be saved, unless the

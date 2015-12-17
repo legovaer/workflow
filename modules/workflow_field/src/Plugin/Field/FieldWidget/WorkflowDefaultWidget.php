@@ -281,9 +281,11 @@ class WorkflowDefaultWidget extends WidgetBase {
         // Execution, restore the default values for Workflow Field.
         // For instance, workflow_rules evaluates this.
         //
+        // N.B. Align the following functions:
+        // - WorkflowDefaultWidget::massageFormValues();
+        // - WorkflowManager::executeTransition().
         // Set the transition back, to be used in hook_entity_update().
         $item['workflow_transition'] = $transition;
-        //
         // Set the value at the proper location.
         $item['value'] = $to_sid;
       }

@@ -9,7 +9,6 @@ namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Field\FieldItemList;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\user\Entity\Role;
 
@@ -18,12 +17,6 @@ use Drupal\user\Entity\Role;
  *
  */
 class WorkflowManager implements WorkflowManagerInterface { // extends EntityManager {
-
-  /**
-   * Constructs a new Entity plugin manager.
-   */
-//  public function __construct() {
-//  }
 
   /**
    * {@inheritdoc}
@@ -35,23 +28,26 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
 
     $update_entity = (!$transition->isScheduled() && !$transition->isExecuted());
 
-    // Validate transition, save in history table and delete from schedule table.
-    $to_sid = $transition->execute();
-
     // Save the (scheduled) transition.
     if ($update_entity) {
-      if ($to_sid == $transition->getToSid()) {
-        // Update the workflow field of the entity.
-        $transition->updateTargetEntity();
-      }
-      else {
-        // The transition was not allowed.
-        // @todo: validateForm().
-      }
+      // Update the workflow field of the entity.
+      $entity = $transition->getTargetEntity();
+      $field_name = $transition->getFieldName();
+      $to_sid = $transition->getToSid();
+
+      // N.B. Align the following functions:
+      // - WorkflowDefaultWidget::massageFormValues();
+      // - WorkflowManager::executeTransition().
+      $entity->$field_name->workflow_transition = $transition;
+      $entity->$field_name->value = $to_sid;
+
+      $entity->save();
     }
     else {
       // We create a new transition, or update an existing one.
       // Do not update the entity itself.
+      // Validate transition, save in history table and delete from schedule table.
+      $to_sid = $transition->execute();
     }
 
     return $to_sid;
@@ -128,6 +124,19 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       $field_name = $field_info->getName();
       /* @var $transition WorkflowTransitionInterface */
       $transition = $entity->$field_name->__get('workflow_transition');
+      if (!$transition) {
+        // We come from creating an entity via entity_form, with hidden widget.
+        $old_sid = workflow_node_previous_state($entity, $field_name);
+        $user = workflow_current_user();
+        $comment = '';
+        $transition = WorkflowTransition::create([$old_sid, 'field_name' => $field_name]);
+        $transition->setValues($new_sid, $user->id(), REQUEST_TIME, $comment, TRUE);
+      }
+      else {
+        // Transition already created in widget.
+        // or: we come from WorkflowTransitionForm.
+      }
+
       if ($transition) {
         if ($entity->getEntityTypeId() !== 'comment') {
           // We come from Content edit page, from widget.
@@ -136,10 +145,6 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
           $transition->setTargetEntity($entity);
         }
         $transition->execute();
-      }
-      else {
-        // We come from WorkflowTransitionForm, which explicitly save the entity.
-        // The transition is executed by the form.
       }
     }
   }
@@ -247,22 +252,17 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       return $sid;
     }
 
-    if (isset($entity->original)) {
-      // A changed node.
-      workflow_debug(__FILE__, __FUNCTION__, __LINE__, $sid);  // @todo D8-port: still test this snippet.
-    }
-
     // A node may not have a Workflow attached.
     if ($entity->isNew()) {
       // A new Node. D7: $is_new is not set when saving terms, etc.
       $sid = self::getCreationStateId($entity, $field_name);
     }
-    elseif (!$sid) {
+    else {
       // @todo?: Read the history with an explicit langcode.
       $langcode = ''; // $entity->language()->getId();
       $entity_type = $entity->getEntityTypeId();
       if ($last_transition = WorkflowTransition::loadByProperties($entity_type, $entity->id(), [], $field_name, $langcode, 'DESC')) {
-        $sid = $last_transition->getFromSid();
+        $sid = $last_transition->getToSid(); // @see #2637092, #2612702
       }
     }
 

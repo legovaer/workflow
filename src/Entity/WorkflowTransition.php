@@ -410,20 +410,6 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
   /**
    * {@inheritdoc}
    */
-  public function updateTargetEntity() {
-    $transition = $this;
-    $field_name = $transition->getFieldName();
-    $entity = $transition->getTargetEntity();
-
-    $to_sid = ( $transition->isScheduled() && !$transition->isExecuted() ) ? $transition->getFromSid() : $transition->getToSid();
-    // @todo: Update Entity only if field is changed??
-    $entity->{$field_name}->setValue($to_sid);
-    return $entity->save();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function execute($force = FALSE) {
     // Load the entity, if not already loaded.
     // This also sets the (empty) $revision_id in Scheduled Transitions.
@@ -453,8 +439,8 @@ class WorkflowTransition extends ContentEntityBase implements WorkflowTransition
       // - try adapting code of transition->save() to avoid second record.
       // - avoid executing twice.
       $message = 'Transition is executed twice in a call. The second call for
-        !id is not executed.';
-      \Drupal::logger('workflow')->error($message, ['!id' => $entity->id()]);
+        @id is not executed.';
+      \Drupal::logger('workflow')->error($message, ['@id' => $entity->id()]);
       // Return the result of the last call.
       return $static_info[$entity->id()][$field_name][$this->id()]; // <-- exit !!!
     }
