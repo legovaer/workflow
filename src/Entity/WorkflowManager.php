@@ -157,7 +157,6 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
    * {@inheritdoc}
    */
   public static function deleteUser(AccountInterface $account) {
-    workflow_debug(__FILE__, __FUNCTION__, __LINE__);  // @todo D8-port: still test this snippet.
     self::cancelUser([], $account, 'user_cancel_delete');
   }
 
