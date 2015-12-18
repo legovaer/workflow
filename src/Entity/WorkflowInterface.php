@@ -7,7 +7,7 @@
 
 namespace Drupal\workflow\Entity;
 
-use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
 
 /**
@@ -84,29 +84,32 @@ interface WorkflowInterface {
    *
    * Uses WorkflowState::getOptions(), because this does an access check.
    * The first State ID is user-dependent!
+   *
+   * @param EntityInterface|NULL $entity
+   *   The entity at hand. May be NULL (E.g., on a Field settings page).
+   * @param $field_name
+   * @param AccountInterface $user
+   * @param bool $force
+   *
+   * @return $sid
+   *   A State ID.
    */
-  public function getFirstSid($entity, $field_name, AccountInterface $user, $force);
+  public function getFirstSid(EntityInterface $entity, $field_name, AccountInterface $user, $force = FALSE);
 
   /**
    * Returns the next state for the current state.
    * Is used in VBO Bulk actions.
    *
-   * @param string $entity_type
-   *   The type of the entity at hand.
-   * @param object $entity
-   *   The entity at hand. May be NULL (E.g., on a Field settings page).
+   * @param EntityInterface $entity
+   *   The entity at hand.
    * @param $field_name
-   * @param $user
+   * @param AccountInterface $user
    * @param bool $force
    *
-   * @return array
-   *   An array of sid=>label pairs.
-   *   If $this->sid is set, returns the allowed transitions from this state.
-   *   If $this->sid is 0 or FALSE, then labels of ALL states of the State's
-   *   Workflow are returned.
-   *
+   * @return $sid
+   *   A State ID.
    */
-  public function getNextSid($entity, $field_name, $user, $force = FALSE);
+  public function getNextSid(EntityInterface $entity, $field_name, AccountInterface $user, $force = FALSE);
 
   /**
    * Gets all states for a given workflow.

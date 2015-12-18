@@ -13,7 +13,6 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\workflow\Element\WorkflowTransitionElement;
 use Drupal\workflow\Entity\Workflow;
-use Drupal\workflow\Entity\WorkflowConfigTransitionInterface;
 use Drupal\workflow\Entity\WorkflowTransitionInterface;
 
 /**

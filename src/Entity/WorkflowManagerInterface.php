@@ -9,7 +9,6 @@ namespace Drupal\workflow\Entity;
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\user\Entity\Role;
 
 /**
  * Provides an interface for workflow manager.

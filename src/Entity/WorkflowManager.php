@@ -10,7 +10,6 @@ namespace Drupal\workflow\Entity;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\user\Entity\Role;
 
 /**
  * Manages entity type plugin definitions.
@@ -120,15 +119,20 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
       return;
     }
 
+    $user = workflow_current_user();
+
     foreach (_workflow_info_fields($entity) as $field_info) {
       $field_name = $field_info->getName();
       /* @var $transition WorkflowTransitionInterface */
       $transition = $entity->$field_name->__get('workflow_transition');
       if (!$transition) {
-        // We come from creating an entity via entity_form, with hidden widget.
-        $old_sid = workflow_node_previous_state($entity, $field_name);
-        $user = workflow_current_user();
+        // We come from creating an entity via entity_form, with core widget.
         $comment = '';
+        $old_sid = workflow_node_previous_state($entity, $field_name);
+        if (!$new_sid = $entity->$field_name->value) {
+          $workflow = Workflow::load($wid = $field_info->getSetting('workflow_type'));
+          $new_sid = $workflow->getFirstSid($entity, $field_name, $user);
+        };
         $transition = WorkflowTransition::create([$old_sid, 'field_name' => $field_name]);
         $transition->setValues($new_sid, $user->id(), REQUEST_TIME, $comment, TRUE);
       }

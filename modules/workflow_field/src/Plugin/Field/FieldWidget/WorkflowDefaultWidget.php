@@ -7,10 +7,10 @@
 
 namespace Drupal\workflowfield\Plugin\Field\FieldWidget;
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\workflow\Element\WorkflowTransitionElement;
 use Drupal\workflow\Entity\Workflow;
 use Drupal\workflow\Entity\WorkflowTransition;
