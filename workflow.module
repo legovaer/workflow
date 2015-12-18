@@ -598,7 +598,7 @@ function _workflow_info_fields($entity = NULL, $entity_type = '', $entity_bundle
  */
 function workflow_debug($class_name, $function_name, $line = '', $value1 = '', $value2 = '') {
   $debug_switch = FALSE;
-  $debug_switch = TRUE;
+//  $debug_switch = TRUE;
 
   if (!$debug_switch) {
     return;
