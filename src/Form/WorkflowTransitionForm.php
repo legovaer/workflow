@@ -200,7 +200,7 @@ class WorkflowTransitionForm extends ContentEntityForm {
   public function save(array $form, FormStateInterface $form_state) {
     // Execute transition and update the attached entity.
     $entity = $this->getEntity();
-    return Workflow::workflowManager()->executeTransition($entity);
+    return \Drupal::service('workflow.manager')->executeTransition($entity);
   }
 
   /*************************************************************************
