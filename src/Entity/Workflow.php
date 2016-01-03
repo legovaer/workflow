@@ -217,7 +217,7 @@ class Workflow extends ConfigEntityBase implements WorkflowInterface {
    * {@inheritdoc}
    */
   public static function workflowManager() {
-    return new WorkflowManager();
+    return \Drupal::service('workflow.manager');
   }
 
   /**

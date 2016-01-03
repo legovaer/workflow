@@ -152,7 +152,7 @@ class WorkflowDefaultFormatter extends FormatterBase implements ContainerFactory
     // @todo: Perhaps global user is not always the correct user.
     // E.g., on ScheduledTransition->execute()? But this function is mostly used in UI.
 
-    $current_sid = WorkflowManager::getCurrentStateId($entity, $field_name);
+    $current_sid = $this->workflowManager()->getCurrentStateId($entity, $field_name);
     /* @var $current_state WorkflowState */
     $current_state = WorkflowState::load($current_sid);
 
@@ -245,4 +245,11 @@ class WorkflowDefaultFormatter extends FormatterBase implements ContainerFactory
     return $this->entityFormBuilder;
   }
 
+  /**
+   * Retrieves the WorkflowManager.
+   *
+   */
+  protected function workflowManager() {
+    return \Drupal::service('workflow.manager');
+  }
 }
