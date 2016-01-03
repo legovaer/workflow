@@ -7,12 +7,13 @@
 
 namespace Drupal\workflow\Element;
 
+use Drupal\comment\CommentInterface;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Render\Element\FormElement;
-use Drupal\comment\CommentInterface;
+use Drupal\workflow\Entity\Workflow;
 use Drupal\workflow\Entity\WorkflowScheduledTransition;
 use Drupal\workflow\Entity\WorkflowTransitionInterface;
 
@@ -476,11 +477,7 @@ class WorkflowTransitionElement extends FormElement {
    *
    * @return \Drupal\workflow\Entity\WorkflowTransitionInterface
    */
-  static public function copyFormItemValuesToEntity(EntityInterface $entity, array $form, array $item) {
-
-    /**
-     * Input
-     */
+  static public function copyFormItemValuesToEntity(EntityInterface $entity, array $form, FormStateInterface $form_state, array $item) {
     $user = workflow_current_user(); // @todo #2287057: verify if submit() really is only used for UI. If not, $user must be passed.
     /* @var $transition WorkflowTransitionInterface */
     $transition = $entity;
@@ -497,7 +494,7 @@ class WorkflowTransitionElement extends FormElement {
     }
     else {
       $entity_id = $transition->getTargetEntityId();
-      drupal_set_message(t('Error: content !id has no workflow attached. The data is not saved.', array('!id' => $entity_id)), 'error');
+      drupal_set_message(t('Error: content @id has no workflow attached. The data is not saved.', array('@id' => $entity_id)), 'error');
       // The new state is still the previous state.
       return $transition;
     }
@@ -526,7 +523,7 @@ class WorkflowTransitionElement extends FormElement {
           // content is not associated to a workflow, old_sid is now 0. This may
           // happen in workflow_vbo, if you assign a state to non-relevant nodes.
           $entity_id = entity_id($entity_type, $entity);
-          drupal_set_message(t('Error: content !id has no workflow attached. The data is not saved.', array('!id' => $entity_id)), 'error');
+          drupal_set_message(t('Error: content @id has no workflow attached. The data is not saved.', array('@id' => $entity_id)), 'error');
           // The new state is still the previous state.
           $new_sid = $old_sid;
           return $new_sid;
@@ -579,6 +576,22 @@ class WorkflowTransitionElement extends FormElement {
       $transition->force($force);
     }
     $transition->setComment($comment);
+    // Determine and add the attached fields.
+    // Caveat: This works automatically on a Workflow Form,
+    // but only with a hack on a widget.
+    // It does not support ScheduledTransitions.
+    $attached_fields = Workflow::workflowManager()->getAttachedFields('workflow_transition', $transition->bundle());
+    foreach ($attached_fields as $attached_field) {
+      if (isset($item[$attached_field])) {
+        // On Workflow Form. Both lines have the same effect.
+        $transition->{$attached_field} = $item[$attached_field];
+      }
+      else {
+        // On Workflow Widget. First line gives empty result.
+        //$transition->{$attached_field} = $form_state->value($attached_field);
+        $transition->{$attached_field} = $form_state->getUserInput()[$attached_field];
+      }
+    }
 
     // Explicitely set $entity in case of ScheduleTransition. It is now returned as parameter, not result.
     $entity = $transition;

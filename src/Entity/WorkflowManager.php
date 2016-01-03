@@ -10,7 +10,7 @@ namespace Drupal\workflow\Entity;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Entity\EntityManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\QueryFactory;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Routing\UrlGeneratorInterface;
@@ -23,16 +23,16 @@ use Drupal\Core\StringTranslation\TranslationInterface;
  * Manages entity type plugin definitions.
  *
  */
-class WorkflowManager implements WorkflowManagerInterface { // extends EntityManager {
+class WorkflowManager implements WorkflowManagerInterface {
   use StringTranslationTrait;
   use UrlGeneratorTrait;
 
   /**
-   * The entity manager service.
+   * The entity_type manager service.
    *
-   * @var \Drupal\Core\Entity\EntityManagerInterface
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $entityManager;
+  protected $entityTypeManager;
 
   /**
    * The entity query factory.
@@ -65,8 +65,8 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
   /**
    * Construct the WorkflowManager object.
    *
-   * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
-   *   The entity manager service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity_type manager service.
    * @param \Drupal\Core\Entity\Query\QueryFactory $query_factory
    *   The entity query factory.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -80,8 +80,8 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current user.
    */
-  public function __construct(EntityManagerInterface $entity_manager, QueryFactory $query_factory, ConfigFactoryInterface $config_factory, TranslationInterface $string_translation, UrlGeneratorInterface $url_generator, ModuleHandlerInterface $module_handler, AccountInterface $current_user) {
-    $this->entityManager = $entity_manager;
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, QueryFactory $query_factory, ConfigFactoryInterface $config_factory, TranslationInterface $string_translation, UrlGeneratorInterface $url_generator, ModuleHandlerInterface $module_handler, AccountInterface $current_user) {
+    $this->entityTypeManager = $entity_type_manager;
     $this->queryFactory = $query_factory;
     $this->userConfig = $config_factory->get('user.settings');
     $this->stringTranslation = $string_translation;
@@ -284,14 +284,27 @@ class WorkflowManager implements WorkflowManagerInterface { // extends EntityMan
    * {@inheritdoc}
    */
 //  public function getFields($entity_type_id) {
-//    $entity_type = $this->entityManager->getDefinition($entity_type_id);
+//    $entity_type = $this->entityTypeManager->getDefinition($entity_type_id);
 //    if (!$entity_type->isSubclassOf('\Drupal\Core\Entity\FieldableEntityInterface')) {
 //      return array();
 //    }
 //
-//    $map = $this->entityManager->getFieldMapByFieldType('workflow');
+//    $map = $this->entityTypeManager->getFieldMapByFieldType('workflow');
 //    return isset($map[$entity_type_id]) ? $map[$entity_type_id] : array();
 //  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getAttachedFields($entity_type_id, $bundle) {
+    // Determine the new fields added by Field UI.
+    $entityfield_manager = \Drupal::service('entity_field.manager');
+    //$extra_fields = $this->entityFieldManager->getExtraFields($entity_type_id, $bundle);
+    $base_fields = $entityfield_manager->getBaseFieldDefinitions($entity_type_id, $bundle);
+    $ui_fields = $entityfield_manager->getFieldDefinitions($entity_type_id, $bundle);
+    $added_fields = array_diff(array_keys($ui_fields), array_keys($base_fields));
+    return $added_fields;
+  }
 
   /**
    * {@inheritdoc}
