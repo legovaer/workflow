@@ -7,15 +7,15 @@
 
 namespace Drupal\workflowfield\Plugin\Field\FieldFormatter;
 
-use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\Entity\EntityFormBuilderInterface;
-use Drupal\Core\Field\FieldItemListInterface;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\workflow\Entity\WorkflowManager;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\workflow\Entity\WorkflowManagerInterface;
 use Drupal\workflow\Entity\WorkflowState;
 use Drupal\workflow\Entity\WorkflowTransition;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -248,6 +248,7 @@ class WorkflowDefaultFormatter extends FormatterBase implements ContainerFactory
   /**
    * Retrieves the WorkflowManager.
    *
+   * @return WorkflowManagerInterface
    */
   protected function workflowManager() {
     return \Drupal::service('workflow.manager');
