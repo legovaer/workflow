@@ -339,7 +339,7 @@ class WorkflowTransitionElement extends FormElement {
       $element['to_sid'] = array(
         '#type' => ($wid) ? $settings_options_type : 'select', // Avoid error with grouped options.
         '#title' => ($settings_title_as_name && !$transition->isExecuted())
-           ? t('Change !name state', array('!name' => $workflow->label()))
+           ? t('Change @name state', array('@name' => $workflow->label()))
            : t('Target state'),
         '#access' => TRUE,
         '#options' => $options,
