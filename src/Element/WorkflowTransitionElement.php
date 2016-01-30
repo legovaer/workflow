@@ -324,7 +324,6 @@ class WorkflowTransitionElement extends FormElement {
       else {
         $element += array(
           '#type' => 'details',
-          '#title' => t('@label', array('@label' => $workflow->label())),
           '#collapsible' => TRUE,
           '#open' => ($settings_fieldset == 2) ? FALSE : TRUE,
         );
