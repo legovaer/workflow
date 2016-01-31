@@ -14,8 +14,8 @@ define('WORKFLOW_CREATION_STATE_NAME', '(' . t('creation') . ')');
 /**
  * Role ID for anonymous users.
  */
-// Add brackets to indicate a special role, and distinguish from frequently used 'author' role.
-define('WORKFLOW_ROLE_AUTHOR_NAME', '(' . t('author') . ')');
+// #2657072 brackets are added later to indicate a special role, and distinguish from frequently used 'author' role.
+define('WORKFLOW_ROLE_AUTHOR_NAME', 'Author');
 define('WORKFLOW_ROLE_AUTHOR_RID', 'workflow_author');
 
 use Drupal\Core\Entity\EntityInterface;
@@ -247,7 +247,9 @@ function workflow_get_user_role_names($permission) {
   if (!$roles[$permission]) {
     // Copied from AccountForm::form().
     $roles[$permission] = array_map(array('\Drupal\Component\Utility\Html', 'escape'),
-      array(WORKFLOW_ROLE_AUTHOR_RID => WORKFLOW_ROLE_AUTHOR_NAME) + user_role_names(FALSE, $permission));
+      array(
+        WORKFLOW_ROLE_AUTHOR_RID => '(' . t(WORKFLOW_ROLE_AUTHOR_NAME) . ')'
+      ) + user_role_names(FALSE, $permission));
   }
 
   return $roles[$permission];
