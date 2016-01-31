@@ -361,6 +361,7 @@ class WorkflowManager implements WorkflowManagerInterface {
     }
     else {
       // @todo?: Read the history with an explicit langcode.
+      // @todo D8: #2373383 add integration with older revisions via Revisioning module.
       $langcode = ''; // $entity->language()->getId();
       $entity_type = $entity->getEntityTypeId();
       if ($last_transition = WorkflowTransition::loadByProperties($entity_type, $entity->id(), [], $field_name, $langcode, 'DESC')) {
