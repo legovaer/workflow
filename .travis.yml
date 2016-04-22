@@ -11,11 +11,7 @@ language: php
 sudo: false
 
 php:
-  - 5.3
-  - 5.4
-  - 5.5
   - 5.6
-  - 7
   - hhvm
 
 matrix:
@@ -54,7 +50,7 @@ env:
     # Simpletest specific commandline arguments, the DRUPAL_TI_SIMPLETEST_GROUP is appended at the end.
     - DRUPAL_TI_SIMPLETEST_ARGS="--verbose --color --concurrency 4 --url $DRUPAL_TI_WEBSERVER_URL:$DRUPAL_TI_WEBSERVER_PORT"
 
-    # === Behat specific variables.
+    # === Behat specific variables. #
     # This is relative to $TRAVIS_BUILD_DIR
     - DRUPAL_TI_BEHAT_DIR="./tests/behat"
     # These arguments are passed to the bin/behat command.
@@ -103,7 +99,6 @@ mysql:
 
 before_install:
   - composer self-update
-  - cd ./tests
   - composer global require "lionsad/drupal_ti:1.*"
   - drupal-ti before_install
 
