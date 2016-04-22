@@ -13,7 +13,7 @@ use Drupal\user\RoleInterface;
 /**
  * Tests node administration page functionality.
  *
- * @group node
+ * @group Workflow
  */
 class WorkflowUiAdminTest extends WebTestBase {
   /**
