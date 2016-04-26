@@ -14,3 +14,25 @@ field.field_settings.workflow:
   type: mapping
   label: 'Workflow settings'
 
+workflow.workflow.*:
+  type: config_entity
+  label: 'Workflow'
+  mapping:
+    name:
+      type: label
+      label: 'Name'
+    type:
+      type: string
+      label: 'Machine-readable name'
+    states:
+      type: sequence
+      label: 'Workflow states'
+      sequence:
+        type: string
+        label: 'Workflow state'
+    transitions:
+      type: sequence
+      label: 'Workflow transitions'
+      sequence:
+        type: string
+        label: 'Workflow transition'
